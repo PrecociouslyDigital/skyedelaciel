@@ -1,27 +1,27 @@
 {
-  "compileOnSave": false,
-  "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "jsx": "preserve",
-    "allowJs": false,
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "noImplicitAny": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "removeComments": true,
-    "preserveConstEnums": false,
-    "sourceMap": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "components/*": ["src/components/*"],
-      "containers/*": ["src/containers/*"],
-      "types/*": ["types/*"]
+    "compileOnSave": false,
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "jsx": "preserve",
+        "allowJs": false,
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "noImplicitAny": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "removeComments": true,
+        "preserveConstEnums": false,
+        "sourceMap": true,
+        "skipLibCheck": true,
+        "noEmit": true,
+        "baseUrl": ".",
+        "paths": {
+            "components/*": ["src/components/*"],
+            "containers/*": ["src/containers/*"],
+            "types/*": ["types/*"]
+        },
+        "lib": ["dom", "es2015", "es2016"]
     },
-    "lib": ["dom", "es2015", "es2016"]
-  },
-  "exclude": ["artifacts/**/*", "dist/**/*", "public/**/*", "node_modules"]
+    "exclude": ["artifacts/**/*", "dist/**/*", "public/**/*", "node_modules"]
 }
