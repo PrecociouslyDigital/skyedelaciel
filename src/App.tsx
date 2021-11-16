@@ -2,21 +2,24 @@ import React from 'react';
 import { Root, Routes } from 'react-static';
 import { Router } from '@reach/router';
 import { Nav } from 'components/nav';
+import { MarkdownProvider } from './mdx';
 import "milligram";
-import 'app.css';
+import './app.css';
 
 
 function App() {
     return (
         <Root>
-            <Nav />
-            <div className="content">
-                <React.Suspense fallback={<em>Loading...</em>}>
-                    <Router>
-                        <Routes path="*" />
-                    </Router>
-                </React.Suspense>
-            </div>
+            <MarkdownProvider>
+                <Nav />
+                <div className="content">
+                    <React.Suspense fallback={<em>Loading...</em>}>
+                        <Router>
+                            <Routes path="*" />
+                        </Router>
+                    </React.Suspense>
+                </div>
+            </MarkdownProvider>
         </Root>
     )
 }
