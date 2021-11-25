@@ -1,3 +1,10 @@
-code {
+pre > code {
     background: rgb(35, 36, 31);
+}
+
+pre{
+    border-left:none;
+}
+pre > pre {
+    border-left:none;
 }
