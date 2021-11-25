@@ -1,0 +1,26 @@
+body{
+    font-family: 'Fira Sans', sans-serif;
+}
+$content-width: 1120px;
+$sidebar-width: 200px;
+
+.content {
+    max-width: $content-width;
+    font-size: 2em;
+    margin: auto;
+    color: var(--text);
+}
+
+
+$mobile-breakpoint: 600px;
+@mixin mobile {
+    @media only screen and (max-width: #{$mobile-breakpoint - 1}) {
+        @content;
+    }
+}
+
+@mixin desktop {
+    @media only screen and (min-width: $mobile-breakpoint) {
+        @content;
+    }
+}

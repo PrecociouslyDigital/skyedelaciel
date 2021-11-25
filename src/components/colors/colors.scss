@@ -1,0 +1,49 @@
+@use "sass:map";
+
+@function colorProperty($property) {
+    @return '--#{$property}';
+}
+
+$themes: (
+    "light": (
+        "background": #000,
+        "text": #DDD8B8,
+        "primary": #465775,
+        "secondary": #B3CBB9,
+        "warning": #CD9FCC,
+        "error": #84A9C0
+    ),
+    "dark": (
+        "text": #000,
+        "background": #DDD8B8,
+        "primary": #465775,
+        "secondary": #B3CBB9,
+        "warning": #CD9FCC,
+        "error": #84A9C0
+    )
+);
+@each $name, $scheme in $themes {
+    scheme[theme=#{$name}]{
+        @each $property, $color in $scheme {
+            --#{$property}: #{$color};
+        } 
+    }
+}
+@each $name, $scheme in $themes {
+    
+}
+
+scheme[theme="default"]{
+    @each $property, $color in map.get($themes, 'light') {
+        --#{$property}: #{$color};
+    } 
+}
+
+
+@media(prefers-color-scheme: 'dark'){
+    scheme[theme="default"]{
+        @each $property, $color in map.get($themes, 'dark') {
+            --#{$property}: #{$color};
+        } 
+    }
+}
