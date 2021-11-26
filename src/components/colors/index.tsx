@@ -3,7 +3,7 @@ import './colors.scss';
 import { singletonHook } from 'react-singleton-hook';
 
 type ColorSchemes = 'default' | 'light' | 'dark';
-let globalSetScheme = (scheme: ColorSchemes) => { throw new Error('you must useScheme before setting its state'); return;};
+let globalSetScheme = (scheme: ColorSchemes) : void => { throw new Error('you must useScheme before setting its state')};
 
 const useColorScheme = singletonHook<ColorSchemes>('default', () => {
   const [scheme, setScheme] = useState<ColorSchemes>('default');
