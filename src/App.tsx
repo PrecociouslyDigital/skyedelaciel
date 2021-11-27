@@ -2,18 +2,17 @@ import React from 'react';
 import { Root, Routes, Head } from 'react-static';
 import { Router } from '@reach/router';
 import { Nav } from 'components/nav';
-import { SchemeProvider } from 'components/colors';
 import { MarkdownProvider } from './mdx';
 import './app.scss';
+import './components/colors/colors.scss';
 
 
 function App() {
     return (
         <Root>
             <Head>
-                <link rel="stylesheet" href="/fonts/fira.css"/>
+                <link rel="stylesheet" href="/css/fira.css"/>
             </Head>
-            <SchemeProvider>
                 <MarkdownProvider>
                     <Nav />
                     <div className="content">
@@ -24,7 +23,6 @@ function App() {
                         </React.Suspense>
                     </div>
                 </MarkdownProvider>
-            </SchemeProvider>
         </Root>
     )
 }

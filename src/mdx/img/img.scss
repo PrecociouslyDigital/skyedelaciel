@@ -1,0 +1,17 @@
+figure {
+    border-style: solid;
+    background-color: var(--background-dark);
+    position: relative;
+
+    img {
+        max-width: calc(100% - 16px);
+        padding: 8px;
+        padding-bottom: 0px;
+    }
+    figcaption {
+        font-size:0.7em;
+        padding:8px;
+        padding-top: 0px;
+        margin:auto;
+    }
+}

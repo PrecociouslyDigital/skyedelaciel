@@ -1,4 +1,5 @@
 @use "sass:map";
+@use "sass:color";
 
 @function colorProperty($property) {
     @return '--#{$property}';
@@ -6,44 +7,64 @@
 
 $themes: (
     "light": (
-        "background": #000,
+        "background": #101011,
         "text": #DDD8B8,
         "primary": #465775,
         "secondary": #B3CBB9,
-        "warning": #CD9FCC,
-        "error": #84A9C0
+        "warning": #84A9C0,
+        "error": #CD9FCC,
+        "lightscale": 20%
     ),
     "dark": (
-        "text": #000,
-        "background": #DDD8B8,
-        "primary": #465775,
-        "secondary": #B3CBB9,
+        "background": #101011,
+        "text": #DDD8B8,
+        "primary": #B3CBB9,
+        "secondary": #465775,
         "warning": #CD9FCC,
-        "error": #84A9C0
+        "error": #84A9C0,
+        "lightscale": -20%
     )
 );
 @each $name, $scheme in $themes {
-    scheme[theme=#{$name}]{
+    body[theme=#{$name}]{
         @each $property, $color in $scheme {
-            --#{$property}: #{$color};
+            @if type-of($color) == color {
+                $lightscale: map.get($scheme, 'lightscale');
+                --#{$property}: #{$color};
+                --#{$property}-sat: #{color.scale($color, $saturation:10%)};
+                --#{$property}-pastel: #{color.scale($color, $saturation:-10%)};
+                --#{$property}-light: #{color.scale($color, $lightness:$lightscale)};
+                --#{$property}-dark: #{color.scale($color, $lightness:-$lightscale)};
+            }
         } 
     }
 }
-@each $name, $scheme in $themes {
-    
-}
 
-scheme[theme="default"]{
+body, body[theme="default"]{
     @each $property, $color in map.get($themes, 'light') {
-        --#{$property}: #{$color};
+        @if type-of($color) == color {
+            $lightscale: map.get(map.get($themes, 'light'), 'lightscale');
+            --#{$property}: #{$color};
+            --#{$property}-sat: #{color.scale($color, $saturation:10%)};
+            --#{$property}-pastel: #{color.scale($color, $saturation:-10%)};
+            --#{$property}-light: #{color.scale($color, $lightness:$lightscale)};
+            --#{$property}-dark: #{color.scale($color, $lightness:-1 * $lightscale)};
+        }
     } 
 }
 
 
 @media(prefers-color-scheme: 'dark'){
-    scheme[theme="default"]{
+    body, body[theme="default"]{
         @each $property, $color in map.get($themes, 'dark') {
-            --#{$property}: #{$color};
+            @if type-of($color) == color {
+                $lightscale: map.get(map.get($themes, 'dark'), 'lightscale');
+                --#{$property}: #{$color};
+                --#{$property}-sat: #{color.scale($color, $saturation:10%)};
+                --#{$property}-pastel: #{color.scale($color, $saturation:-10%)};
+                --#{$property}-light: #{color.scale($color, $lightness:$lightscale)};
+                --#{$property}-dark: #{color.scale($color, $lightness:-1 * $lightscale)};
+            }
         } 
     }
 }
