@@ -1,0 +1,100 @@
+
+$content-width: 1120px;
+$sidebar-width: 200px;
+
+
+
+$mobile-breakpoint: 1000px;
+@mixin mobile {
+        @media only screen and (max-width: #{$mobile-breakpoint - 1px}) {
+                @content;
+        }
+}
+
+@mixin desktop {
+        @media only screen and (min-width: $mobile-breakpoint)  {
+                @content;
+        }
+}
+
+@mixin linx ($link, $visit, $hover) {
+    a {
+        color: $link;
+        @content;
+        &:visited {
+            color: $visit;
+        }
+        &:hover {
+            color: $hover;   
+        }
+    }
+}
+@mixin linxDirect ($link, $visit, $hover) {
+    & > a {
+        color: $link;
+        @content;
+        &:visited {
+            color: $visit;
+        }
+        &:hover {
+            color: $hover;   
+        }
+    }
+}
+
+
+.content {
+        max-width: $content-width;
+        font-size: 2em;
+        margin-top:0em;
+        position:relative;
+        word-wrap: break-word;
+        @include desktop {
+                margin-left: $sidebar-width;
+        }
+        div > :first-child {
+            margin-top:0;
+        }
+}
+
+
+body > div:first-child{
+    margin:auto;
+    padding:0.5em;
+    width:fit-content;
+    max-width: 99vw;
+}
+
+:root {
+    scrollbar-color: var(--text);
+}
+body {
+    font-family: 'Fira Sans', sans-serif;
+    color: var(--text);
+    background-color: var(--background);
+    overflow:overlay;
+}
+
+@include linx(var(--text-light), var(--text), var(--text-dark)) {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+::-webkit-scrollbar {
+    width:8px;
+    background-color: rgba(0,0,0,0);
+    &:horizontal{
+        height:8px;
+    }
+}
+::-webkit-scrollbar-thumb{
+    background-color: var(--secondary);
+    border-radius:4px;
+}
+
+::-webkit-scrollbar-track {
+    opacity: 0;
+}
+::-webkit-scrollbar-corner {
+    opacity: 0;
+}

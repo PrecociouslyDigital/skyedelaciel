@@ -1,0 +1,97 @@
+@import '../../app.scss';
+@import "../../font-awesome/fontawesome.scss";
+@import "../../font-awesome/solid.scss";
+@import "../../font-awesome/brands.scss";
+nav {
+    position:relative;
+    @include linxDirect(var(--primary), var(--secondary), var(--primary-dark)) {
+        font-weight:bold;
+        margin-top: auto;
+        @include desktop{
+        }
+    }
+    @include desktop{
+        position:absolute;
+        width:$sidebar-width;
+        font-size:3em;
+        line-height:1.5em;
+    }
+
+    div {
+        @include linx(var(--text), var(--text-light), var(--text-dark)){
+
+        }
+        hr {
+            width:85%;
+            left:0;
+            margin-left:0;
+            position:relative;
+            margin-top:0.5em;
+            margin-bottom:0.5em;
+        }
+        > :last-child {
+            line-height:1em;
+        }
+    }
+
+    
+
+    @include mobile{
+        font-size:2em;
+        display:flex;
+        justify-content: center;
+        align-items: center;
+        div {
+            width:89%;
+            top:1.5em;
+            left:0;
+            padding-left:3%;
+            padding-right:3%;
+            margin-right:11%;
+            position:absolute;
+        }
+    }
+
+    input[type="checkbox"] {
+        display:none;
+    }
+
+    input[type=checkbox] + label {
+        @extend %fa-icon;
+        @extend .fas;
+        display:inline-block;
+        transition: transform 0.5s ease-in-out;
+        color:var(--text);
+        vertical-align: middle;
+        font-size:1em;
+        padding:4px;
+        &::before {
+            content: fa-content($fa-var-angle-down);
+        }
+        
+    } 
+
+    input[type=checkbox] + label + div {
+        max-height:0;
+        transition:height 0.5s ease-in-out;
+        transition: opacity 0.1s;
+        overflow: hidden;
+        opacity: 0;
+    }
+    
+    input[type="checkbox"]:checked + label {
+        transform: rotate(180deg);
+        color:var(--text-dark);
+
+    }
+    input[type="checkbox"]:checked + label + div {
+        max-height:100vh;
+        visibility: visible;
+        opacity: 1;
+        @include mobile {
+            background-color: var(--background);
+            z-index: 10;
+            border-style: solid;
+        }
+    }
+}

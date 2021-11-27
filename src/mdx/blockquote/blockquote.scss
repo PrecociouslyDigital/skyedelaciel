@@ -1,0 +1,36 @@
+blockquote {
+    border-left: 10px solid var(--primary-pastel);
+    margin: 1em 10px;
+    padding: 0.5em 8px;
+    quotes: "\201C""\201D";
+}
+
+@mixin quote{
+    color: var(--primary-pastel);
+    
+    font-size: 3em;
+    line-height: 0px;
+    margin-right: 10px;
+    vertical-align: -0.4em;
+    display:inline; 
+    @content;
+}
+
+blockquote> p:first-child {
+    &::before {
+        @include quote {
+            content: open-quote;
+        }
+    }
+    position:relative;
+
+    &::after {
+        @include quote {
+            top:0.1em;
+            position:relative;
+            content: close-quote;
+        }
+    }
+    
+}
+

@@ -1,0 +1,70 @@
+@use "sass:map";
+@use "sass:color";
+
+@function colorProperty($property) {
+    @return '--#{$property}';
+}
+
+$themes: (
+    "light": (
+        "background": #101011,
+        "text": #DDD8B8,
+        "primary": #465775,
+        "secondary": #B3CBB9,
+        "warning": #84A9C0,
+        "error": #CD9FCC,
+        "lightscale": 20%
+    ),
+    "dark": (
+        "background": #101011,
+        "text": #DDD8B8,
+        "primary": #B3CBB9,
+        "secondary": #465775,
+        "warning": #CD9FCC,
+        "error": #84A9C0,
+        "lightscale": -20%
+    )
+);
+@each $name, $scheme in $themes {
+    body[theme=#{$name}]{
+        @each $property, $color in $scheme {
+            @if type-of($color) == color {
+                $lightscale: map.get($scheme, 'lightscale');
+                --#{$property}: #{$color};
+                --#{$property}-sat: #{color.scale($color, $saturation:10%)};
+                --#{$property}-pastel: #{color.scale($color, $saturation:-10%)};
+                --#{$property}-light: #{color.scale($color, $lightness:$lightscale)};
+                --#{$property}-dark: #{color.scale($color, $lightness:-$lightscale)};
+            }
+        } 
+    }
+}
+
+body, body[theme="default"]{
+    @each $property, $color in map.get($themes, 'light') {
+        @if type-of($color) == color {
+            $lightscale: map.get(map.get($themes, 'light'), 'lightscale');
+            --#{$property}: #{$color};
+            --#{$property}-sat: #{color.scale($color, $saturation:10%)};
+            --#{$property}-pastel: #{color.scale($color, $saturation:-10%)};
+            --#{$property}-light: #{color.scale($color, $lightness:$lightscale)};
+            --#{$property}-dark: #{color.scale($color, $lightness:-1 * $lightscale)};
+        }
+    } 
+}
+
+
+@media(prefers-color-scheme: 'dark'){
+    body, body[theme="default"]{
+        @each $property, $color in map.get($themes, 'dark') {
+            @if type-of($color) == color {
+                $lightscale: map.get(map.get($themes, 'dark'), 'lightscale');
+                --#{$property}: #{$color};
+                --#{$property}-sat: #{color.scale($color, $saturation:10%)};
+                --#{$property}-pastel: #{color.scale($color, $saturation:-10%)};
+                --#{$property}-light: #{color.scale($color, $lightness:$lightscale)};
+                --#{$property}-dark: #{color.scale($color, $lightness:-1 * $lightscale)};
+            }
+        } 
+    }
+}
