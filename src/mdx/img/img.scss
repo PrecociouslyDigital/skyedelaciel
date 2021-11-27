@@ -1,8 +1,22 @@
+@import '../../app.scss';
+
 figure {
     border-style: solid;
     background-color: var(--background-dark);
     position: relative;
-
+    display: block;
+    clear: right;
+    @include desktop {
+        width: fit-content;
+        float: right;
+        max-width: $mobile-breakpoint * 0.4;
+    }
+    
+    @include mobile {
+        width: 70%;
+        margin:auto;
+    }
+    
     img {
         max-width: calc(100% - 16px);
         padding: 8px;

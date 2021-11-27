@@ -14,13 +14,27 @@ nav {
         position:absolute;
         width:$sidebar-width;
         font-size:3em;
+        line-height:1.5em;
     }
 
     div {
         @include linx(var(--text), var(--text-light), var(--text-dark)){
 
         }
+        hr {
+            width:85%;
+            left:0;
+            margin-left:0;
+            position:relative;
+            margin-top:0.5em;
+            margin-bottom:0.5em;
+        }
+        > :last-child {
+            line-height:1em;
+        }
     }
+
+    
 
     @include mobile{
         font-size:2em;
@@ -59,7 +73,7 @@ nav {
 
     input[type=checkbox] + label + div {
         max-height:0;
-        transition:max-height 0.5s ease-in-out;
+        transition:height 0.5s ease-in-out;
         transition: opacity 0.1s;
         overflow: hidden;
         opacity: 0;
@@ -71,7 +85,7 @@ nav {
 
     }
     input[type="checkbox"]:checked + label + div {
-        max-height:10vh;
+        max-height:100vh;
         visibility: visible;
         opacity: 1;
         @include mobile {

@@ -4,15 +4,15 @@ $sidebar-width: 200px;
 
 
 
-$mobile-breakpoint: 600px;
+$mobile-breakpoint: 1000px;
 @mixin mobile {
-        @media only screen and (max-width: #{$mobile-breakpoint - 1}) {
+        @media only screen and (max-width: #{$mobile-breakpoint - 1px}) {
                 @content;
         }
 }
 
 @mixin desktop {
-        @media only screen and (min-width: $mobile-breakpoint) {
+        @media only screen and (min-width: $mobile-breakpoint)  {
                 @content;
         }
 }
@@ -75,8 +75,9 @@ body {
     overflow:overlay;
 }
 
-@include linx(var(--text), var(--text-dark), var(--text-light)) {
+@include linx(var(--text-light), var(--text), var(--text-dark)) {
     text-decoration: none;
+    font-weight: 500;
 }
 
 ::-webkit-scrollbar {
