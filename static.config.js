@@ -1,6 +1,6 @@
-import axios from 'axios'
 import path from 'path'
-// import { Post } from './types'
+const yamlFront = require('yaml-front-matter');
+import {promises as fs} from 'fs';
 
 // Typescript support in static.config.js is not yet supported, but is coming in a future update!
 
@@ -16,6 +16,13 @@ export default {
             require.resolve('react-static-plugin-source-filesystem'),
             {
                 location: path.resolve('./src/pages'),
+                createRoute: (data) => ({
+                    getData: async() => ({
+                       frontMatter: yamlFront.loadFront(await fs.readFile(data.template)),
+                       location: data.path,
+                    }),
+                   ...data,
+                }),
             },
         ],
         require.resolve('react-static-plugin-reach-router'),
