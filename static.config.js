@@ -1,6 +1,9 @@
-import axios from 'axios'
-import path from 'path'
-// import { Post } from './types'
+import path from 'path';
+import {doRoutePreprocess} from './plugins'
+
+require('dotenv');
+
+
 
 // Typescript support in static.config.js is not yet supported, but is coming in a future update!
 
@@ -16,6 +19,10 @@ export default {
             require.resolve('react-static-plugin-source-filesystem'),
             {
                 location: path.resolve('./src/pages'),
+                createRoute: (data) => ({
+                    getData: doRoutePreprocess(data),
+                    ...data,
+                }),
             },
         ],
         require.resolve('react-static-plugin-reach-router'),
@@ -39,3 +46,5 @@ export default {
         ],
     ],
 }
+
+

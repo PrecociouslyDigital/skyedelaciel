@@ -1,8 +1,5 @@
-
 $content-width: 1120px;
 $sidebar-width: 200px;
-
-
 
 $mobile-breakpoint: 1000px;
 @mixin mobile {
@@ -73,6 +70,9 @@ body {
     color: var(--text);
     background-color: var(--background);
     overflow:overlay;
+}
+html{
+    scroll-behavior: smooth;
 }
 
 @include linx(var(--text-light), var(--text), var(--text-dark)) {

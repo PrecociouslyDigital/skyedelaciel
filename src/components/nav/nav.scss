@@ -28,6 +28,9 @@ nav {
             position:relative;
             margin-top:0.5em;
             margin-bottom:0.5em;
+            @include mobile {
+                width:100%;
+            }
         }
         > :last-child {
             line-height:1em;
@@ -47,8 +50,9 @@ nav {
             left:0;
             padding-left:3%;
             padding-right:3%;
-            margin-right:11%;
             position:absolute;
+            padding-top: 0.5em;
+            padding-bottom:0.5em;
         }
     }
 
