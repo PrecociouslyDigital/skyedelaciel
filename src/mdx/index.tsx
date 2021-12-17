@@ -4,8 +4,9 @@ import { Blockquote } from './blockquote';
 import { MDXProvider } from '@mdx-js/react'; 
 import React from 'react';
 import { useRouteData } from 'react-static';
-import jsxToString from 'jsx-to-string';
-import { Header } from './headers';
+import { Header, slugfy } from './headers';
+import { memoize } from 'lodash';
+import { Citation } from '../components/cite';
 
 export const MarkdownProvider: React.FC<{}> = ({children}) => (
     <MDXProvider components={{
@@ -14,45 +15,77 @@ export const MarkdownProvider: React.FC<{}> = ({children}) => (
         blockquote: Blockquote,
         wrapper: wrapper,
         h1: Header('h1'),
-
+        h2: Header('h2'),
+        h3: Header('h3'),
+        h4: Header('h4'),
+        h5: Header('h5'),
+        Citation,
     }}>
         {children}
     </MDXProvider>
 );
-interface HeaderData {
-    title: string;
-    slug: string;
-    children: HeaderData[];
-}
+type HeaderData = [number[], string][]
 
-const createHeaderDataFromElement= (ele: HTMLElement) : HeaderData => ({
-    title: ele.innerText,
-    slug: ele.innerText.replace(' ', '-').replace(/[^a-zA-Z0-9-_]/g, ''),
-    children: [],
+export const renderChildren = (children: React.ReactNode) => React.Children.map(
+            children, child => renderChild(child)
+            ).join('');
+
+const renderChild = memoize((child: any): string => {
+    if(typeof child === 'string' || typeof child === 'number' || typeof child === 'boolean') {
+        return child.toString();
+    }
+    if(child.props != null && child.props.children != null){
+        if(Array.isArray(child.props.children)){
+            return child.props.children.map(renderChild).join('');
+        }else{
+            if(child.props.children.props != null){
+                return renderChild(child.props.children);
+            }
+            
+            return child.props.children.toString();
+        }
+    }
 });
 
-function createTOCFromEleList(){
-    const h1s: HeaderData[]  = [];
-    return [function(ele: HTMLElement){
-        if(ele.tagName.charAt(0) !== 'h'){
-            throw new Error(`This isn't a header!`);
+
+function addEleToTOC(headers: HeaderData, child: React.ReactElement): void{
+    const hLevel = parseInt(child.props.mdxType.charAt(1));
+    if(headers.length === 0){
+        //We're the first!
+        headers.push([[1], renderChild(child)])
+    }
+    // Walk from the back: What is our nearest sibling/ancestor's number?
+    let ancestor = null;
+    for(let i = headers.length - 1; i >= 0; i--){
+        if(headers[i][0].length <= hLevel){
+            ancestor = headers[i][0];
+            break;
         }
-        const level = parseInt(ele.tagName.charAt(1));
-        if(level > 5){
-            throw new Error(`Your h${level} is too big!`);
+    }
+    
+    let self = [...ancestor];
+    // If we're a sibling; increment the number:
+    if(ancestor.length === hLevel){
+        self[self.length-1] += 1;
+    }else{
+        // This is our parent in some way. Time to add zeros!
+        for(let i = ancestor.length; i < hLevel; i++){
+            self[i] = 0;
         }
-        let relevantHeaders = h1s;
-        for(let i = 0; i < level; i++){
-            relevantHeaders = relevantHeaders[relevantHeaders.length - 1].children
-        }
-        relevantHeaders.push(createHeaderDataFromElement(ele))
-    }, h1s]
+        self[hLevel-1] = 1
+    }
+    headers.push([self, renderChild(child)]);
 }
 
+
 const wrapper : React.FC<{}> = ({components, children}: {components: React.ReactChild, children: React.ReactNode} ) => {
-    let childrenArray = React.Children.toArray(children);
-    console.log(childrenArray.map(jsxToString));
-    const routeData = useRouteData();
+    const headers: HeaderData = [];
+    console.log(useRouteData());
+    React.Children.forEach(children, (child: any) => {
+        if(/h[1-5]/g.test(child.props.mdxType)){
+            addEleToTOC(headers, child);
+        }
+    });
     return <div>
         
         {children}
