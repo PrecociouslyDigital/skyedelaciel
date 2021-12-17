@@ -20,6 +20,7 @@
         "dotenv": "^10.0.0",
         "jsx-to-string": "^1.4.0",
         "lodash": "^4.17.21",
+        "markdown-to-jsx": "^7.1.5",
         "metadata-scraper": "^0.2.46",
         "milligram": "^1.4.1",
         "node-isbn": "^1.6.1",

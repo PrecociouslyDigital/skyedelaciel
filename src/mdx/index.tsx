@@ -4,9 +4,10 @@ import { Blockquote } from './blockquote';
 import { MDXProvider } from '@mdx-js/react'; 
 import React from 'react';
 import { useRouteData } from 'react-static';
-import { Header, slugfy } from './headers';
+import { Header } from './headers';
 import { memoize } from 'lodash';
-import { Citation } from '../components/cite';
+import { Bibliography, Citation } from 'components/cite';
+import { HeaderData, TOC, Abstract, Title } from 'components/frontmatter';
 
 export const MarkdownProvider: React.FC<{}> = ({children}) => (
     <MDXProvider components={{
@@ -24,7 +25,6 @@ export const MarkdownProvider: React.FC<{}> = ({children}) => (
         {children}
     </MDXProvider>
 );
-type HeaderData = [number[], string][]
 
 export const renderChildren = (children: React.ReactNode) => React.Children.map(
             children, child => renderChild(child)
@@ -80,14 +80,17 @@ function addEleToTOC(headers: HeaderData, child: React.ReactElement): void{
 
 const wrapper : React.FC<{}> = ({components, children}: {components: React.ReactChild, children: React.ReactNode} ) => {
     const headers: HeaderData = [];
-    console.log(useRouteData());
+    const {frontMatter, urlMeta } = useRouteData();
     React.Children.forEach(children, (child: any) => {
         if(/h[1-5]/g.test(child.props.mdxType)){
             addEleToTOC(headers, child);
         }
     });
     return <div>
-        
+        {frontMatter.title && <Title {...frontMatter}/>}
+        {headers.length > 0 && <TOC headers={headers}/>}
+        {frontMatter.abstract && <Abstract content={frontMatter.abstract}></Abstract>}
         {children}
+        <Bibliography works={urlMeta}/>
     </div>
 }
