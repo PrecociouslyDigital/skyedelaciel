@@ -8,9 +8,11 @@ import { Header } from './headers';
 import { memoize } from 'lodash';
 import { Bibliography, Citation } from 'components/cite';
 import { HeaderData, TOC, Abstract, Title } from 'components/frontmatter';
+import { Link } from 'components/links';
 
 export const MarkdownProvider: React.FC<{}> = ({children}) => (
     <MDXProvider components={{
+        a: Link,
         code: Code,
         img: Image,
         blockquote: Blockquote,
@@ -78,7 +80,7 @@ function addEleToTOC(headers: HeaderData, child: React.ReactElement): void{
 }
 
 
-const wrapper : React.FC<{}> = ({components, children}: {components: React.ReactChild, children: React.ReactNode} ) => {
+const wrapper : React.FC<{}> = ({children}: {components: React.ReactChild, children: React.ReactNode} ) => {
     const headers: HeaderData = [];
     const {frontMatter, urlMeta } = useRouteData();
     React.Children.forEach(children, (child: any) => {
@@ -86,6 +88,7 @@ const wrapper : React.FC<{}> = ({components, children}: {components: React.React
             addEleToTOC(headers, child);
         }
     });
+    console.log(urlMeta);
     return <div>
         {frontMatter.title && <Title {...frontMatter}/>}
         {headers.length > 0 && <TOC headers={headers}/>}

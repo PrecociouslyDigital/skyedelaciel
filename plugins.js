@@ -36,7 +36,7 @@ export const doRoutePreprocess = (data) => async () => {
    * [[-\]_.~!*'();:@&=+$,/?%#[A-z0-9]]+ : match any url-allowed character
    */
   const urlMatches =
-    content.match(/https?:\/\/[[-\]_.~*@&=+$,/?%#[A-z0-9]+/g) || [];
+    content.match(/https?:\/\/[\-[-\]_.~*@&=+$,/?%#[A-z0-9]+/g) || [];
   const fmCites = frontMatter.additionalCites || [];
   const urls = [...new Set([...urlMatches, ...fmCites])];
 

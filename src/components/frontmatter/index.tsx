@@ -30,6 +30,6 @@ export type HeaderData = [number[], string][];
 export const TOC: React.FC<{headers: HeaderData}> = ({headers})=> <ul className="toc">
     <h5>Table of Contents</h5>
     {headers.map(([header, content]) => <li className={`h${header.length}`}>
-            <JumpLink to={`#${slugfy(content)}`}><span>{header.join('.')}.</span> <span>{content}</span></JumpLink>
+            <a href={`#${slugfy(content)}`}><span>{header.join('.')}.</span> <span>{content}</span></a>
         </li>)}
 </ul>

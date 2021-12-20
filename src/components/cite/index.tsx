@@ -9,7 +9,7 @@ export const Citation: React.FC<{
     <br></br>{url}<br></br>{children}
 </div>);
 
-const resolvers : {
+export const resolvers : {
     [key in Format] : (url: string, obj: any) => React.ReactElement;
 } = {
     youtube: (url, data) => <BibEle 
@@ -33,7 +33,14 @@ const resolvers : {
         url={url}
         year={data.publishedDate}
     />,
+    
 };
+const defaultCite = (url: string, data: any) => <BibEle
+        authors={data.author != null ? [data.author.split(' ')] : null}
+        title={data.title}
+        url={url}
+        year={data.published != null ? new Date(data.published * 1000).getFullYear().toString() : ''}
+    />;
 
 export const Bibliography: React.FC<{
     works: {
@@ -42,7 +49,7 @@ export const Bibliography: React.FC<{
 }> = ({works}) => (
     <p id="bib">
         <h1>Works Consulted</h1>
-        {Object.entries(works).map(([url, data]) => {
+        {Object.entries(works).map(([url, data]: [string, any]) => {
             if(typeof data === 'string') {
                 return data;
             }
@@ -51,6 +58,10 @@ export const Bibliography: React.FC<{
                     return resolvers[format as Format](url, data);
                 }
             }
+            if(data.title != null){
+                return defaultCite(url, data);
+            }
+            return null;
         })}
     </p>
 )
@@ -62,7 +73,7 @@ const mlaDateFormat = (date: Date) => date.toLocaleDateString('en-us', {
 });
 
 const BibEle: React.FC<{
-    authors: string[][];
+    authors?: string[][];
     title: string;
     workTitle?:string;
     url: string;
@@ -72,7 +83,7 @@ const BibEle: React.FC<{
     pages?: [string, string];
     accessed?: Date;
 }> = ({authors, title, url, ...props}) => <p className='cite'> <a href={url}>
-    {authors.map(author => {
+    {authors != null && authors.map(author => {
         let name = author[author.length-1];
         if(author.length > 1){
             name += ', '
