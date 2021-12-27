@@ -3,7 +3,6 @@
 @import "../../font-awesome/solid.scss";
 @import "../../font-awesome/brands.scss";
 nav {
-    position:relative;
     @include linxDirect(var(--primary), var(--secondary), var(--primary-dark)) {
         font-weight:bold;
         margin-top: auto;
@@ -11,7 +10,7 @@ nav {
         }
     }
     @include desktop{
-        position:absolute;
+        position:fixed;
         width:$sidebar-width;
         font-size:3em;
         line-height:1.5em;

@@ -7,10 +7,10 @@
 
 $themes: (
     "light": (
-        "background": #101011,
-        "text": #DDD8B8,
-        "primary": #465775,
-        "secondary": #B3CBB9,
+        "background":#c7cdd4,
+        "text":  #101011,
+        "primary": #6185c4,
+        "secondary": #7f6a8d,
         "warning": #84A9C0,
         "error": #CD9FCC,
         "lightscale": 20%
@@ -40,7 +40,7 @@ $themes: (
     }
 }
 
-body, body[theme="default"]{
+body:not([theme]), body[theme="default"]{
     @each $property, $color in map.get($themes, 'light') {
         @if type-of($color) == color {
             $lightscale: map.get(map.get($themes, 'light'), 'lightscale');
@@ -54,8 +54,8 @@ body, body[theme="default"]{
 }
 
 
-@media(prefers-color-scheme: 'dark'){
-    body, body[theme="default"]{
+@media only screen and (prefers-color-scheme: 'dark'){
+    body:not([theme]), body[theme="default"]{
         @each $property, $color in map.get($themes, 'dark') {
             @if type-of($color) == color {
                 $lightscale: map.get(map.get($themes, 'dark'), 'lightscale');

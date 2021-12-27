@@ -4,3 +4,4 @@ dist
 artifacts/**
 tmp/**
 .env
+src/pages/tale.mdx

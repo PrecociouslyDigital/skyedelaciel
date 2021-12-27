@@ -59,6 +59,9 @@ const LinkPreview : React.FC<{url: string}> = ({url}) => {
     let ele = defaultPopup;
     let format: Format;
     const { urlMeta } = useRouteData();
+    if(urlMeta[url] == null){
+        return null;
+    }
     for(format in formats){
         if(formats[format].test(url)){
             ele = popups[format];
