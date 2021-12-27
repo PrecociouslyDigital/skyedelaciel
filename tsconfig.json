@@ -1,28 +1,44 @@
 {
-    "compileOnSave": false,
     "compilerOptions": {
-        "target": "esnext",
-        "module": "esnext",
-        "jsx": "preserve",
-        "allowJs": false,
-        "moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
-        "noImplicitAny": true,
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "removeComments": true,
-        "preserveConstEnums": false,
-        "sourceMap": true,
+        "target": "es5",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "allowJs": true,
         "skipLibCheck": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
         "noEmit": true,
-        "baseUrl": ".",
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
         "paths": {
-            "components/*": ["src/components/*"],
-            "containers/*": ["src/containers/*"],
-            "mdx/*": ["src/mdx/*"],
-            "types/*": ["types/*"]
-        },
-        "lib": ["dom", "es2015", "es2016"]
+            "components/*": [
+                "src/components/*"
+            ],
+            "containers/*": [
+                "src/containers/*"
+            ],
+            "mdx/*": [
+                "src/mdx/*"
+            ],
+            "types/*": [
+                "types/*"
+            ]
+        }
     },
-    "exclude": ["artifacts/**/*", "dist/**/*", "public/**/*", "node_modules"]
+    "include": [
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
 }
