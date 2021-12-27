@@ -11,6 +11,12 @@ figure {
         float: right;
         max-width: $mobile-breakpoint * 0.4;
     }
+    @include print{
+        width: fit-content;
+        float: right;
+        max-width: 40vw;
+        
+    }
     
     @include mobile {
         width: 70%;

@@ -6,7 +6,9 @@ import { MarkdownProvider } from './mdx';
 import './app.scss';
 import './components/colors/colors.scss';
 
-
+function Ugh({default} : {default:boolean}){
+    return <h1>NO PATH FOUND UWU</h1>
+}
 function App() {
     return (
         <Root>
@@ -19,6 +21,7 @@ function App() {
                         <React.Suspense fallback={<em>Loading...</em>}>
                             <Router>
                                 <Routes path="*" />
+                                <Ugh default/>
                             </Router>
                         </React.Suspense>
                     </div>
