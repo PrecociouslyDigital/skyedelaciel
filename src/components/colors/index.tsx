@@ -1,16 +1,13 @@
-import React from 'react';
+import React, { ChangeEvent, ChangeEventHandler } from 'react';
 import './colors.scss';
 
 type ColorSchemes = 'default' | 'light' | 'dark';
 
-export const ThemeSwitcher: React.FC<{}> = () => (<select>
-    <ThemeSelector theme="default">Default</ThemeSelector>
-    <ThemeSelector theme="light">Light</ThemeSelector>
-    <ThemeSelector theme="dark">Dark</ThemeSelector>
+export const ThemeSwitcher: React.FC<{}> = () => (<select value={document.body.getAttribute("theme")} onChange={setColorScheme}>
+    <option value="default">Default</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
 </select>);
-
-const ThemeSelector: React.FC<{theme: ColorSchemes}> = React.memo(({theme, children}) => (<option
-    onSelect={setColorScheme(theme)} value={theme}>{children}</option>));
 
 declare global {
     namespace JSX {
@@ -20,4 +17,6 @@ declare global {
     }
 }
 
-export const setColorScheme = (theme: ColorSchemes) => () => document.body.style.setProperty('theme',theme);
+export const setColorScheme : ChangeEventHandler = (e: any) => {
+    document.body.setAttribute("theme", e.target.value);
+}

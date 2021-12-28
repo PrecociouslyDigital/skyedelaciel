@@ -9,6 +9,7 @@ import { memoize } from 'lodash';
 import { Bibliography, Citation } from 'components/cite';
 import { HeaderData, TOC, Abstract, Title } from 'components/frontmatter';
 import { Link } from 'components/links';
+import { Footer } from 'components/footer';
 
 export const MarkdownProvider: React.FC<{}> = ({children}) => (
     <MDXProvider components={{
@@ -88,12 +89,16 @@ const wrapper : React.FC<{}> = ({children}: {components: React.ReactChild, child
             addEleToTOC(headers, child);
         }
     });
-    console.log(urlMeta);
-    return <div>
-        {frontMatter.title && <Title {...frontMatter}/>}
-        {headers.length > 0 && <TOC headers={headers}/>}
-        {frontMatter.abstract && <Abstract content={frontMatter.abstract}></Abstract>}
+    return (
+      <div>
+        {frontMatter.title && <Title {...frontMatter} />}
+        {headers.length > 0 && <TOC headers={headers} />}
+        {frontMatter.abstract && (
+          <Abstract content={frontMatter.abstract}></Abstract>
+        )}
         {children}
-        <Bibliography works={urlMeta}/>
-    </div>
+        <Bibliography works={urlMeta} />
+        <Footer />
+      </div>
+    );
 }

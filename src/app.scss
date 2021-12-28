@@ -67,9 +67,6 @@ body > div:first-child{
     max-width: 99vw;
 }
 
-:root {
-    scrollbar-color: var(--text);
-}
 body {
     font-family: 'Fira Sans', sans-serif;
     color: var(--text);
@@ -111,4 +108,10 @@ html{
 }
 ::-webkit-scrollbar-corner {
     opacity: 0;
+}
+
+:root {
+    // We're outside the color scheme context unfortunately
+    scrollbar-color: #465775 rgba(0,0,0,0);
+    scrollbar-width: thin;
 }

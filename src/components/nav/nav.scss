@@ -3,6 +3,8 @@
 @import "../../font-awesome/solid.scss";
 @import "../../font-awesome/brands.scss";
 nav {
+    overflow-y:scroll;
+    max-height:100vh;
     @include linxDirect(var(--primary), var(--secondary), var(--primary-dark)) {
         font-weight:bold;
         margin-top: auto;
@@ -55,11 +57,11 @@ nav {
         }
     }
 
-    input[type="checkbox"] {
+    input {
         display:none;
     }
 
-    input[type=checkbox] + label {
+    input + label {
         @extend %fa-icon;
         @extend .fas;
         display:inline-block;
@@ -74,7 +76,7 @@ nav {
         
     } 
 
-    input[type=checkbox] + label + div {
+    input + label + div {
         max-height:0;
         transition:height 0.5s ease-in-out;
         transition: opacity 0.1s;
@@ -82,12 +84,12 @@ nav {
         opacity: 0;
     }
     
-    input[type="checkbox"]:checked + label {
+    input:checked + label {
         transform: rotate(180deg);
         color:var(--text-dark);
 
     }
-    input[type="checkbox"]:checked + label + div {
+    input:checked + label + div {
         max-height:100vh;
         visibility: visible;
         opacity: 1;

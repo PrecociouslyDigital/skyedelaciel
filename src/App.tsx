@@ -5,6 +5,7 @@ import { Nav } from 'components/nav';
 import { MarkdownProvider } from './mdx';
 import './app.scss';
 import './components/colors/colors.scss';
+import { Footer } from 'components/footer';
 
 function Ugh({default} : {default:boolean}){
     return <h1>NO PATH FOUND UWU</h1>
@@ -16,15 +17,14 @@ function App() {
                 <link rel="stylesheet" href="/css/fira.css"/>
             </Head>
                 <MarkdownProvider>
-                    <Nav />
-                    <div className="content">
-                        <React.Suspense fallback={<em>Loading...</em>}>
+                    <React.Suspense fallback={<em>Loading...</em>}>
+                        <Nav />
+                        <div className="content">
                             <Router>
                                 <Routes path="*" />
-                                <Ugh default/>
                             </Router>
-                        </React.Suspense>
-                    </div>
+                        </div>
+                    </React.Suspense>
                 </MarkdownProvider>
         </Root>
     )
