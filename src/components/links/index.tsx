@@ -13,19 +13,62 @@ const defaultPopup =  (url: string, data: any) => <div className="preview">
     </div>;
 
 
-const popups : {
-    [key in Format] : (url: string, obj: any) => React.ReactElement;
+const popups: {
+  [key in Format]: (url: string, obj: any) => React.ReactElement;
 } = {
-    youtube: (url, data) => <>
-        <p><a href={url}><em>{data.title}</em></a></p>
-        <img className='thumbnail' src={data.thumbnail_url}></img>
-    </>,
-    doi: (url, data) => <div className="preview">{resolvers.doi(url, data)}</div>,
-    isbn: (url: string, data: any) => <div className="preview">
-        <div><p><a href={url}><em>{data.title}</em></a></p>
-        {data.description && <p>{data.description}</p>}</div>
-        <img className='thumbnail right' src={data.imageLinks.thumbnail}></img>
-    </div>,
+  youtube: (url, data) => (
+    <>
+      <p>
+        <a href={url}>
+          <em>{data.title}</em>
+        </a>
+      </p>
+      <img className="thumbnail" src={data.thumbnail_url}></img>
+    </>
+  ),
+  doi: (url, data) => <div className="preview">{resolvers.doi(url, data)}</div>,
+  isbn: (url: string, data: any) => (
+    <div className="preview">
+      <div>
+        <p>
+          <a href={url}>
+            <em>{data.title}</em>
+          </a>
+        </p>
+        {data.description && <p>{data.description}</p>}
+      </div>
+      <img className="thumbnail right" src={data.imageLinks.thumbnail}></img>
+    </div>
+  ),
+  wikipedia: (url: string, data: any) => (
+    <div className="wiki">
+      <div>
+        <p>
+          <a href={url}>
+            <em>{data.title}</em>
+          </a>
+        </p>
+        <p>
+          <p dangerouslySetInnerHTML={{ __html: data.short }} />
+          <br/>
+          <img className="thumbnail right" src={data.thumbnail.source}></img>
+        </p>
+        <br/>
+      </div>
+      {data.infobox != null && (
+        <table>
+          {Object.entries(data.infobox).map(([key, value]) => (
+            <>
+              <tr>
+                <td>{key}</td>
+                <td>{value}</td>
+              </tr>
+            </>
+          ))}
+        </table>
+      )}
+    </div>
+  ),
 };
 
 
@@ -36,9 +79,9 @@ export const JumpLink : React.FC<{href: string}>=({href, children}) => (
     </ReachLink>); 
 
 export const InternalLink : React.FC<{href: string}>=({href, children}) => (
-    <Popup content={<div>hello</div>}><ReachLink to={href}>
+    <ReachLink to={href}>
         {children}
-    </ReachLink></Popup>); 
+    </ReachLink>); 
 
 export const ExternalLink : React.FC<{href: string}>=({href, children}) => (
     <Popup content={<LinkPreview url={href}/>}><a href={href}>

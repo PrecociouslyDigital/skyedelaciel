@@ -1,5 +1,5 @@
 import path from 'path';
-import {doRoutePreprocess} from './plugins'
+import {doRoutePreprocess, fsTree} from './plugins'
 
 require('dotenv');
 
@@ -9,9 +9,8 @@ require('dotenv');
 
 export default {
     entry: path.join(__dirname, 'src', 'index.tsx'),
-    getRoutes: async () => {
-        return [
-        ]
+    getRoutes: async ()=>{
+        return [];
     },
     plugins: [
         'react-static-plugin-typescript',

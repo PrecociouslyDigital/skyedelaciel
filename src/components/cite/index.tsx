@@ -9,31 +9,41 @@ export const Citation: React.FC<{
     <br></br>{url}<br></br>{children}
 </div>);
 
-export const resolvers : {
-    [key in Format] : (url: string, obj: any) => React.ReactElement;
+export const resolvers: {
+  [key in Format]: (url: string, obj: any) => React.ReactElement;
 } = {
-    youtube: (url, data) => <BibEle 
-        authors={[[data.author_name]]}
-        title={data.title}
-        url={url}
-        // Todo: Get Video published date.
-        />,
-    doi: (url, data) => <BibEle
-        authors={data.author.map(({given, family}: any) => [given, family])}
-        url={url}
-        title={data.title}
-        vol={`vol. ${data.volume}`}
-        pages={data.page != null ? data.page.split('-'):null}
-        workTitle={data['container-title']}
-        year={data.published['date-parts'][0][0]}
-    />,
-    isbn: (url, data) => <BibEle
-        authors={data.authors.map((s:string) => s.split(' '))}
-        title={data.title}
-        url={url}
-        year={data.publishedDate}
-    />,
-    
+  youtube: (url, data) => (
+    <BibEle
+      authors={[[data.author_name]]}
+      title={data.title}
+      url={url}
+      // Todo: Get Video published date.
+    />
+  ),
+  doi: (url, data) => (
+    <BibEle
+      authors={data.author.map(({ given, family }: any) => [given, family])}
+      url={url}
+      title={data.title}
+      vol={`vol. ${data.volume}`}
+      pages={data.page != null ? data.page.split("-") : null}
+      workTitle={data["container-title"]}
+      year={data.published["date-parts"][0][0]}
+    />
+  ),
+  isbn: (url, data) => (
+    <BibEle
+      authors={data.authors.map((s: string) => s.split(" "))}
+      title={data.title}
+      url={url}
+      year={data.publishedDate}
+    />
+  ),
+  wikipedia: (url, data) => (
+    <p className='cite'><a href={url}>
+        "{data.title}." <em>Wikipedia, </em> Wikimedia Foundation.
+    </a></p>
+  ),
 };
 const defaultCite = (url: string, data: any) => <BibEle
         authors={data.author != null ? [data.author.split(' ')] : null}

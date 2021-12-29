@@ -3,7 +3,7 @@ import './colors.scss';
 
 type ColorSchemes = 'default' | 'light' | 'dark';
 
-export const ThemeSwitcher: React.FC<{}> = () => (<select value={document.body.getAttribute("theme")} onChange={setColorScheme}>
+export const ThemeSwitcher: React.FC<{}> = () => (<select value={undefined} onChange={setColorScheme}>
     <option value="default">Default</option>
     <option value="light">Light</option>
     <option value="dark">Dark</option>

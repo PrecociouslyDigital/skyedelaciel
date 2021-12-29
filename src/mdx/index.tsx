@@ -84,9 +84,14 @@ function addEleToTOC(headers: HeaderData, child: React.ReactElement): void{
 const wrapper : React.FC<{}> = ({children}: {components: React.ReactChild, children: React.ReactNode} ) => {
     const headers: HeaderData = [];
     const {frontMatter, urlMeta } = useRouteData();
+    console.log(useRouteData());
     React.Children.forEach(children, (child: any) => {
-        if(/h[1-5]/g.test(child.props.mdxType)){
-            addEleToTOC(headers, child);
+        if (
+          child.props != null &&
+          child.props.mdxType != null &&
+          /h[1-5]/g.test(child.props.mdxType)
+        ) {
+          addEleToTOC(headers, child);
         }
     });
     return (
@@ -97,7 +102,7 @@ const wrapper : React.FC<{}> = ({children}: {components: React.ReactChild, child
           <Abstract content={frontMatter.abstract}></Abstract>
         )}
         {children}
-        <Bibliography works={urlMeta} />
+        {frontMatter.noBib !== true && <Bibliography works={urlMeta} />}
         <Footer />
       </div>
     );
