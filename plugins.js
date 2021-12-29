@@ -173,10 +173,11 @@ export const doRoutePreprocess = (data) => async () => {
           continue;
         }
         try{
-            ret.subPaths[subPath] = yamlFront.loadFront(
-            await fs.readFile(`${dir}/${subPath}`)
+            const subUrl = subPath.slice(0,-('.mdx'.length));
+            ret.subPaths[subUrl] = yamlFront.loadFront(
+              await fs.readFile(`${dir}/${subPath}`)
             );
-            delete ret.subPaths[subPath].__content;
+            delete ret.subPaths[subUrl].__content;
         }catch{
             console.log('jfiowejfiowej');
         }

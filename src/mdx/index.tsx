@@ -10,6 +10,7 @@ import { Bibliography, Citation } from 'components/cite';
 import { HeaderData, TOC, Abstract, Title } from 'components/frontmatter';
 import { Link } from 'components/links';
 import { Footer } from 'components/footer';
+import { Previews } from 'components/nav';
 
 export const MarkdownProvider: React.FC<{}> = ({children}) => (
     <MDXProvider components={{
@@ -24,6 +25,7 @@ export const MarkdownProvider: React.FC<{}> = ({children}) => (
         h4: Header('h4'),
         h5: Header('h5'),
         Citation,
+        Previews,
     }}>
         {children}
     </MDXProvider>
