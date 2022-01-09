@@ -9,6 +9,8 @@ import { memoize } from 'lodash';
 import { Bibliography, Citation } from 'components/cite';
 import { HeaderData, TOC, Abstract, Title } from 'components/frontmatter';
 import { Link } from 'components/links';
+import { Footer } from 'components/footer';
+import { Previews } from 'components/nav';
 
 export const MarkdownProvider: React.FC<{}> = ({children}) => (
     <MDXProvider components={{
@@ -23,6 +25,7 @@ export const MarkdownProvider: React.FC<{}> = ({children}) => (
         h4: Header('h4'),
         h5: Header('h5'),
         Citation,
+        Previews,
     }}>
         {children}
     </MDXProvider>
@@ -83,17 +86,26 @@ function addEleToTOC(headers: HeaderData, child: React.ReactElement): void{
 const wrapper : React.FC<{}> = ({children}: {components: React.ReactChild, children: React.ReactNode} ) => {
     const headers: HeaderData = [];
     const {frontMatter, urlMeta } = useRouteData();
+    console.log(useRouteData());
     React.Children.forEach(children, (child: any) => {
-        if(/h[1-5]/g.test(child.props.mdxType)){
-            addEleToTOC(headers, child);
+        if (
+          child.props != null &&
+          child.props.mdxType != null &&
+          /h[1-5]/g.test(child.props.mdxType)
+        ) {
+          addEleToTOC(headers, child);
         }
     });
-    console.log(urlMeta);
-    return <div>
-        {frontMatter.title && <Title {...frontMatter}/>}
-        {headers.length > 0 && <TOC headers={headers}/>}
-        {frontMatter.abstract && <Abstract content={frontMatter.abstract}></Abstract>}
+    return (
+      <div>
+        {frontMatter.title && <Title {...frontMatter} />}
+        {headers.length > 0 && <TOC headers={headers} />}
+        {frontMatter.abstract && (
+          <Abstract content={frontMatter.abstract}></Abstract>
+        )}
         {children}
-        <Bibliography works={urlMeta}/>
-    </div>
+        {frontMatter.noBib !== true && <Bibliography works={urlMeta} />}
+        <Footer />
+      </div>
+    );
 }

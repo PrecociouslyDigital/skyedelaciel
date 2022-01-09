@@ -12,7 +12,11 @@
         transform: translate(-50%, calc(-100% - 15px));
         left: 50%;
         box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
-        max-width: fit-content;
+        min-width: fit-content;
+        max-width:400px;
+        max-height:20em;
+        height:fit-content;
+        overflow-y:auto;
         transition: all 0.5s cubic-bezier(0.75, -0.02, 0.2, 0.97);
         &:after{
             position: absolute;

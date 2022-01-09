@@ -9,6 +9,10 @@ figure {
     @include desktop {
         width: fit-content;
         float: right;
+        &::after{
+            clear:both;
+            content:'';
+        }
         max-width: $mobile-breakpoint * 0.4;
     }
     @include print{

@@ -1,0 +1,24 @@
+footer{
+    width:100%;
+    text-align: center;
+    > p{
+        font-size: 10px;
+        img{
+            max-height: 10px;
+            position:relative;
+            top:5px;
+            transform: translateY(-30%);
+        }
+    }
+    > .footerBits{
+        display: flex;
+        gap: 10px;
+        justify-content:center;
+        align-content:center;
+        a{
+            height:fit-content;
+            top:4px;
+            position:relative;
+        }
+    }
+}
