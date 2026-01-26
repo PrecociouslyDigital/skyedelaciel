@@ -48,19 +48,22 @@ import ThemeToggle from "./ThemeToggle.svelte";
         }
     }
 
-    // Landscape: vertical sidebar
+    // Landscape: vertical sidebar, right-aligned to content edge
     @media (orientation: landscape) and (min-width: 60rem) {
         .navbar {
+            grid-column: 1;
             flex-direction: column;
-            align-items: flex-start;
-            position: fixed;
-            left: 1rem;
+            align-items: flex-end;
+            justify-self: end;
+            position: sticky;
             top: 2rem;
             padding: 0;
+            text-align: right;
         }
 
         .nav-links {
             flex-direction: column;
+            align-items: flex-end;
             gap: 0.5rem;
         }
     }

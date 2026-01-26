@@ -55,10 +55,18 @@ a:visited {
     color: var(--color-secondary);
 }
 
-/* Landscape mode: account for fixed navbar */
+/* Landscape mode: grid layout with navbar aligned to content edge */
 @media (orientation: landscape) and (min-width: 60rem) {
     body {
-        padding-left: 6rem;
+        display: grid;
+        grid-template-columns: 1fr min(80ch, calc(100% - 4rem)) 1fr;
+        gap: 2rem;
+        padding: 2rem;
+    }
+
+    article {
+        grid-column: 2;
+        margin: 0; // Grid handles centering
     }
 }
 
