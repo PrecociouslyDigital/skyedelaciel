@@ -1,0 +1,41 @@
+---
+title: Technical Reference
+abstract: This living document describes the site's architecture and implementation. It is intended to be a useful reference for human and machine alike.
+---
+
+# Stack
+
+- **Astro 6** (beta) — static site generator
+- **MDX** — markdown with JSX components
+- **Svelte** — interactive components (when needed)
+- **SCSS** — styling
+
+# Project Structure
+
+```
+src/
+├── components/   # Reusable Astro/Svelte components
+├── layouts/      # Page layouts
+│   └── md.prelude.astro  # Default layout for all markdown
+└── pages/        # Routes (file-based routing)
+```
+
+# Remark Plugins
+
+Custom plugins in `astro.config.mts`:
+
+## `defaultLayout`
+Automatically applies `@/layouts/md.prelude.astro` to all markdown files, eliminating the need for explicit layout frontmatter.
+
+## `extractLinks`
+Extracts all links (both inline and reference-style) from markdown content and exposes them via `frontmatter.links`. Useful for link validation or building a link graph.
+
+# Layout: `md.prelude.astro`
+
+The default markdown layout. Expects frontmatter:
+
+| Field      | Required | Description                          |
+|------------|----------|--------------------------------------|
+| `title`    | Yes      | Page title (used in `<title>` and `<h1>`) |
+| `abstract` | Yes      | Page description (meta + displayed)  |
+| `author`   | No       | Defaults to "skyedelaciel"           |

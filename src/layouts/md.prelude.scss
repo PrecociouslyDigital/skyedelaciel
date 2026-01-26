@@ -1,0 +1,54 @@
+/* Base typography */
+body {
+    font-family: serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 2rem;
+}
+
+article {
+    max-width: 80ch;
+    margin: 0 auto;
+}
+
+/* Front matter */
+.front-matter {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #ccc;
+}
+
+.title-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1.5rem;
+}
+
+.title {
+    font-size: 2rem;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.author {
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.abstract {
+    font-style: italic;
+    margin: 1rem 0 0;
+}
+
+/* Print styles */
+@media print {
+    body {
+        padding: 0;
+    }
+
+    .front-matter {
+        border-bottom: none;
+    }
+}
