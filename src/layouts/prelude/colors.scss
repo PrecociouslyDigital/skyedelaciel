@@ -1,0 +1,82 @@
+@use "sass:map";
+@use "sass:color";
+
+$themes: (
+    "light": (
+        "background": #c7cdd4,
+        "text": #101011,
+        "primary": #6185c4,
+        "secondary": #7f6a8d,
+        "warning": #84A9C0,
+        "error": #CD9FCC,
+        "lightscale": 20%
+    ),
+    "dark": (
+        "background": #101011,
+        "text": #DDD8B8,
+        "primary": #B3CBB9,
+        "secondary": #465775,
+        "warning": #CD9FCC,
+        "error": #84A9C0,
+        "lightscale": -20%
+    ),
+    "print": (
+        "background": #ffffff,
+        "text": #000000,
+        "primary": #6185c4,
+        "secondary": #7f6a8d,
+        "warning": #84A9C0,
+        "error": #CD9FCC,
+        "lightscale": 0%
+    )
+);
+
+// Mixin to output CSS custom properties from a theme
+@mixin apply-theme($theme-name) {
+    $theme: map.get($themes, $theme-name);
+    --color-background: #{map.get($theme, "background")};
+    --color-text: #{map.get($theme, "text")};
+    --color-primary: #{map.get($theme, "primary")};
+    --color-secondary: #{map.get($theme, "secondary")};
+    --color-warning: #{map.get($theme, "warning")};
+    --color-error: #{map.get($theme, "error")};
+
+    // Derived colors using lightscale
+    $scale: map.get($theme, "lightscale");
+    --color-muted: #{color.scale(map.get($theme, "text"), $lightness: 40%)};
+    --color-border: #{color.scale(map.get($theme, "text"), $lightness: 60%)};
+}
+
+// Default: light theme
+:root {
+    @include apply-theme("light");
+}
+
+// System preference: dark
+@media (prefers-color-scheme: dark) {
+    :root {
+        @include apply-theme("dark");
+    }
+}
+
+// User override: invert the current theme
+// - [data-theme-override]: set by JS for persistence (prevents flash)
+// - :has(#theme-toggle:checked): works without JS
+html[data-theme-override],
+html:has(#theme-toggle:checked) {
+    @include apply-theme("dark");
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-theme-override],
+    html:has(#theme-toggle:checked) {
+        @include apply-theme("light");
+    }
+}
+
+// Print always uses print theme
+@media print {
+    :root, html:has(#theme-toggle:checked) {
+        @include apply-theme("print");
+    }
+}

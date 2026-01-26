@@ -1,11 +1,18 @@
 ---
 import "./prelude.scss";
+import Navbar from "~/components/Navbar.astro";
 const { frontmatter } = Astro.props;
 ---
 
 <html lang="en">
     <head>
         <meta charset="utf-8" />
+        <script is:inline>
+            // Restore theme override before render to prevent flash
+            if (localStorage.getItem('theme-override') === 'true') {
+                document.documentElement.dataset.themeOverride = '';
+            }
+        </script>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width" />
@@ -14,6 +21,7 @@ const { frontmatter } = Astro.props;
         <meta name="description" content={frontmatter.abstract} />
     </head>
     <body>
+        <Navbar />
         <article>
             <header class="front-matter">
                 <div class="title-line">

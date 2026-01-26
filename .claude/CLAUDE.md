@@ -1,7 +1,7 @@
 This repository contains the personal website of a writer and software engineer. You're here to assist in implementing beautiful, concise and readable UI in an elegant and DRY way.
 
 ## Astro
-The website is intended to be served as a static bundle by Astro. You have an MCP server to access Astro documentation.
+The website is intended to be served as a static bundle by Astro. You have an MCP server to access Astro documentation. Let the user start and manage the dev server.
 ### Style Guide
 - Prefer writing SCSS styles
   - Use your best judgement as to when named variables add clarity and configurability.

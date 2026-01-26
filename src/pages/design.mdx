@@ -1,10 +1,9 @@
 ---
 title: Design Specification
 abstract: This is a living document describing the desired visual design of the website. It is intended to be a useful reference for human and machine alike. 
-
 ---
 # Design Goals
-Content on this site is optimized for **reading prose on desktop**. Where possible, pages should **degrade gracefully** on other form factors (such as supporting vertical displays or touchscreens), and **print well** directly from the browser. 
+Content on this site is optimized for **reading prose on desktop**. Where possible, pages should **degrade gracefully** on other form factors (such as supporting vertical displays or touchscreens), support screen-readers with aria tags where appropriate, and **print well** directly from the browser. 
 
 Inspirations include Edward Tufte and Gwern.net.
 
@@ -21,3 +20,18 @@ The abstract should follow the title and author. It should be formatted similarl
 
 ## Content
 The main content of the article should have a maximum width of 80 characters.
+
+## Colors
+There should be three color schemes, dark, light and print. Dark and light color schemes should default to the system preference, based on the css media query `prefers-color-scheme`, but should also be toggleable by the user (see [Navbar](#Navbar)). Once a user sets a theme preference, that preference should be persisted to local storage and reloaded as early as possible in page load.
+
+# Components
+## Navbar
+### Landscape
+On landscape viewports, the navbar should sit to the left of the content, and be arranged vertically.
+### Portrait
+On portrait viewports, the navbar should be horizontal, in line with the content, before the title.
+### Content
+The navbar should contain, in order
+- A clickable logo that takes you to the homepage
+- Links to various internal and external landing pages
+- A button that toggles the [Color Scheme](#Colors)

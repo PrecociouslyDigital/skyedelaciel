@@ -1,9 +1,13 @@
+@use "colors";
+
 /* Base typography */
 body {
     font-family: serif;
     line-height: 1.6;
     margin: 0;
     padding: 2rem;
+    background-color: var(--color-background);
+    color: var(--color-text);
 }
 
 article {
@@ -15,7 +19,7 @@ article {
 .front-matter {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .title-line {
@@ -34,12 +38,28 @@ article {
 .author {
     font-family: sans-serif;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--color-muted);
 }
 
 .abstract {
     font-style: italic;
     margin: 1rem 0 0;
+}
+
+/* Links */
+a {
+    color: var(--color-primary);
+}
+
+a:visited {
+    color: var(--color-secondary);
+}
+
+/* Landscape mode: account for fixed navbar */
+@media (orientation: landscape) and (min-width: 60rem) {
+    body {
+        padding-left: 6rem;
+    }
 }
 
 /* Print styles */
