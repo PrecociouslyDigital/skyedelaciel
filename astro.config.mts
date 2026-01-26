@@ -11,7 +11,7 @@ import type { RemarkPlugin } from "@astrojs/markdown-remark";
 const defaultLayout: RemarkPlugin = R.always((_, file) => {
     file.data.astro = R.mergeDeepLeft(file.data.astro ?? {}, {
         frontmatter: {
-            layout: "@/layouts/md.prelude.astro",
+            layout: "~/layouts/md.prelude.astro",
         }
     });
 });
