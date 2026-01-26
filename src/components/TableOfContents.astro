@@ -40,19 +40,28 @@ function buildTree(headings: Heading[]): TocNode[] {
     return root;
 }
 
-const nodes = providedNodes ?? (headings ? buildTree(headings) : []);
+const filteredHeadings = headings?.filter((h) => h.depth <= 3);
+const nodes =
+    providedNodes ?? (filteredHeadings ? buildTree(filteredHeadings) : []);
 ---
 
-{nodes.length > 0 && (
-    <ol class="toc-list">
-        {nodes.map((node) => (
-            <li>
-                <a href={`#${node.slug}`}>{node.text}</a>
-                {node.children.length > 0 && <Astro.self nodes={node.children} />}
-            </li>
-        ))}
-    </ol>
-)}
+{
+    nodes.length > 0 && (
+        <ol class="toc-list">
+            {nodes.map((node) => (
+                <li>
+                    <a href={`#${node.slug}`}>{node.text}</a>
+                    {node.children.length > 0 && (
+                        <details data-slug={node.slug}>
+                            <summary aria-label="Expand section" />
+                            <Astro.self nodes={node.children} />
+                        </details>
+                    )}
+                </li>
+            ))}
+        </ol>
+    )
+}
 
 <style lang="scss">
     .toc-list {
@@ -63,7 +72,9 @@ const nodes = providedNodes ?? (headings ? buildTree(headings) : []);
         margin: 0;
 
         .toc-list {
-            padding-left: 0.75rem;
+            padding-left: 1ch;
+            border-left: 1px solid var(--color-muted);
+            margin-left: 0.5ch;
         }
 
         a {
@@ -72,6 +83,69 @@ const nodes = providedNodes ?? (headings ? buildTree(headings) : []);
 
             &:hover {
                 text-decoration: underline;
+            }
+
+            &[data-current] {
+                color: var(--color-fg);
+                // Use a text shadow here to avoid shifting the vertical bar
+                text-shadow: 0px 0px 1px black;
+            }
+        }
+
+        li {
+            display: grid;
+            grid-template-columns: 1fr 1em;
+            grid-template-rows: auto auto;
+
+            // Link in first column
+            > a {
+                grid-column: 1;
+                grid-row: 1;
+            }
+
+            > details {
+                display: contents;
+
+                // Chevron to the right of link
+                > summary {
+                    grid-column: 2;
+                    grid-row: 1;
+                    cursor: pointer;
+                    list-style: none;
+                    padding-left: 0.5ch;
+
+                    &::marker,
+                    &::-webkit-details-marker {
+                        display: none;
+                    }
+
+                    &::before {
+                        content: "▸";
+                        transition: transform 0.15s ease;
+                        display: inline-block;
+                    }
+                }
+
+                &[open] > summary::before {
+                    transform: rotate(90deg);
+                }
+
+                > .toc-list {
+                    grid-column: 1 / -1;
+                    grid-row: 2;
+                    margin-top: 0.25em;
+                }
+            }
+        }
+    }
+
+    @media print {
+        details {
+            // Expand all for print
+            &:not([open]) {
+                > .toc-list {
+                    display: block;
+                }
             }
         }
     }
