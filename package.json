@@ -1,0 +1,26 @@
+{
+  "name": "skyedelaciel",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^5.0.0-beta.2",
+    "@astrojs/svelte": "^8.0.0-beta.1",
+    "@certible/remark-links-extractor": "^1.0.0",
+    "astro": "^6.0.0-beta.3",
+    "astro-broken-links-checker": "^1.0.6",
+    "astro-default-frontmatter": "^0.0.1",
+    "mdast-util-definitions": "^6.0.0",
+    "ramda": "^0.32.0",
+    "sass": "^1.97.3",
+    "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/ramda": "^0.31.1"
+  }
+}
