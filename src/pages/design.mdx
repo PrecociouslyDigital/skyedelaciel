@@ -1,0 +1,23 @@
+---
+title: Design Specification
+abstract: This is a living document describing the desired visual design of the website. It is intended to be a useful reference for human and machine alike. 
+
+---
+# Design Goals
+Content on this site is optimized for **reading prose on desktop**. Where possible, pages should **degrade gracefully** on other form factors (such as supporting vertical displays or touchscreens), and **print well** directly from the browser. 
+
+Inspirations include Edward Tufte and Gwern.net.
+
+# Article Defaults
+Most content on this site is a single article on a single page.
+## Front Matter
+An article's front matter (not to be conflated with markdown's `yaml` frontmatter) contains human-relevant metadata about the article. It should begin every article, visually set apart
+### Title
+The first front matter to appear should be the title, which should be visually more important than anything else in the article.
+### Author
+The author should appear after the title, less visually notable than most text. It should appear on the same line if the viewport has enough horizontal space, or wrap to its own line otherwise.
+### Abstract
+The abstract should follow the title and author. It should be formatted similarly to article text, but still stand out at a glance.
+
+## Content
+The main content of the article should have a maximum width of 80 characters.
