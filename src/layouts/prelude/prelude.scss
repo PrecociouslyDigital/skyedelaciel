@@ -64,7 +64,7 @@ a:visited {
 .toc-portrait {
     margin-top: 1rem;
 
-    #toc-toggle {
+    input[type=checkbox] {
         display: none;
     }
 
@@ -76,6 +76,7 @@ a:visited {
 
         &::before {
             content: "▸ ";
+            color: var(--color-text);
         }
 
         &:hover {
