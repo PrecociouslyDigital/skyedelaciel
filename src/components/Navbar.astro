@@ -50,15 +50,11 @@ import ThemeToggle from "./ThemeToggle.svelte";
         }
     }
 
-    // Landscape: vertical sidebar, right-aligned to content edge
+    // Landscape: vertical layout (sidebar handles positioning)
     @media (orientation: landscape) and (min-width: 60rem) {
         .navbar {
-            grid-column: 1;
             flex-direction: column;
             align-items: flex-end;
-            justify-self: end;
-            position: sticky;
-            top: 2rem;
             padding: 0;
             max-width: none;
             margin: 0;

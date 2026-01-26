@@ -1,0 +1,78 @@
+---
+interface Heading {
+    depth: number;
+    slug: string;
+    text: string;
+}
+
+interface TocNode {
+    slug: string;
+    text: string;
+    children: TocNode[];
+}
+
+interface Props {
+    headings?: Heading[];
+    nodes?: TocNode[];
+}
+
+const { headings, nodes: providedNodes } = Astro.props;
+
+/** Build nested tree from flat heading list */
+function buildTree(headings: Heading[]): TocNode[] {
+    const root: TocNode[] = [];
+    const stack: { depth: number; children: TocNode[] }[] = [
+        { depth: 0, children: root },
+    ];
+
+    for (const { depth, slug, text } of headings) {
+        const node: TocNode = { slug, text, children: [] };
+
+        // Pop until we find a parent at shallower depth
+        while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
+            stack.pop();
+        }
+
+        stack[stack.length - 1].children.push(node);
+        stack.push({ depth, children: node.children });
+    }
+
+    return root;
+}
+
+const nodes = providedNodes ?? (headings ? buildTree(headings) : []);
+---
+
+{nodes.length > 0 && (
+    <ol class="toc-list">
+        {nodes.map((node) => (
+            <li>
+                <a href={`#${node.slug}`}>{node.text}</a>
+                {node.children.length > 0 && <Astro.self nodes={node.children} />}
+            </li>
+        ))}
+    </ol>
+)}
+
+<style lang="scss">
+    .toc-list {
+        font-family: sans-serif;
+        font-size: 0.85rem;
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+
+        .toc-list {
+            padding-left: 0.75rem;
+        }
+
+        a {
+            text-decoration: none;
+            color: var(--color-muted);
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+</style>

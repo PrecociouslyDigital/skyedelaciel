@@ -1,7 +1,8 @@
 ---
 import "./prelude.scss";
 import Navbar from "~/components/Navbar.astro";
-const { frontmatter } = Astro.props;
+import TableOfContents from "~/components/TableOfContents.astro";
+const { frontmatter, headings } = Astro.props;
 ---
 
 <html lang="en">
@@ -15,7 +16,12 @@ const { frontmatter } = Astro.props;
         <meta name="description" content={frontmatter.abstract} />
     </head>
     <body>
-        <Navbar />
+        <aside class="sidebar">
+            <Navbar />
+            <nav class="toc toc-sidebar" aria-label="Table of contents">
+                <TableOfContents headings={headings} />
+            </nav>
+        </aside>
         <article>
             <header class="front-matter">
                 <div class="title-line">
@@ -25,6 +31,11 @@ const { frontmatter } = Astro.props;
                     >
                 </div>
                 <p class="abstract">{frontmatter.abstract}</p>
+                <nav class="toc toc-portrait" aria-label="Table of contents">
+                    <input type="checkbox" id="toc-toggle" />
+                    <label for="toc-toggle">Contents</label>
+                    <TableOfContents headings={headings} />
+                </nav>
             </header>
 
             <slot />

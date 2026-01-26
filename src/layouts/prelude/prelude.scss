@@ -55,7 +55,52 @@ a:visited {
     color: var(--color-secondary);
 }
 
-/* Landscape mode: grid layout with navbar aligned to content edge */
+/* Sidebar TOC - hidden by default (portrait) */
+.toc-sidebar {
+    display: none;
+}
+
+/* Portrait TOC - collapsible checkbox hack */
+.toc-portrait {
+    margin-top: 1rem;
+
+    #toc-toggle {
+        display: none;
+    }
+
+    label {
+        cursor: pointer;
+        font-family: sans-serif;
+        font-size: 0.9rem;
+        color: var(--color-muted);
+
+        &::before {
+            content: "▸ ";
+        }
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .toc-list {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+
+    &:has(#toc-toggle:checked) {
+        label::before {
+            content: "▾ ";
+        }
+
+        .toc-list {
+            max-height: 50vh;
+        }
+    }
+}
+
+/* Landscape mode: grid layout with sidebar */
 @media (orientation: landscape) and (min-width: 60rem) {
     body {
         display: grid;
@@ -68,6 +113,26 @@ a:visited {
         grid-column: 2;
         margin: 0; // Grid handles centering
     }
+
+    .sidebar {
+        grid-column: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2rem;
+        position: sticky;
+        top: 2rem;
+        align-self: start;
+        text-align: right;
+    }
+
+    .toc-sidebar {
+        display: block;
+    }
+
+    .toc-portrait {
+        display: none;
+    }
 }
 
 /* Print styles */
@@ -78,5 +143,16 @@ a:visited {
 
     .front-matter {
         border-bottom: none;
+    }
+
+    .toc-portrait {
+        // Show TOC expanded in print
+        label::before {
+            content: "";
+        }
+
+        .toc-list {
+            max-height: none;
+        }
     }
 }
