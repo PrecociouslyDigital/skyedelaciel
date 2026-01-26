@@ -1,0 +1,23 @@
+---
+const { frontmatter } = Astro.props;
+---
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width" />
+        <title>{frontmatter.title}</title>
+        <meta name="author" content={frontmatter.author ?? "skyedelaciel"} />
+        <meta name="description" content={frontmatter.abstract} />
+    </head>
+    <body>
+        <div class="header">
+            <h1 class="title">{frontmatter.title}</h1>
+            <p class="abstract">{frontmatter.abstract}</p>
+        </div>
+
+        <slot />
+    </body>
+</html>
