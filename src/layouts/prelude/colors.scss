@@ -59,16 +59,12 @@ $themes: (
     }
 }
 
-// User override: invert the current theme
-// - [data-theme-override]: set by JS for persistence (prevents flash)
-// - :has(#theme-toggle:checked): works without JS
-html[data-theme-override],
+// User override: checkbox toggles opposite theme
 html:has(#theme-toggle:checked) {
     @include apply-theme("dark");
 }
 
 @media (prefers-color-scheme: dark) {
-    html[data-theme-override],
     html:has(#theme-toggle:checked) {
         @include apply-theme("light");
     }

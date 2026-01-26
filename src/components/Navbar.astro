@@ -1,10 +1,10 @@
 ---
-// Navbar - pure HTML/CSS, progressive enhancement for theme persistence
+import ThemeToggle from "./ThemeToggle.svelte";
 ---
 
 <nav class="navbar" aria-label="Main navigation">
     <a href="/" class="logo" aria-label="Home">
-        <img src="/logo-wordless.svg" alt="" width="32" height="32" />
+        <img src="/logo.svg" alt="" width="32" height="32" />
     </a>
 
     <div class="nav-links">
@@ -13,27 +13,8 @@
         <a href="https://github.com/skyedelaciel" rel="noopener">GitHub</a>
     </div>
 
-    <label class="theme-toggle" aria-label="Toggle color scheme">
-        <input type="checkbox" id="theme-toggle" />
-        <span class="toggle-icon" aria-hidden="true"></span>
-    </label>
+    <ThemeToggle client:load />
 </nav>
-
-<script is:inline>
-    // Sync checkbox with attribute state and persist changes
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) {
-        toggle.checked = document.documentElement.hasAttribute('data-theme-override');
-        toggle.addEventListener('change', () => {
-            if (toggle.checked) {
-                document.documentElement.dataset.themeOverride = '';
-            } else {
-                delete document.documentElement.dataset.themeOverride;
-            }
-            localStorage.setItem('theme-override', String(toggle.checked));
-        });
-    }
-</script>
 
 <style lang="scss">
     .navbar {
@@ -67,42 +48,6 @@
         }
     }
 
-    .theme-toggle {
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        margin-left: auto;
-
-        input {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-icon {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 50%;
-            border: 2px solid var(--color-text);
-            background: linear-gradient(
-                135deg,
-                var(--color-text) 50%,
-                transparent 50%
-            );
-            transition: transform 0.2s ease;
-        }
-
-        input:checked + .toggle-icon {
-            transform: rotate(180deg);
-        }
-
-        input:focus-visible + .toggle-icon {
-            outline: 2px solid var(--color-primary);
-            outline-offset: 2px;
-        }
-    }
-
     // Landscape: vertical sidebar
     @media (orientation: landscape) and (min-width: 60rem) {
         .navbar {
@@ -117,11 +62,6 @@
         .nav-links {
             flex-direction: column;
             gap: 0.5rem;
-        }
-
-        .theme-toggle {
-            margin-left: 0;
-            margin-top: 1rem;
         }
     }
 
