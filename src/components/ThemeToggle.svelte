@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { onMount } from "svelte";
 
     // Only runs client-side; SSR renders unchecked checkbox
-    onMount(() => {
+    $effect.pre(() => {
+        //Hack: clear previous hack to prevent FOUC
+        delete document.querySelector("html")!.dataset.themeChecked;
         const toggle = document.getElementById(
             "theme-toggle",
         ) as HTMLInputElement;

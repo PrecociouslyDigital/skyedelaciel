@@ -65,14 +65,17 @@ html:has(#theme-toggle:checked) {
 }
 
 @media (prefers-color-scheme: dark) {
-    html:has(#theme-toggle:checked) {
+    html:has(#theme-toggle:checked),
+        html[data-theme-checked] {
         @include apply-theme("light");
     }
 }
 
 // Print always uses print theme
 @media print {
-    :root, html:has(#theme-toggle:checked) {
+    :root,
+        html:has(#theme-toggle:checked),
+        html[data-theme-checked] {
         @include apply-theme("print");
     }
 }
