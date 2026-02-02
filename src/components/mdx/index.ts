@@ -1,3 +1,4 @@
+//@ts-expect-error
 import type { AstroComponentFactory } from "astro/runtime/server/render/astro/factory";
 
 import H1 from "./heading/H1.astro";
