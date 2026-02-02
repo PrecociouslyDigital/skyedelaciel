@@ -1,19 +1,28 @@
 ---
+import type { Data } from "csl-json";
 import { formatCitation } from "./cite";
 import type { LinkEntry } from "./types";
 
 interface Props {
     linkMeta: Record<string, LinkEntry>;
-    citations?: Record<string, unknown>[];
+    citations?: Data[];
 }
 
-const { linkMeta, citations } = Astro.props;
+const { linkMeta, citations = [] } = Astro.props;
 
-// Build bibliography entries from external links (skip internal)
-const entries = Object.values(linkMeta)
+// Merge resolved link entries and manually added citations
+const fromLinks = Object.values(linkMeta)
     .filter((e) => e.kind !== "internal")
-    .map((e) => ({ entry: e, formatted: formatCitation(e) }))
-    .sort((a, b) => a.formatted.localeCompare(b.formatted));
+    .map((e) => ({ csl: e.csl, formatted: formatCitation(e) }));
+
+const fromCitations = citations.map((csl) => ({
+    csl,
+    formatted: formatCitation({ csl, kind: "external" }),
+}));
+
+const entries = [...fromLinks, ...fromCitations].sort((a, b) =>
+    a.formatted.localeCompare(b.formatted),
+);
 ---
 
 {
@@ -21,9 +30,9 @@ const entries = Object.values(linkMeta)
         <section class="bibliography" aria-label="Works referenced">
             <h2>Works Referenced</h2>
             <ol>
-                {entries.map(({ entry, formatted }) => (
+                {entries.map(({ csl, formatted }) => (
                     <li>
-                        <a href={entry.csl.URL} class="content-link">
+                        <a href={csl.URL} class="content-link">
                             {formatted}
                         </a>
                     </li>

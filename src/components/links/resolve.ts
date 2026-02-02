@@ -1,5 +1,6 @@
 import ogs from "open-graph-scraper";
-import type { LinkKind, LinkEntry, CslData } from "./types";
+import type { Data, Date as CslDate, Person } from "csl-json";
+import type { LinkKind, LinkEntry } from "./types";
 import { getCached, setCached } from "./cache";
 
 /** Classify a URL into one of the known link kinds. */
@@ -30,15 +31,18 @@ function extractWikiTitle(url: string): string {
 }
 
 /** Today as a CSL date-parts value. */
-const todayParts = (): { "date-parts": number[][] } => {
+const todayParts = (): CslDate => {
     const d = new Date();
-    return { "date-parts": [[d.getFullYear(), d.getMonth() + 1, d.getDate()]] };
+    return {
+        "date-parts": [[d.getFullYear(), d.getMonth() + 1, d.getDate()]],
+    };
 };
 
 /** Parse a "YYYY-MM-DD" (or partial) string into CSL date-parts. */
-const parseDateParts = (s: string): { "date-parts": number[][] } => ({
-    "date-parts": [s.split("-").map(Number)],
-});
+const parseDateParts = (s: string): CslDate => {
+    const [y, m, d] = s.split("-").map(Number);
+    return { "date-parts": [[y, m, d]] };
+};
 
 async function resolveDoi(url: string): Promise<LinkEntry> {
     const doi = extractDoi(url);
@@ -46,13 +50,13 @@ async function resolveDoi(url: string): Promise<LinkEntry> {
         const res = await fetch(`https://api.crossref.org/works/${doi}`);
         const data = await res.json();
         const work = data.message;
-        const authors: CslData["author"] = (work.author ?? []).map(
+        const authors: Person[] = (work.author ?? []).map(
             (a: { given?: string; family?: string }) => ({
-                family: a.family,
+                family: a.family ?? "",
                 given: a.given,
             }),
         );
-        const csl: CslData = {
+        const csl: Data = {
             type: "article-journal",
             id: url,
             URL: url,
@@ -60,7 +64,9 @@ async function resolveDoi(url: string): Promise<LinkEntry> {
             "container-title": work["container-title"]?.[0],
             ...(authors.length && { author: authors }),
             ...(work.created?.["date-parts"]?.[0] && {
-                issued: { "date-parts": [work.created["date-parts"][0]] },
+                issued: {
+                    "date-parts": [work.created["date-parts"][0]],
+                } as CslDate,
             }),
             accessed: todayParts(),
         };
@@ -117,14 +123,14 @@ async function resolveWikipedia(url: string): Promise<LinkEntry> {
 async function resolveExternal(url: string): Promise<LinkEntry> {
     try {
         const { result } = await ogs({ url });
-        const csl: CslData = {
+        const csl: Data = {
             type: "webpage",
             id: url,
             URL: url,
             title: result.ogTitle ?? result.dcTitle,
             "container-title": result.ogSiteName,
             ...(result.author && {
-                author: [{ family: result.author }],
+                author: [{ family: result.author } as Person],
             }),
             ...((result.ogDate ?? result.dcDate) && {
                 issued: parseDateParts(result.ogDate ?? result.dcDate!),
