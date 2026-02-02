@@ -1,0 +1,23 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "~/layouts/prelude/md.astro";
+import { mdxComponents } from "~/components/mdx";
+
+export async function getStaticPaths() {
+    const pages = await getCollection("pages");
+    return pages.map((entry) => ({
+        params: { slug: entry.id },
+        props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings, remarkPluginFrontmatter } = await render(entry);
+---
+
+<Layout
+    frontmatter={{ ...entry.data, links: remarkPluginFrontmatter.links }}
+    headings={headings}
+>
+    <Content components={mdxComponents} />
+</Layout>

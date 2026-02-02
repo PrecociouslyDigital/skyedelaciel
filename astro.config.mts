@@ -8,17 +8,8 @@ import svelte from '@astrojs/svelte';
 import mdx from "@astrojs/mdx";
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
 
-const defaultLayout: RemarkPlugin = R.always((_, file) => {
-    file.data.astro = R.mergeDeepLeft(file.data.astro ?? {}, {
-        frontmatter: {
-            layout: "~/layouts/prelude/md.astro",
-        }
-    });
-});
-
 import { definitions } from "mdast-util-definitions"
 import { visit } from "unist-util-visit"
-
 
 const extractLinks: RemarkPlugin = R.always((tree, file) => {
     const getDefinition = definitions(tree);
@@ -47,6 +38,6 @@ const extractLinks: RemarkPlugin = R.always((tree, file) => {
 export default defineConfig({
     integrations: [mdx(), svelte()],
     markdown: {
-        remarkPlugins: [defaultLayout, extractLinks]
+        remarkPlugins: [extractLinks]
     },
 });
