@@ -44,8 +44,12 @@ const todayParts = (): CslDate => {
 
 /** Parse a "YYYY-MM-DD" (or partial) string into CSL date-parts. */
 const parseDateParts = (s: string): CslDate => {
-    const [y, m, d] = s.split("-").map(Number);
-    return { "date-parts": [[y, m, d]] };
+    const date = new Date(s);
+    return {
+        "date-parts": [
+            [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDay()],
+        ],
+    };
 };
 
 async function resolveDoi(url: string): Promise<LinkEntry> {
@@ -103,10 +107,12 @@ async function resolveWikipedia(url: string): Promise<LinkEntry> {
                 URL: url,
                 title: data.title,
                 "container-title": "Wikipedia",
-                accessed: todayParts(),
+                issued: parseDateParts(data.timestamp),
             },
             kind: "wikipedia",
-            summary: data.extract,
+            summary: data.extract_html
+                .replace("<p>", "<span>")
+                .replace("</p>", "</span>"),
             imageUrl: data.thumbnail?.source,
         };
     } catch {
@@ -165,7 +171,6 @@ async function resolveExternal(url: string): Promise<LinkEntry> {
         };
     }
 }
-
 /**
  * Resolve metadata for a URL, using cache when available.
  * Internal links are resolved from the provided page data.

@@ -1,70 +1,44 @@
 ---
 import { getLinkMeta } from "./store";
-import type { CslDate, LinkEntry } from "./types";
+import {authorLine, formatCslDate } from "./cite";
+import * as R from "ramda";
+
+export interface Props {
+    href: string;
+    showImage: boolean;
+    [key: string] : any;
+}
 
 const { href, showImage = false, ...rest } = Astro.props;
-const entry = href ? getLinkMeta(href) : undefined;
 
-/** Format CSL date-parts into a human-readable string. */
-const formatCslDate = (date: CslDate | undefined): string | undefined => {
-    const parts = date?.["date-parts"]?.[0];
-    if (!parts?.length) return date?.literal ?? date?.raw;
-    const [year, month, day] = parts.map(Number);
-    // Build date from available granularity
-    if (month && day)
-        return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    if (month)
-        return new Date(year, month - 1).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-        });
-    return String(year);
-};
+const entry = getLinkMeta(href);
+if (entry == null) throw new Error("null href passed to a?");
 
-/** Format a CSL author name object into a display string. */
-const formatAuthor = (
-    a: { given?: string; family?: string; literal?: string } | undefined,
-): string | undefined =>
-    a?.literal ??
-    (a?.given && a?.family ? `${a.given} ${a.family}` : a?.family);
 
-/** Comma-separated author list. */
-const authorLine = (entry: LinkEntry): string | undefined => {
-    const authors = entry.csl.author;
-    if (!authors?.length) return undefined;
-    return authors.map(formatAuthor).filter(Boolean).join(", ");
-};
-
-const { csl } = entry ?? {};
+const { csl } = entry;
 
 /** Whether we have enough metadata to show a popover. */
 const hasPopover = entry && (csl?.title || entry.summary || csl?.abstract);
 
-/** Source label by kind. */
-const siteName =
-    entry?.kind === "internal"
-        ? "skyedelaciel"
-        : entry?.kind === "wikipedia"
-          ? "Wikipedia"
-          : (csl?.["container-title"] ?? undefined);
-
 /** Single metadata line: author, site/journal, date — joined by " · " */
-const metaParts: string[] = [
-    entry ? authorLine(entry) : undefined,
-    siteName,
-    entry?.kind === "doi" && csl?.["container-title"]
-        ? csl["container-title"]
-        : undefined,
-    csl?.issued ? formatCslDate(csl.issued) : undefined,
-].filter((s): s is string => Boolean(s));
-const metaLine = metaParts.length ? metaParts.join(" · ") : undefined;
+const metaParts: string[] = (() => {
+    switch (entry.kind) {
+        case "external":
+        case "doi":
+            return [
+                authorLine(entry),
+                csl?.["container-title"] ?? "",
+                formatCslDate(csl.issued),
+            ];
+        case "wikipedia":
+        case "internal":
+            return [];
+    }
+})();
+const metaLine = metaParts.map(R.trim).filter(R.isNotEmpty).join(" · ");
 
 /** Pick the best descriptive text. */
-const description = entry?.summary ?? csl?.abstract ?? undefined;
+const description = entry?.summary ?? csl?.abstract;
 ---
 
 {
@@ -87,7 +61,7 @@ const description = entry?.summary ?? csl?.abstract ?? undefined;
                 )}
                 {metaLine && <span class="link-popover-meta">{metaLine}</span>}
                 {description && (
-                    <span class="link-popover-description">{description}</span>
+                    <span class="link-popover-description" set:html={description}/>
                 )}
             </span>
         </span>
@@ -113,7 +87,7 @@ const description = entry?.summary ?? csl?.abstract ?? undefined;
         z-index: 10;
         width: 22rem;
         max-height: 16rem;
-        overflow-y: auto;
+        overflow-y: scroll;
         padding: 0.6rem 0.75rem;
         margin-bottom: 0.35rem;
         background: var(--color-background);
@@ -152,13 +126,6 @@ const description = entry?.summary ?? csl?.abstract ?? undefined;
         color: var(--color-muted);
         font-size: 0.78rem;
         font-style: italic;
-    }
-
-    .link-popover-description {
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
     }
 
     @media print {
