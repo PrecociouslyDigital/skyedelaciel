@@ -8,6 +8,8 @@ const pages = defineCollection({
         title: z.string(),
         abstract: z.string(),
         author: z.string().optional(),
+        bibliography: z.boolean().default(true),
+        citation: z.array(z.record(z.unknown())).optional(),
     }),
 });
 

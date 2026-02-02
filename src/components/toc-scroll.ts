@@ -12,7 +12,7 @@ const observer = new IntersectionObserver(
         }
     },
     // Trigger when heading is in upper portion of viewport
-    { rootMargin: "0% 0px -95% 0px" }
+    { rootMargin: "0% 0px -95% 0px" },
 );
 
 // Observe all headings in the article
@@ -35,7 +35,7 @@ function expandTocSection(slug: string) {
 
     // Close all sections first
     toc.querySelectorAll("details[open]").forEach((d) =>
-        d.removeAttribute("open")
+        d.removeAttribute("open"),
     );
 
     // Open only ancestors of the current link

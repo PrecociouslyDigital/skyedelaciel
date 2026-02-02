@@ -1,0 +1,7 @@
+---
+import { getLinkMeta } from "./store";
+const { href, ...rest } = Astro.props;
+const entry = href ? getLinkMeta(href) : undefined;
+---
+
+<a href={href} {...rest} class:list={["content-link", rest.class]}><slot /></a>

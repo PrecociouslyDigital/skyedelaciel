@@ -1,0 +1,34 @@
+---
+import { formatCitation } from "./cite";
+import type { LinkEntry } from "./types";
+
+interface Props {
+    linkMeta: Record<string, LinkEntry>;
+    citations?: Record<string, unknown>[];
+}
+
+const { linkMeta, citations } = Astro.props;
+
+// Build bibliography entries from external links (skip internal)
+const entries = Object.values(linkMeta)
+    .filter((e) => e.kind !== "internal")
+    .map((e) => ({ entry: e, formatted: formatCitation(e) }))
+    .sort((a, b) => a.formatted.localeCompare(b.formatted));
+---
+
+{
+    entries.length > 0 && (
+        <section class="bibliography" aria-label="Works referenced">
+            <h2>Works Referenced</h2>
+            <ol>
+                {entries.map(({ entry, formatted }) => (
+                    <li>
+                        <a href={entry.csl.URL} class="content-link">
+                            {formatted}
+                        </a>
+                    </li>
+                ))}
+            </ol>
+        </section>
+    )
+}
