@@ -16,10 +16,16 @@ function makeEngine(item: LinkEntry["csl"]) {
     return new CSL.Engine(sys, mlaStyle, "en-US");
 }
 
+/** Wrap the entry's URL in a span so CSS can hide it on screen, show on print. */
+function wrapUrl(html: string, url?: string) {
+    if (!url) return html;
+    return html.replace(`${url}.`, `<span class="cite-url">${url}.</span>`);
+}
+
 /** Format a LinkEntry as an MLA bibliography string via citeproc-js. */
 export function formatCitation(entry: LinkEntry): string {
     const engine = makeEngine(entry.csl);
     engine.updateItems([entry.csl.id]);
     const [, entries]: [unknown, string[]] = engine.makeBibliography();
-    return entries[0]?.trim().replace(/\s*\(n\.d\.\)\.?/, "") ?? "";
+    return wrapUrl(entries[0]?.trim() ?? "", entry.csl.URL);
 }

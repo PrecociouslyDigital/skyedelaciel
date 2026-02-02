@@ -1,6 +1,5 @@
 import ogs from "open-graph-scraper";
-import type { Data, Date as CslDate, Person } from "csl-json";
-import type { LinkKind, LinkEntry } from "./types";
+import type { LinkKind, LinkEntry, CslData, CslDate } from "./types";
 import { getCached, setCached } from "./cache";
 
 /** Classify a URL into one of the known link kinds. */
@@ -55,13 +54,13 @@ async function resolveDoi(url: string): Promise<LinkEntry> {
         const res = await fetch(`https://api.crossref.org/works/${doi}`);
         const data = await res.json();
         const work = data.message;
-        const authors: Person[] = (work.author ?? []).map(
+        const authors = (work.author ?? []).map(
             (a: { given?: string; family?: string }) => ({
                 family: a.family ?? "",
                 given: a.given,
             }),
         );
-        const csl: Data = {
+        const csl: CslData = {
             type: "article-journal",
             id: url,
             URL: url,
@@ -71,7 +70,7 @@ async function resolveDoi(url: string): Promise<LinkEntry> {
             ...(work.created?.["date-parts"]?.[0] && {
                 issued: {
                     "date-parts": [work.created["date-parts"][0]],
-                } as CslDate,
+                },
             }),
             accessed: todayParts(),
         };
@@ -139,14 +138,14 @@ async function resolveExternal(url: string): Promise<LinkEntry> {
         const author =
             result.author ?? result.articleAuthor ?? result.ogArticleAuthor;
 
-        const csl: Data = {
+        const csl: CslData = {
             type: "webpage",
             id: url,
             URL: url,
             title,
             "container-title": result.ogSiteName,
             ...(author && {
-                author: [{ family: author } as Person],
+                author: [{ family: author }],
             }),
             ...((result.ogDate ?? result.dcDate) && {
                 issued: parseDateParts(result.ogDate ?? result.dcDate!),

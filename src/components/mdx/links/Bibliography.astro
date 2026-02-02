@@ -1,11 +1,10 @@
 ---
-import type { Data } from "csl-json";
 import { formatCitation } from "./cite";
-import type { LinkEntry } from "./types";
+import type { LinkEntry, CslData } from "./types";
 
 interface Props {
     linkMeta: Record<string, LinkEntry>;
-    citations?: Data[];
+    citations?: CslData[];
 }
 
 const { linkMeta, citations = [] } = Astro.props;
@@ -39,3 +38,17 @@ const entries = [...fromLinks, ...fromCitations].sort((a, b) =>
         </section>
     )
 }
+
+<style lang="scss">
+    /* .cite-url lives inside set:html content, so needs :global scoped
+       under .bibliography to avoid leaking */
+    .bibliography :global(.cite-url) {
+        display: none;
+    }
+
+    @media print {
+        .bibliography :global(.cite-url) {
+            display: inline;
+        }
+    }
+</style>
