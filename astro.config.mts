@@ -6,6 +6,7 @@ import svelte from '@astrojs/svelte';
 
 
 import mdx from "@astrojs/mdx";
+import rehypeSlug from "rehype-slug";
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
 
 import { definitions } from "mdast-util-definitions"
@@ -38,6 +39,7 @@ const extractLinks: RemarkPlugin = R.always((tree, file) => {
 export default defineConfig({
     integrations: [mdx(), svelte()],
     markdown: {
-        remarkPlugins: [extractLinks]
+        remarkPlugins: [extractLinks],
+        rehypePlugins: [rehypeSlug],
     },
 });

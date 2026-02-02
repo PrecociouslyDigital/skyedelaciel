@@ -1,0 +1,47 @@
+---
+import type { HTMLTag } from "astro/types";
+import CopyAnchorIcon from "./CopyAnchorIcon.svelte";
+
+interface Props {
+    /** e.g. "h1", "h2", ... */
+    as: HTMLTag;
+    id?: string;
+    [key: string]: any;
+}
+
+const { as: Tag, id, ...rest } = Astro.props;
+---
+
+<Tag id={id} class="heading" {...rest}><a
+    href={id ? `#${id}` : undefined}
+    class="heading-anchor"
+><slot /></a>{id && <CopyAnchorIcon slug={id} client:visible />}</Tag>
+
+<style lang="scss">
+    .heading {
+        font-family: sans-serif;
+
+        &:hover :global(.copy-anchor) {
+            opacity: 1;
+        }
+    }
+
+    .heading-anchor {
+        color: inherit;
+        text-decoration: none;
+
+        &:visited {
+            color: inherit;
+        }
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    @media print {
+        :global(.copy-anchor) {
+            display: none;
+        }
+    }
+</style>
