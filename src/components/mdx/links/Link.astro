@@ -1,19 +1,18 @@
 ---
 import { getLinkMeta } from "./store";
-import {authorLine, formatCslDate } from "./cite";
+import { authorLine, formatCslDate } from "./cite";
 import * as R from "ramda";
 
 export interface Props {
     href: string;
     showImage: boolean;
-    [key: string] : any;
+    [key: string]: any;
 }
 
 const { href, showImage = false, ...rest } = Astro.props;
 
 const entry = getLinkMeta(href);
 if (entry == null) throw new Error("null href passed to a?");
-
 
 const { csl } = entry;
 
@@ -61,7 +60,10 @@ const description = entry?.summary ?? csl?.abstract;
                 )}
                 {metaLine && <span class="link-popover-meta">{metaLine}</span>}
                 {description && (
-                    <span class="link-popover-description" set:html={description}/>
+                    <span
+                        class="link-popover-description"
+                        set:html={description}
+                    />
                 )}
             </span>
         </span>
@@ -80,6 +82,8 @@ const description = entry?.summary ?? csl?.abstract;
 
     .link-popover {
         display: none;
+        flex-direction: column;
+        gap: 0.25rem;
         position: absolute;
         bottom: 100%;
         left: 50%;
@@ -89,7 +93,6 @@ const description = entry?.summary ?? csl?.abstract;
         max-height: 16rem;
         overflow-y: scroll;
         padding: 0.6rem 0.75rem;
-        margin-bottom: 0.35rem;
         background: var(--color-background);
         border: 1px solid var(--color-border);
         border-radius: 4px;
@@ -98,17 +101,19 @@ const description = entry?.summary ?? csl?.abstract;
         line-height: 1.4;
         font-weight: normal;
 
-        /* Stack children vertically */
-        & > :global(*) {
-            display: block;
-        }
+        opacity: 0;
+        transition:
+            opacity 0.15s ease 0.3s,
+            display 0.15s ease 0.4s;
+        transition-behavior: allow-discrete;
+
     }
 
     .link-wrapper:hover .link-popover,
-    .link-wrapper:focus-within .link-popover {
+    .link-wrapper:focus-within .link-popover,
+    .link-popover:hover {
         display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
+        opacity: 1;
     }
 
     .link-popover-image {
