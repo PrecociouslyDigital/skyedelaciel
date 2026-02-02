@@ -10,3 +10,5 @@ The website is intended to be served as a static bundle by Astro. You have an MC
 ## Design Spec
 `src/content/design.mdx` is a living document containing the design spec for the site. 
 It should always be accurate. Use your best judgement about whether to update the specification or the code.
+## Misc
+Prettier is available and configured. Use it to ensure that your code is well formatted.
