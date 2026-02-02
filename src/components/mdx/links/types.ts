@@ -1,10 +1,9 @@
-export type { Data as CslData } from "csl-json";
 import { z } from "zod";
 
 export type LinkKind = "internal" | "doi" | "wikipedia" | "external";
 
 export interface LinkEntry {
-    csl: import("csl-json").Data;
+    csl: z.infer<typeof cslCitation>;
     kind: LinkKind;
     summary?: string;
     imageUrl?: string;
