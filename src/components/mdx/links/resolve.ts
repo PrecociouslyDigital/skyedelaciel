@@ -9,7 +9,12 @@ function classify(url: string): LinkKind {
         const parsed = new URL(url, "https://skyedelaciel.com");
         if (!parsed.hostname || parsed.hostname === "skyedelaciel.com")
             return "internal";
-        if (parsed.hostname.includes("doi.org")) return "doi";
+        // DOIs always begin with the "10." prefix
+        if (
+            parsed.hostname.includes("doi.org") &&
+            /^\/10\./.test(parsed.pathname)
+        )
+            return "doi";
         if (parsed.hostname.endsWith(".wikipedia.org")) return "wikipedia";
     } catch {
         // Unparseable URLs (bare fragments, etc.) are internal
@@ -122,15 +127,26 @@ async function resolveWikipedia(url: string): Promise<LinkEntry> {
 
 async function resolveExternal(url: string): Promise<LinkEntry> {
     try {
-        const { result } = await ogs({ url });
+        const { result, html } = await ogs({ url });
+
+        // Fallback: extract <title> from raw HTML when OG/DC tags are absent
+        const title =
+            result.ogTitle ??
+            result.dcTitle ??
+            result.twitterTitle ??
+            html?.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim();
+
+        const author =
+            result.author ?? result.articleAuthor ?? result.ogArticleAuthor;
+
         const csl: Data = {
             type: "webpage",
             id: url,
             URL: url,
-            title: result.ogTitle ?? result.dcTitle,
+            title,
             "container-title": result.ogSiteName,
-            ...(result.author && {
-                author: [{ family: result.author } as Person],
+            ...(author && {
+                author: [{ family: author } as Person],
             }),
             ...((result.ogDate ?? result.dcDate) && {
                 issued: parseDateParts(result.ogDate ?? result.dcDate!),

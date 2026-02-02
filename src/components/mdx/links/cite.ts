@@ -7,7 +7,7 @@ export function formatCitation(entry: LinkEntry): string {
     const cite = new Cite([entry.csl]);
     return cite
         .format("bibliography", {
-            format: "text",
+            format: "html",
             template: "apa",
             lang: "en-US",
         })

@@ -32,9 +32,7 @@ const entries = [...fromLinks, ...fromCitations].sort((a, b) =>
             <ol>
                 {entries.map(({ csl, formatted }) => (
                     <li>
-                        <a href={csl.URL} class="content-link">
-                            {formatted}
-                        </a>
+                        <a href={csl.URL} class="content-link" set:html={formatted}/>
                     </li>
                 ))}
             </ol>
