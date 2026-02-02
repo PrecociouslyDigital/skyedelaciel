@@ -24,6 +24,7 @@
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.6",
-        "@types/ramda": "^0.31.1"
+        "@types/ramda": "^0.31.1",
+        "prettier": "^3.8.1"
     }
 }
