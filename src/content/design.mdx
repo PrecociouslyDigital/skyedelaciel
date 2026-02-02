@@ -1,50 +1,74 @@
 ---
 title: Design Specification
-abstract: This is a living document describing the desired visual design of the website. It is intended to be a useful reference for human and machine alike. 
+abstract: This is a living document describing the desired visual design of the website. It is intended to be a useful reference for human and machine alike.
 ---
+
 # Design Goals
+
 Content on this site should be optimized for **reading prose on desktop**. Where possible, pages should **degrade gracefully** on other form factors (such as supporting vertical displays or touchscreens), support screen-readers with aria tags where appropriate, and **print well** directly from the browser. Elements should be padded pleasantly, both from each other and the edge of the screen.
 
 Inspirations include Edward Tufte and Gwern.net.
 
 # Article Defaults
+
 Most content on this site is a single article on a single page.
+
 ## Front Matter
+
 An article's front matter (not to be conflated with markdown's `yaml` frontmatter) contains human-relevant metadata about the article. It should begin every article, visually set apart
+
 ### Title
+
 The first front matter to appear should be the title, which should be visually more important than anything else in the article.
+
 ### Author
+
 The author should appear after the title, less visually notable than most text. It should appear on the same line if the viewport has enough horizontal space, or wrap to its own line otherwise.
+
 ### Abstract
+
 The abstract should follow the title and author. It should be formatted similarly to article text, but still stand out at a glance.
 
 ## Content
+
 The main content of the article should have a maximum width of 80 characters.
 
 ## Colors
+
 There should be three color schemes, dark, light and print. Dark and light color schemes should default to the system preference, based on the css media query `prefers-color-scheme`, but should also be toggleable by the user (see [Navbar](#Navbar)). Once a user sets a theme preference, that preference should be persisted to local storage and reloaded as early as possible in page load.
 
 # Components
+
 ## Navbar
+
 ### Landscape
-On landscape viewports, the navbar sits to the side of the content, right-aligned to its left edge, and is arranged vertically. 
+
+On landscape viewports, the navbar sits to the side of the content, right-aligned to its left edge, and is arranged vertically.
+
 ### Portrait
+
 On portrait viewports, the navbar is horizontal, in line with the content, before the title. It should match the content's maximum width so they align visually.
+
 ### Content
+
 The navbar contains, in order
+
 - A clickable logo that takes you to the homepage
 - Links to various internal and external landing pages
 - A button that toggles the [Color Scheme](#Colors)
 
 ## Table of contents
+
 ### Landscape
+
 On landscape viewports, the table of contents should sit to the left of the content, and be arranged vertically, underneath the navbar. As the user scrolls, the top of the table of contents should "stick" to the top of the viewport (with pleasant margin, of course).
 
-The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the *right* of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, headings should auto-expand and collapse as a user scrolls through the document. 
+The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the _right_ of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, headings should auto-expand and collapse as a user scrolls through the document.
 
 ### Portrait
-On portrait viewports, the navbar is in line with the content, after the abstract, in a collapsible section. Each level should also be collapsible. Collapse should be controlled by an indicator to the *left* of that element. All are collapsed by default. This table of contents should *not* auto-expand and collapse.
+
+On portrait viewports, the navbar is in line with the content, after the abstract, in a collapsible section. Each level should also be collapsible. Collapse should be controlled by an indicator to the _left_ of that element. All are collapsed by default. This table of contents should _not_ auto-expand and collapse.
 
 ## Headings
-Hedings should be in a different font from the main content. They should be [anchor links](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a) to themselves. On platforms with javascript enabled, an icon should appear on hover that copies the full anchor link to the clipboard.
 
+Hedings should be in a different font from the main content. They should be [anchor links](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a) to themselves. On platforms with javascript enabled, an icon should appear on hover that copies the full anchor link to the clipboard.
