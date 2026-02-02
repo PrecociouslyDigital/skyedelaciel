@@ -11,9 +11,9 @@ import type { RemarkPlugin } from "@astrojs/markdown-remark";
 import { definitions } from "mdast-util-definitions";
 import { visit } from "unist-util-visit";
 
-import { resolveLinkMeta } from "./src/components/links/resolve";
-import { loadCache, saveCache } from "./src/components/links/cache";
-import type { LinkEntry } from "./src/components/links/types";
+import { resolveLinkMeta } from "./src/components/mdx/links/resolve";
+import { loadCache, saveCache } from "./src/components/mdx/links/cache";
+import type { LinkEntry } from "./src/components/mdx/links/types";
 
 loadCache();
 

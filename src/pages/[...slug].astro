@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content";
 import Layout from "~/layouts/prelude/md.astro";
 import { mdxComponents } from "~/components/mdx";
-import { setLinkMeta } from "~/components/links/store";
+import { setLinkMeta } from "~/components/mdx/links/store";
 
 export async function getStaticPaths() {
     const pages = await getCollection("pages");
