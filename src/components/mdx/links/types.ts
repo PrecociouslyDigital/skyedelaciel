@@ -3,7 +3,7 @@ import { z } from "zod";
 export type LinkKind = "internal" | "doi" | "wikipedia" | "external";
 
 export interface LinkEntry {
-    csl: z.infer<typeof cslCitation>;
+    csl: z.infer<typeof cslData>[];
     kind: LinkKind;
     summary?: string;
     imageUrl?: string;
