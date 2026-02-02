@@ -12,10 +12,11 @@ interface Props {
 const { as: Tag, id, ...rest } = Astro.props;
 ---
 
-<Tag id={id} class="heading" {...rest}><a
-    href={id ? `#${id}` : undefined}
-    class="heading-anchor"
-><slot /></a>{id && <CopyAnchorIcon slug={id} client:visible />}</Tag>
+<Tag id={id} class="heading" {...rest}
+    ><a href={id ? `#${id}` : undefined} class="heading-anchor"><slot /></a>{
+        id && <CopyAnchorIcon slug={id} client:visible />
+    }</Tag
+>
 
 <style lang="scss">
     .heading {

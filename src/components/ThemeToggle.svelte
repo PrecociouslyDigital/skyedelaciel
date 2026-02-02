@@ -1,5 +1,4 @@
 <script lang="ts">
-
     // Only runs client-side; SSR renders unchecked checkbox
     $effect.pre(() => {
         //Hack: clear previous hack to prevent FOUC

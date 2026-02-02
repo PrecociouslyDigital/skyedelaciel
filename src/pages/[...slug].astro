@@ -2,6 +2,7 @@
 import { getCollection, render } from "astro:content";
 import Layout from "~/layouts/prelude/md.astro";
 import { mdxComponents } from "~/components/mdx";
+import { setLinkMeta } from "~/components/links/store";
 
 export async function getStaticPaths() {
     const pages = await getCollection("pages");
@@ -13,10 +14,18 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content, headings, remarkPluginFrontmatter } = await render(entry);
+const linkMeta = remarkPluginFrontmatter.linkMeta ?? {};
+
+// Populate the module store so <Link> components can look up metadata
+setLinkMeta(linkMeta);
 ---
 
 <Layout
-    frontmatter={{ ...entry.data, links: remarkPluginFrontmatter.links }}
+    frontmatter={{
+        ...entry.data,
+        links: remarkPluginFrontmatter.links,
+        linkMeta,
+    }}
     headings={headings}
 >
     <Content components={mdxComponents} />

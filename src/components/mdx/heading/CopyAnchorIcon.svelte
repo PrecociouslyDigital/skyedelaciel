@@ -12,7 +12,11 @@
     }
 </script>
 
-<button class="copy-anchor" onclick={copyAnchor} aria-label="Copy link to heading">
+<button
+    class="copy-anchor"
+    onclick={copyAnchor}
+    aria-label="Copy link to heading"
+>
     {copied ? "Copied!" : "#"}
 </button>
 

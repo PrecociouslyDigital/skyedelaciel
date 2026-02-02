@@ -72,3 +72,39 @@ On portrait viewports, the navbar is in line with the content, after the abstrac
 ## Headings
 
 Hedings should be in a different font from the main content. They should be [anchor links](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a) to themselves. On platforms with javascript enabled, an icon should appear on hover that copies the full anchor link to the clipboard.
+
+## Links
+
+Links in content should be semi-bold, but not a different color or underlined.
+
+### Popover
+
+Hovering over a link should show a popover, fixed to above the link, with a short preview. The popover can include any html content, but should always have a space for "date published" (which can be unknown) and "date retrieved". The popover should have a fixed maximum size, and can be scrolled if its contents are long.
+
+#### Default Style
+
+By default, links should pull title, author, site/publication name, date and summary from [OpenGraph](https://ogp.me/) tags. Resolution should attempt to fall back to `<title>` and `<meta name="author">` tags if OpenGraph tags are not present.
+
+#### Internal Pages
+
+Internal pages should show the title, abstract, and site name, but not any other information.
+
+#### DOIs
+
+Links to https://doi.org that represent a valid Digital Object Identifier should pull title, author, date published, abstract and other metadata directly from the [CrossRef DOI Api](https://api.crossref.org/swagger-ui/index.html).
+
+#### Wikipedia
+
+Links to Wikipedia should include the title, summary and infobox, as well as an image if one exists.
+
+### Print
+
+When printed, links should appear as regular text. The link originally referenced should be inline-cited in MLA format: e.g. (Author, Year), if the [Bibliography](#Bibliography) is turned on. If not, it should print the full link in plaintext.
+
+## Bibliography
+
+If `bibliography: false` is not set in the frontmatter, the article should include a "Works Referenced" section generated from every link in the article, in MLA style. Entries should be links to their source
+
+#### Additional Citations
+
+Articles can provide an additional list of citations under the `citation` frontmatter property. The list of citations should be in [bibjson](https://rufuspollock-okfn.github.io/bibjson/) format, validated by Astro's support for [frontmatter schema](https://rufuspollock-okfn.github.io/bibjson/).

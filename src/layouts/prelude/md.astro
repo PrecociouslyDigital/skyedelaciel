@@ -2,6 +2,7 @@
 import "./prelude.scss";
 import Navbar from "~/components/Navbar.astro";
 import TableOfContents from "~/components/TableOfContents.astro";
+import Bibliography from "~/components/links/Bibliography.astro";
 const { frontmatter, headings } = Astro.props;
 ---
 
@@ -46,6 +47,15 @@ const { frontmatter, headings } = Astro.props;
             </header>
 
             <slot />
+
+            {
+                frontmatter.bibliography !== false && frontmatter.linkMeta && (
+                    <Bibliography
+                        linkMeta={frontmatter.linkMeta}
+                        citations={frontmatter.citation}
+                    />
+                )
+            }
         </article>
     </body>
 </html>
