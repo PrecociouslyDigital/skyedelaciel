@@ -52,6 +52,17 @@ const siteName =
           ? "Wikipedia"
           : (csl?.["container-title"] ?? undefined);
 
+/** Single metadata line: author, site/journal, date — joined by " · " */
+const metaParts: string[] = [
+    entry ? authorLine(entry) : undefined,
+    siteName,
+    entry?.kind === "doi" && csl?.["container-title"]
+        ? csl["container-title"]
+        : undefined,
+    csl?.issued ? formatCslDate(csl.issued) : undefined,
+].filter((s): s is string => Boolean(s));
+const metaLine = metaParts.length ? metaParts.join(" · ") : undefined;
+
 /** Pick the best descriptive text. */
 const description = entry?.summary ?? csl?.abstract ?? undefined;
 ---
@@ -74,29 +85,7 @@ const description = entry?.summary ?? csl?.abstract ?? undefined;
                 {csl?.title && (
                     <span class="link-popover-title">{csl.title}</span>
                 )}
-                {authorLine(entry) && (
-                    <span class="link-popover-meta">{authorLine(entry)}</span>
-                )}
-                {siteName && (
-                    <span class="link-popover-meta link-popover-site">
-                        {siteName}
-                    </span>
-                )}
-                {entry.kind === "doi" && csl?.["container-title"] && (
-                    <span class="link-popover-meta link-popover-journal">
-                        {csl["container-title"]}
-                    </span>
-                )}
-                {csl?.issued && (
-                    <span class="link-popover-meta">
-                        {formatCslDate(csl.issued)}
-                    </span>
-                )}
-                {csl?.accessed && (
-                    <span class="link-popover-meta link-popover-retrieved">
-                        Retrieved {formatCslDate(csl.accessed)}
-                    </span>
-                )}
+                {metaLine && <span class="link-popover-meta">{metaLine}</span>}
                 {description && (
                     <span class="link-popover-description">{description}</span>
                 )}
@@ -162,9 +151,6 @@ const description = entry?.summary ?? csl?.abstract ?? undefined;
     .link-popover-meta {
         color: var(--color-muted);
         font-size: 0.78rem;
-    }
-
-    .link-popover-journal {
         font-style: italic;
     }
 
