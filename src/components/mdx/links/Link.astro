@@ -12,22 +12,20 @@ export interface Props {
 const { href, showImage = false, ...rest } = Astro.props;
 
 const entry = getLinkMeta(href);
-if (entry == null) throw new Error("null href passed to a?");
-
-const { csl } = entry;
 
 /** Whether we have enough metadata to show a popover. */
-const hasPopover = entry && (csl?.title || entry.summary || csl?.abstract);
+const hasPopover = R.isNotNil(entry) && (entry.csl?.title || entry.summary || entry.csl?.abstract);
 
 /** Single metadata line: author, site/journal, date — joined by " · " */
-const metaParts: string[] = (() => {
+const metaParts = (() => {
+    if (entry == null) return [];
     switch (entry.kind) {
         case "external":
         case "doi":
             return [
                 authorLine(entry),
-                csl?.["container-title"] ?? "",
-                formatCslDate(csl.issued),
+                entry.csl?.["container-title"] ?? "",
+                formatCslDate(entry.csl.issued),
             ];
         case "wikipedia":
         case "internal":
@@ -37,7 +35,7 @@ const metaParts: string[] = (() => {
 const metaLine = metaParts.map(R.trim).filter(R.isNotEmpty).join(" · ");
 
 /** Pick the best descriptive text. */
-const description = entry?.summary ?? csl?.abstract;
+const description = entry?.summary ?? entry?.csl?.abstract;
 ---
 
 {
@@ -55,8 +53,8 @@ const description = entry?.summary ?? csl?.abstract;
                         loading="lazy"
                     />
                 )}
-                {csl?.title && (
-                    <span class="link-popover-title">{csl.title}</span>
+                {entry.csl?.title && (
+                    <span class="link-popover-title">{entry.csl.title}</span>
                 )}
                 {metaLine && <span class="link-popover-meta">{metaLine}</span>}
                 {description && (
