@@ -1,0 +1,21 @@
+/// Width-based layout breakpoints.
+///
+/// Two tiers gate progressively richer layouts:
+///   - `wide`: grid layout kicks in (sidenotes in margin, multi-column)
+///   - `wide-sidebar`: left gutter is wide enough for the sidebar (nav + TOC)
+///
+/// The sidebar tier exists because the grid biases content leftward at
+/// narrower widths to make room for sidenotes, leaving too little space
+/// for the sidebar. At 72rem+ the left gutter reaches ~8rem.
+
+@mixin wide {
+    @media (min-width: 60rem) {
+        @content;
+    }
+}
+
+@mixin wide-sidebar {
+    @media (min-width: 72rem) {
+        @content;
+    }
+}

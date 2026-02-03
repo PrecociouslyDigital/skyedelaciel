@@ -17,6 +17,8 @@ import ThemeToggle from "./ThemeToggle.svelte";
 </nav>
 
 <style lang="scss">
+    @use "../layouts/prelude/breakpoints";
+
     .navbar {
         display: flex;
         align-items: center;
@@ -50,8 +52,8 @@ import ThemeToggle from "./ThemeToggle.svelte";
         }
     }
 
-    // Landscape: vertical layout (sidebar handles positioning)
-    @media (orientation: landscape) and (min-width: 60rem) {
+    // Wide-sidebar: vertical layout (sidebar handles positioning)
+    @include breakpoints.wide-sidebar {
         .navbar {
             flex-direction: column;
             align-items: flex-end;

@@ -14,6 +14,7 @@ import { visit } from "unist-util-visit";
 import { resolveLinkMeta } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import type { LinkEntry } from "./src/components/mdx/links/types";
+import remarkSidenotes from "./src/plugins/remark-sidenotes";
 
 loadCache();
 
@@ -56,7 +57,7 @@ const extractLinks: RemarkPlugin = () => async (tree, file) => {
 export default defineConfig({
     integrations: [mdx(), svelte()],
     markdown: {
-        remarkPlugins: [extractLinks],
+        remarkPlugins: [extractLinks, remarkSidenotes],
         rehypePlugins: [rehypeSlug],
     },
 });

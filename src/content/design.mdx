@@ -41,13 +41,13 @@ There should be three color schemes, dark, light and print. Dark and light color
 
 ## Navbar
 
-### Landscape
+### Wide viewports
 
-On landscape viewports, the navbar sits to the side of the content, right-aligned to its left edge, and is arranged vertically.
+When there is enough space for both the navbar and sidenotes, the navbar sits to the side of the content, right-aligned to its left edge, and is arranged vertically.
 
-### Portrait
+### Narrow viewports
 
-On portrait viewports, the navbar is horizontal, in line with the content, before the title. It should match the content's maximum width so they align visually.
+The navbar is horizontal, in line with the content, before the title. It should match the content's maximum width so they align visually.
 
 ### Content
 
@@ -59,15 +59,15 @@ The navbar contains, in order
 
 ## Table of contents
 
-### Landscape
+### Wide viewports
 
-On landscape viewports, the table of contents should sit to the left of the content, and be arranged vertically, underneath the navbar. As the user scrolls, the top of the table of contents should "stick" to the top of the viewport (with pleasant margin, of course).
+When there is enough space for both the table of contents and sidenotes, the table of contents sits to the left of the content, arranged vertically, underneath the navbar. As the user scrolls, the top of the table of contents should "stick" to the top of the viewport (with pleasant margin, of course).
 
 The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the _right_ of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, headings should auto-expand and collapse as a user scrolls through the document.
 
-### Portrait
+### Narrow viewports
 
-On portrait viewports, the navbar is in line with the content, after the abstract, in a collapsible section. Each level should also be collapsible. Collapse should be controlled by an indicator to the _left_ of that element. All are collapsed by default. This table of contents should _not_ auto-expand and collapse.
+The table of contents is in line with the content, after the abstract, in a collapsible section. Each level should also be collapsible. Collapse should be controlled by an indicator to the _left_ of that element. All are collapsed by default. This table of contents should _not_ auto-expand and collapse.
 
 ## Headings
 
@@ -108,3 +108,10 @@ If `bibliography: false` is not set in the frontmatter, the article should inclu
 #### Additional Citations
 
 Articles can provide an additional list of citations under the `citation` frontmatter property. The list of citations should be in [bibjson](https://rufuspollock-okfn.github.io/bibjson/) format, validated by Astro's support for [frontmatter schema](https://rufuspollock-okfn.github.io/bibjson/).
+
+## Sidenotes
+When there is enough horizontal space and in print, footnotes should be displayed to the right of content, aligned with their footnote marker as much as possible. Hovering over the footnote marker should visually highlight the associated sidenote.
+On narrow viewports, sidenotes should be hidden by default. Clicking them should display the sidenote in line with the content, and clicking the sidenote or the sidenote marker should re-hide the sidenote.
+This behavior should not require javascript.[^scripter]
+
+[^scripter]: Thanks to [A Scripter's notes](https://scripter.co/sidenotes-using-only-css/) for sharing a bunch of CSS tricks that make this possible.

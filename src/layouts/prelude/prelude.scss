@@ -1,4 +1,5 @@
 @use "colors";
+@use "breakpoints";
 
 /* Base typography */
 body {
@@ -8,6 +9,7 @@ body {
     padding: 2rem;
     background-color: var(--color-background);
     color: var(--color-text);
+    counter-reset: sidenote;
 }
 
 article {
@@ -136,11 +138,22 @@ a:visited {
     }
 }
 
-/* Landscape mode: grid layout with sidebar */
-@media (orientation: landscape) and (min-width: 60rem) {
+/* Wide viewport: grid layout with sidenotes */
+@include breakpoints.wide {
     body {
+        --content-width: min(80ch, calc(100vw - 8rem));
+        // Space available for left + right gutters (after content and gaps)
+        --gutter: calc(100vw - 8rem - var(--content-width));
+        // Left gutter grows from 0 toward half — centering the content
+        // once there's enough room for a 16rem right margin.
+        --left-col: max(
+            0px,
+            min(calc(var(--gutter) - 16rem), calc(var(--gutter) / 2))
+        );
+        --sidenote-width: min(14rem, var(--gutter));
+
         display: grid;
-        grid-template-columns: 1fr min(80ch, calc(100% - 4rem)) 1fr;
+        grid-template-columns: var(--left-col) var(--content-width) 1fr;
         gap: 2rem;
         padding: 2rem;
     }
@@ -150,6 +163,13 @@ a:visited {
         margin: 0; // Grid handles centering
     }
 
+    // Sidebar hidden below wide-sidebar threshold
+    .sidebar {
+        display: none;
+    }
+}
+
+@include breakpoints.wide-sidebar {
     .sidebar {
         grid-column: 1;
         display: flex;

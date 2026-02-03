@@ -1,0 +1,125 @@
+---
+/**
+ * CSS-only sidenote. Renders footnote content in the right margin when the
+ * viewport is wide enough, or as a toggle-able inline note otherwise.
+ *
+ * Numbering is entirely CSS-counter-driven — the `id` prop is a slug, not a
+ * number, so manually authored <Sidenote> components won't break numbering.
+ */
+export interface Props {
+    id: string;
+}
+
+const { id } = Astro.props;
+const inputId = `sn-${id}`;
+---
+
+<span class="sidenote-wrapper">
+    <input type="checkbox" id={inputId} />
+    <label for={inputId} role="doc-noteref"></label>
+    <small role="note">
+        <label for={inputId}></label>
+        <slot />
+    </small>
+</span>
+
+<style lang="scss">
+    @use "../../layouts/prelude/breakpoints";
+
+    .sidenote-wrapper {
+        /* Inline context for the marker; block for the note is handled per mode */
+        display: inline;
+    }
+
+    input[type="checkbox"] {
+        display: none;
+    }
+
+    /* — Marker (superscript number) — */
+    label[role="doc-noteref"] {
+        cursor: pointer;
+        vertical-align: super;
+        font-size: 0.75em;
+        line-height: 0;
+        counter-increment: sidenote;
+
+        &::after {
+            content: counter(sidenote);
+        }
+    }
+
+    /* — Note body — */
+    small[role="note"] {
+        display: none;
+        font-size: 0.82rem;
+        line-height: 1.45;
+
+        /* Dismiss label (narrow viewports only) */
+        > label {
+            cursor: pointer;
+            font-size: 0.75em;
+            vertical-align: super;
+            line-height: 0;
+            margin-right: 0.25em;
+
+            &::after {
+                content: counter(sidenote) ".";
+            }
+        }
+    }
+
+    /* — Narrow: toggle on checkbox — */
+    .sidenote-wrapper:has(input:checked) > small[role="note"] {
+        display: block;
+        margin: 0.5rem 0;
+        padding-left: 1rem;
+        border-left: 2px solid var(--color-border);
+    }
+
+    /* — Wide: always visible in right margin — */
+    @include breakpoints.wide {
+        small[role="note"] {
+            display: block;
+            float: right;
+            clear: right;
+            /* Size to the right gutter, set by prelude.scss */
+            width: var(--sidenote-width, 14rem);
+            margin-right: calc(-1 * var(--sidenote-width, 14rem) - 2rem);
+            margin-bottom: 0.5rem;
+            padding: 0;
+            border: none;
+            /* Label is not interactive at wide viewports, just a number */
+            > label {
+                cursor: default;
+            }
+        }
+
+        /* Highlight sidenote when marker is hovered */
+        .sidenote-wrapper:has(label[role="doc-noteref"]:hover) > small {
+            color: var(--color-primary);
+        }
+
+        /* Override: narrow toggle should not change layout */
+        .sidenote-wrapper:has(input:checked) > small[role="note"] {
+            padding: 0;
+            border: none;
+        }
+    }
+
+    /* — Print: same as landscape — */
+    @media print {
+        small[role="note"] {
+            display: block;
+            float: right;
+            clear: right;
+            width: 14rem;
+            margin-right: -16rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.78rem;
+
+            > label {
+                cursor: default;
+            }
+        }
+    }
+</style>

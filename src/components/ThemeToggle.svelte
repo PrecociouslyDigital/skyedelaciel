@@ -23,7 +23,8 @@
     <span class="toggle-icon" aria-hidden="true"></span>
 </label>
 
-<style>
+<style lang="scss">
+    @use "../layouts/prelude/breakpoints";
     .theme-toggle {
         cursor: pointer;
         display: flex;
@@ -60,7 +61,7 @@
         outline-offset: 2px;
     }
 
-    @media (orientation: landscape) and (min-width: 60rem) {
+    @include breakpoints.wide-sidebar {
         .theme-toggle {
             margin-left: 0;
             margin-top: 1rem;

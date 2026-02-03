@@ -8,6 +8,7 @@ import H4 from "./heading/H4.astro";
 import H5 from "./heading/H5.astro";
 import H6 from "./heading/H6.astro";
 import Link from "./links/Link.astro";
+import Sidenote from "./Sidenote.astro";
 
 /** Global MDX component overrides, passed to <Content /> in the dynamic route. */
 export const mdxComponents: Record<string, AstroComponentFactory> = {
@@ -18,4 +19,5 @@ export const mdxComponents: Record<string, AstroComponentFactory> = {
     h5: H5,
     h6: H6,
     a: Link,
+    Sidenote,
 };
