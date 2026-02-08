@@ -1,0 +1,18 @@
+{
+    "https://api.crossref.org/swagger-ui/index.html": {
+        "csl": {
+            "type": "webpage",
+            "id": "https://api.crossref.org/swagger-ui/index.html",
+            "URL": "https://api.crossref.org/swagger-ui/index.html",
+            "title": "Crossref REST API",
+            "accessed": {
+                "date-parts": [[2026, 2, 8]]
+            }
+        },
+        "kind": "external",
+        "summary": {
+            "type": "html",
+            "content": "<p>Welcome to the Crossref REST API. This page contains basic information about the API, including details about available endpoints and request parameters, and options to try requests yourself. You can find additional information on <a rel=\"noopener noreferrer\" target=\"_blank\" href=\"https://www.crossref.org/documentation/retrieve-metadata/rest-api/\">our documentation website</a>.</p>"
+        }
+    }
+}

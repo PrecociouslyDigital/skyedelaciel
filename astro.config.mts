@@ -35,7 +35,9 @@ const extractLinks: RemarkPlugin = () => async (tree, file) => {
     });
 
     // Resolve metadata for each unique URL
-    const unique = [...new Set(links)];
+    const unique = [...new Set(links)].filter(
+        R.compose(R.not, R.startsWith("#")),
+    );
     const resolved = await Promise.all(
         unique.map((url) => resolveLinkMeta(url)),
     );

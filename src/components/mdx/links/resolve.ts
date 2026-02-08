@@ -1,6 +1,10 @@
 import ogs from "open-graph-scraper";
 import type { LinkKind, LinkEntry, CslData, CslDate } from "./types";
+import { cslData } from "./types";
 import { getCached, setCached } from "./cache";
+import * as R from "ramda";
+import * as z from "zod";
+
 
 /** Classify a URL into one of the known link kinds. */
 function classify(url: string): LinkKind {
@@ -55,30 +59,20 @@ const parseDateParts = (s: string): CslDate => {
 async function resolveDoi(url: string): Promise<LinkEntry> {
     const doi = extractDoi(url);
     try {
-        const res = await fetch(`https://api.crossref.org/works/${doi}`);
-        const data = await res.json();
-        const work = data.message;
-        const authors = (work.author ?? []).map(
-            (a: { given?: string; family?: string }) => ({
-                family: a.family ?? "",
-                given: a.given,
-            }),
-        );
-        const csl: CslData = {
-            type: "article-journal",
-            id: url,
-            URL: url,
-            title: work.title?.[0],
-            "container-title": work["container-title"]?.[0],
-            ...(authors.length && { author: authors }),
-            ...(work.created?.["date-parts"]?.[0] && {
-                issued: {
-                    "date-parts": [work.created["date-parts"][0]],
-                },
-            }),
-            accessed: todayParts(),
+        const res = await fetch(`https://api.crossref.org/works/${doi}`, {
+            headers: {
+                Accept: "application/vnd.citationstyles.csl+json",
+            },
+        });
+        const csl = await z.parseAsync(cslData, await res.json());
+        return {
+            csl,
+            kind: "doi",
+            summary: {
+                type: "text",
+                content: csl.abstract,
+            },
         };
-        return { csl, kind: "doi" };
     } catch {
         return {
             csl: {
@@ -110,9 +104,12 @@ async function resolveWikipedia(url: string): Promise<LinkEntry> {
                 issued: parseDateParts(data.timestamp),
             },
             kind: "wikipedia",
-            summary: data.extract_html
-                .replace("<p>", "<span>")
-                .replace("</p>", "</span>"),
+            summary: {
+                type: "html",
+                content: data.extract_html
+                    .replace("<p>", "<span>")
+                    .replace("</p>", "</span>"),
+            },
             imageUrl: data.thumbnail?.source,
         };
     } catch {
@@ -158,10 +155,16 @@ async function resolveExternal(url: string): Promise<LinkEntry> {
             }),
             accessed: todayParts(),
         };
+        const desc = result.ogDescription ?? result.dcDescription;
         return {
             csl,
             kind: "external",
-            summary: result.ogDescription ?? result.dcDescription,
+            summary: desc
+                ? {
+                      type: "text",
+                      content: desc,
+                  }
+                : undefined,
             imageUrl: result.ogImage?.[0]?.url,
         };
     } catch {

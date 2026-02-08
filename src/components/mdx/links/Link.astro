@@ -33,9 +33,6 @@ const metaParts = (() => {
     }
 })();
 const metaLine = metaParts.map(R.trim).filter(R.isNotEmpty).join(" · ");
-
-/** Pick the best descriptive text. */
-const description = entry?.summary ?? entry?.csl?.abstract;
 ---
 
 {
@@ -57,12 +54,18 @@ const description = entry?.summary ?? entry?.csl?.abstract;
                     <span class="link-popover-title">{entry.csl.title}</span>
                 )}
                 {metaLine && <span class="link-popover-meta">{metaLine}</span>}
-                {description && (
+                {entry?.summary && (entry.summary.type === "html" ? (
                     <span
                         class="link-popover-description"
-                        set:html={description}
+                        set:html={entry.summary.content.replace("<p>", "<span>")
+                    .replace("</p>", "</span>")}
                     />
-                )}
+                ) : (
+                    <span
+                        class="link-popover-description"
+                        set:text={entry.summary.content}
+                    />
+                ))}
             </span>
         </span>
     ) : (
