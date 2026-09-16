@@ -8,7 +8,7 @@ export interface LinkEntry {
     summary?: {
         type: "html" | "text";
         content: string;
-    }
+    };
     imageUrl?: string;
 }
 
@@ -38,71 +38,94 @@ export const cslDate = z
 
 export type CslCitation = z.infer<typeof cslCitation>;
 export const cslCitation = z
-  .object({
-    schema: z.literal(
-      "https://resource.citationstyles.org/schema/latest/input/json/csl-citation.json"
-    ),
-    citationID: z.union([z.string(), z.number()]),
-    citationItems: z
-      .array(
-        z
-          .object({
-            id: z.union([z.string(), z.number()]),
-            itemData: z.any().optional(),
-            prefix: z.string().optional(),
-            suffix: z.string().optional(),
-            locator: z.string().optional(),
-            label: z
-              .enum([
-                "act",
-                "appendix",
-                "article-locator",
-                "book",
-                "canon",
-                "chapter",
-                "column",
-                "elocation",
-                "equation",
-                "figure",
-                "folio",
-                "issue",
-                "line",
-                "note",
-                "opus",
-                "page",
-                "paragraph",
-                "part",
-                "rule",
-                "scene",
-                "section",
-                "sub-verbo",
-                "supplement",
-                "table",
-                "timestamp",
-                "title-locator",
-                "verse",
-                "version",
-                "volume",
-              ])
-              .optional(),
-            "suppress-author": z
-              .union([z.string(), z.number(), z.boolean()])
-              .optional(),
-            "author-only": z
-              .union([z.string(), z.number(), z.boolean()])
-              .optional(),
-            uris: z.array(z.string()).optional(),
-          })
-          .strict()
-      )
-      .optional(),
-    properties: z
-      .object({ noteIndex: z.number().optional() })
-      .strict()
-      .optional(),
-  })
-  .strict()
-  .describe("JSON schema for CSL citation objects");
+    .object({
+        schema: z.literal(
+            "https://resource.citationstyles.org/schema/latest/input/json/csl-citation.json",
+        ),
+        citationID: z.union([z.string(), z.number()]),
+        citationItems: z
+            .array(
+                z
+                    .object({
+                        id: z.union([z.string(), z.number()]),
+                        itemData: z.any().optional(),
+                        prefix: z.string().optional(),
+                        suffix: z.string().optional(),
+                        locator: z.string().optional(),
+                        label: z
+                            .enum([
+                                "act",
+                                "appendix",
+                                "article-locator",
+                                "book",
+                                "canon",
+                                "chapter",
+                                "column",
+                                "elocation",
+                                "equation",
+                                "figure",
+                                "folio",
+                                "issue",
+                                "line",
+                                "note",
+                                "opus",
+                                "page",
+                                "paragraph",
+                                "part",
+                                "rule",
+                                "scene",
+                                "section",
+                                "sub-verbo",
+                                "supplement",
+                                "table",
+                                "timestamp",
+                                "title-locator",
+                                "verse",
+                                "version",
+                                "volume",
+                            ])
+                            .optional(),
+                        "suppress-author": z
+                            .union([z.string(), z.number(), z.boolean()])
+                            .optional(),
+                        "author-only": z
+                            .union([z.string(), z.number(), z.boolean()])
+                            .optional(),
+                        uris: z.array(z.string()).optional(),
+                    })
+                    .strict(),
+            )
+            .optional(),
+        properties: z
+            .object({ noteIndex: z.number().optional() })
+            .strict()
+            .optional(),
+    })
+    .strict()
+    .describe("JSON schema for CSL citation objects");
+
+export type CslName = z.infer<typeof cslName>;
+
+/** A CSL name object, as used by every contributor field below. */
+export const cslName = z
+    .object({
+        family: z.string().optional(),
+        given: z.string().optional(),
+        "dropping-particle": z.string().optional(),
+        "non-dropping-particle": z.string().optional(),
+        suffix: z.string().optional(),
+        "comma-suffix": z
+            .union([z.string(), z.number(), z.boolean()])
+            .optional(),
+        "static-ordering": z
+            .union([z.string(), z.number(), z.boolean()])
+            .optional(),
+        literal: z.string().optional(),
+        "parse-names": z
+            .union([z.string(), z.number(), z.boolean()])
+            .optional(),
+    })
+    .strict();
 
 export type CslData = z.infer<typeof cslData>;
 
@@ -161,604 +184,32 @@ export const cslData = z
         language: z.string().optional(),
         journalAbbreviation: z.string().optional(),
         shortTitle: z.string().optional(),
-        author: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        chair: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "collection-editor": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        compiler: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        composer: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "container-author": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        contributor: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        curator: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        director: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        editor: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "editorial-director": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "executive-producer": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        guest: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        host: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        interviewer: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        illustrator: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        narrator: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        organizer: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "original-author": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        performer: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        producer: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        recipient: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "reviewed-author": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "script-writer": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        "series-creator": z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        translator: z
-            .array(
-                z
-                    .object({
-                        family: z.string().optional(),
-                        given: z.string().optional(),
-                        "dropping-particle": z.string().optional(),
-                        "non-dropping-particle": z.string().optional(),
-                        suffix: z.string().optional(),
-                        "comma-suffix": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "static-ordering": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        literal: z.string().optional(),
-                        "parse-names": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
+        author: cslName.array().optional(),
+        chair: cslName.array().optional(),
+        "collection-editor": cslName.array().optional(),
+        compiler: cslName.array().optional(),
+        composer: cslName.array().optional(),
+        "container-author": cslName.array().optional(),
+        contributor: cslName.array().optional(),
+        curator: cslName.array().optional(),
+        director: cslName.array().optional(),
+        editor: cslName.array().optional(),
+        "editorial-director": cslName.array().optional(),
+        "executive-producer": cslName.array().optional(),
+        guest: cslName.array().optional(),
+        host: cslName.array().optional(),
+        interviewer: cslName.array().optional(),
+        illustrator: cslName.array().optional(),
+        narrator: cslName.array().optional(),
+        organizer: cslName.array().optional(),
+        "original-author": cslName.array().optional(),
+        performer: cslName.array().optional(),
+        producer: cslName.array().optional(),
+        recipient: cslName.array().optional(),
+        "reviewed-author": cslName.array().optional(),
+        "script-writer": cslName.array().optional(),
+        "series-creator": cslName.array().optional(),
+        translator: cslName.array().optional(),
         accessed: cslDate.optional(),
         "available-date": cslDate.optional(),
         "event-date": cslDate.optional(),
