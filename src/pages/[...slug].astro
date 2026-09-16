@@ -3,6 +3,8 @@ import { getCollection, render } from "astro:content";
 import Layout from "~/layouts/prelude/md.astro";
 import { mdxComponents } from "~/components/mdx";
 import { setLinkMeta } from "~/components/mdx/links/store";
+import { resolveInternalLinks } from "~/components/mdx/links/resolve";
+import { linkFrontmatter } from "~/components/mdx/links/types";
 
 export async function getStaticPaths() {
     const pages = await getCollection("pages");
@@ -14,19 +16,24 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content, headings, remarkPluginFrontmatter } = await render(entry);
-const linkMeta = remarkPluginFrontmatter.linkMeta ?? {};
+
+const { links, linkMeta: remoteLinks } = linkFrontmatter.parse(
+    remarkPluginFrontmatter,
+);
+
+// Internal links need no network: resolve them from the collection itself.
+const pages = await getCollection("pages");
+const internalLinks = resolveInternalLinks(
+    links,
+    new Map(pages.map((page) => [page.id, page.data])),
+);
+
+const linkMeta = { ...remoteLinks, ...internalLinks };
 
 // Populate the module store so <Link> components can look up metadata
 setLinkMeta(linkMeta);
 ---
 
-<Layout
-    frontmatter={{
-        ...entry.data,
-        links: remarkPluginFrontmatter.links,
-        linkMeta,
-    }}
-    headings={headings}
->
+<Layout frontmatter={{ ...entry.data, links, linkMeta }} headings={headings}>
     <Content components={mdxComponents} />
 </Layout>

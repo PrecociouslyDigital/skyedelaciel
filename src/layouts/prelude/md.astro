@@ -1,8 +1,21 @@
 ---
+import type { MarkdownHeading } from "astro";
+import type { CollectionEntry } from "astro:content";
 import "./prelude.scss";
 import Navbar from "~/components/Navbar.astro";
 import TableOfContents from "~/components/TableOfContents.astro";
 import Bibliography from "~/components/mdx/links/Bibliography.astro";
+import type { LinkMeta } from "~/components/mdx/links/types";
+
+export interface Props {
+    /** The page's own frontmatter, plus what the remark plugins added to it. */
+    frontmatter: CollectionEntry<"pages">["data"] & {
+        links: string[];
+        linkMeta: LinkMeta;
+    };
+    headings: MarkdownHeading[];
+}
+
 const { frontmatter, headings } = Astro.props;
 ---
 
@@ -49,7 +62,7 @@ const { frontmatter, headings } = Astro.props;
             <slot />
 
             {
-                frontmatter.bibliography && frontmatter.linkMeta && (
+                frontmatter.bibliography && (
                     <Bibliography
                         linkMeta={frontmatter.linkMeta}
                         citations={frontmatter.citation}

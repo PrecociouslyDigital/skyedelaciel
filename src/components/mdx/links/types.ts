@@ -1,17 +1,5 @@
 import { z } from "zod";
 
-export type LinkKind = "internal" | "doi" | "wikipedia" | "external";
-
-export interface LinkEntry {
-    csl: CslData;
-    kind: LinkKind;
-    summary?: {
-        type: "html" | "text";
-        content: string;
-    };
-    imageUrl?: string;
-}
-
 export type CslDate = z.infer<typeof cslDate>;
 
 export const cslDate = z
@@ -295,3 +283,60 @@ export const cslData = z
     })
     .strict()
     .describe("JSON schema for CSL input data");
+
+/** What sort of link this is — a property of the URL alone. */
+export type LinkKind = z.infer<typeof linkKind>;
+export const linkKind = z.enum(["internal", "doi", "wikipedia", "external"]);
+
+/** Popover body text, in whichever form the source gave it to us. */
+export type Summary = z.infer<typeof summary>;
+export const summary = z.object({
+    type: z.enum(["html", "text"]),
+    content: z.string(),
+});
+
+/** A link we managed to look up. */
+export type ResolvedLink = z.infer<typeof resolvedLink>;
+export const resolvedLink = z.object({
+    resolution: z.literal("resolved"),
+    kind: linkKind,
+    csl: cslData,
+    summary: summary.optional(),
+    imageUrl: z.string().optional(),
+});
+
+/**
+ * A link we failed to look up. It still carries a `csl` — enough for a
+ * bare-URL bibliography entry — but nothing a popover could be built from.
+ */
+export type UnresolvedLink = z.infer<typeof unresolvedLink>;
+export const unresolvedLink = z.object({
+    resolution: z.literal("unresolved"),
+    kind: linkKind,
+    csl: cslData,
+});
+
+/**
+ * Everything known about one link. `kind` and `resolution` are orthogonal:
+ * any kind of link can fail to resolve.
+ */
+export type LinkEntry = z.infer<typeof linkEntry>;
+export const linkEntry = z.discriminatedUnion("resolution", [
+    resolvedLink,
+    unresolvedLink,
+]);
+
+/** Every link in a document, keyed by URL. */
+export type LinkMeta = z.infer<typeof linkMeta>;
+export const linkMeta = z.record(z.string(), linkEntry);
+
+/**
+ * What the extractLinks remark plugin contributes to a page's frontmatter.
+ * That channel is a JSON round-trip, so the far side re-parses rather than
+ * trusting what comes out of it.
+ */
+export type LinkFrontmatter = z.infer<typeof linkFrontmatter>;
+export const linkFrontmatter = z.object({
+    links: z.array(z.string()).default([]),
+    linkMeta: linkMeta.default({}),
+});

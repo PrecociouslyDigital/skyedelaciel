@@ -1,27 +1,23 @@
 ---
 import { formatCitation } from "./cite";
-import type { LinkEntry, CslData } from "./types";
+import type { LinkMeta, CslData } from "./types";
 
 interface Props {
-    linkMeta: Record<string, LinkEntry>;
+    linkMeta: LinkMeta;
     citations?: CslData[];
 }
 
 const { linkMeta, citations = [] } = Astro.props;
 
-// Merge resolved link entries and manually added citations
-const fromLinks = Object.values(linkMeta)
-    .filter((e) => e.kind !== "internal")
-    .map((e) => ({ csl: e.csl, formatted: formatCitation(e) }));
+// Every outbound link, plus any citations added by hand in the frontmatter
+const cited = Object.values(linkMeta)
+    .filter((entry) => entry.kind !== "internal")
+    .map((entry) => entry.csl)
+    .concat(citations);
 
-const fromCitations = citations.map((csl) => ({
-    csl,
-    formatted: formatCitation({ csl, kind: "external" }),
-}));
-
-const entries = [...fromLinks, ...fromCitations].sort((a, b) =>
-    a.formatted.localeCompare(b.formatted),
-);
+const entries = cited
+    .map((csl) => ({ csl, formatted: formatCitation(csl) }))
+    .sort((a, b) => a.formatted.localeCompare(b.formatted));
 ---
 
 {
@@ -31,7 +27,11 @@ const entries = [...fromLinks, ...fromCitations].sort((a, b) =>
             <ol>
                 {entries.map(({ csl, formatted }) => (
                     <li>
-                        <a href={csl.URL} class="content-link" set:html={formatted}/>
+                        <a
+                            href={csl.URL}
+                            class="content-link"
+                            set:html={formatted}
+                        />
                     </li>
                 ))}
             </ol>

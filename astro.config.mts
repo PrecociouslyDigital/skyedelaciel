@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import * as R from "ramda";
+import { match } from "ts-pattern";
 
 import svelte from "@astrojs/svelte";
 
@@ -11,9 +12,8 @@ import type { RemarkPlugin } from "@astrojs/markdown-remark";
 import { definitions } from "mdast-util-definitions";
 import { visit } from "unist-util-visit";
 
-import { resolveLinkMeta } from "./src/components/mdx/links/resolve";
+import { resolveRemoteLinks } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
-import type { LinkEntry } from "./src/components/mdx/links/types";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
 
 loadCache();
@@ -21,30 +21,17 @@ loadCache();
 const extractLinks: RemarkPlugin = () => async (tree, file) => {
     const getDefinition = definitions(tree);
     const links: string[] = [];
-    visit(tree, ["link", "linkReference"], (node) => {
-        switch (node.type) {
-            case "link":
-                links.push(node.url);
-                break;
-            case "linkReference": {
-                const mbDef = getDefinition(node.identifier);
-                if (mbDef != null) links.push(mbDef.url);
-                break;
-            }
-        }
+    visit(tree, ["link", "linkReference"] as const, (node) => {
+        match(node)
+            .with({ type: "link" }, ({ url }) => links.push(url))
+            .with({ type: "linkReference" }, ({ identifier }) => {
+                const definition = getDefinition(identifier);
+                if (definition) links.push(definition.url);
+            })
+            .exhaustive();
     });
 
-    // Resolve metadata for each unique URL
-    const unique = [...new Set(links)].filter(
-        R.compose(R.not, R.startsWith("#")),
-    );
-    const resolved = await Promise.all(
-        unique.map((url) => resolveLinkMeta(url)),
-    );
-    const linkMeta: Record<string, LinkEntry> = {};
-    for (let i = 0; i < unique.length; i++) {
-        linkMeta[unique[i]] = resolved[i];
-    }
+    const linkMeta = await resolveRemoteLinks(links);
     saveCache();
 
     file.data.astro = R.mergeDeepWith(R.concat, file.data.astro, {

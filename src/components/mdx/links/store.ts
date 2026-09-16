@@ -1,9 +1,9 @@
-import type { LinkEntry } from "./types";
+import type { LinkEntry, LinkMeta } from "./types";
 
 /** Module-level store for per-page link metadata, set before render. */
-let store: Record<string, LinkEntry> = {};
+let store: LinkMeta = {};
 
-export function setLinkMeta(meta: Record<string, LinkEntry>): void {
+export function setLinkMeta(meta: LinkMeta): void {
     store = meta;
 }
 

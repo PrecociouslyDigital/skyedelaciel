@@ -1,0 +1,35 @@
+# resolve.ts
+
+## 2026-09-15 — two date bugs that the old `catch` hid
+
+`parseDateParts` called `getUTCDay()` — the *weekday*, 0–6 — where it meant
+`getUTCDate()`. For `2026-02-08` that produced day `0`, which the old
+`formatCslDate`'s `month && day` truthiness test read as "no day", so the link
+rendered "February 2026". On any other weekday it rendered a plausible but
+wrong day, which is why it survived so long.
+
+The second one only shows up with unparseable input. `new Date(garbage)` gives
+an Invalid Date, so the old code stored `[[NaN, NaN, NaN]]`. `JSON.stringify`
+writes NaN as `null`, the cache reads back `[[null, null, null]]`,
+`parts.map(Number)` turns that into `[0, 0, 0]`, and the year-only fallback
+printed the literal string **"0"**. `parseCslDate` now checks `Date.parse`
+first and keeps unparseable input in CSL's own `raw` variant.
+
+## 2026-09-15 — DOI resolution does not currently work
+
+Unrelated to the refactor, found while verifying it. Two independent problems,
+so fixing either alone changes nothing:
+
+1. `api.crossref.org/works/{doi}` answers **406** to the
+   `application/vnd.citationstyles.csl+json` Accept header. Content negotiation
+   against `https://doi.org/{doi}` returns the same data and does work.
+2. What CrossRef returns is not CSL-JSON as `cslData` defines it. `type` is
+   `"journal-article"` (CrossRef's vocabulary, not CSL's `"article-journal"`),
+   there is no `id` (the DOI lives in `DOI`), and each author carries
+   `sequence` / `affiliation` / `role`, which `.strict()` rejects.
+
+So a real fix is a CrossRef → CSL normalisation step, not a URL change. Until
+then DOI links resolve to the `unresolved` variant: no popover, and a bare-URL
+MLA entry in the bibliography. That is at least visible now — under the old
+per-resolver `catch` it was indistinguishable from a successful lookup that
+happened to find nothing.

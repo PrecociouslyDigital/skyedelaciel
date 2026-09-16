@@ -1,71 +1,52 @@
 ---
 import { getLinkMeta } from "./store";
-import { authorLine, formatCslDate } from "./cite";
-import * as R from "ramda";
+import { buildPreview } from "./preview";
 
 export interface Props {
     href: string;
-    showImage: boolean;
+    showImage?: boolean;
     [key: string]: any;
 }
 
 const { href, showImage = false, ...rest } = Astro.props;
 
 const entry = getLinkMeta(href);
-
-/** Whether we have enough metadata to show a popover. */
-const hasPopover = R.isNotNil(entry) && (entry.csl?.title || entry.summary || entry.csl?.abstract);
-
-/** Single metadata line: author, site/journal, date — joined by " · " */
-const metaParts = (() => {
-    if (entry == null) return [];
-    switch (entry.kind) {
-        case "external":
-        case "doi":
-            return [
-                authorLine(entry),
-                entry.csl?.["container-title"] ?? "",
-                formatCslDate(entry.csl.issued),
-            ];
-        case "wikipedia":
-        case "internal":
-            return [];
-    }
-})();
-const metaLine = metaParts.map(R.trim).filter(R.isNotEmpty).join(" · ");
+const preview = entry && buildPreview(entry);
 ---
 
 {
-    hasPopover ? (
+    preview ? (
         <span class="link-wrapper">
             <a href={href} {...rest} class:list={["content-link", rest.class]}>
                 <slot />
             </a>
             <span class="link-popover" role="tooltip">
-                {showImage && entry.imageUrl && (
+                {showImage && preview.image && (
                     <img
                         class="link-popover-image"
-                        src={entry.imageUrl}
+                        src={preview.image}
                         alt=""
                         loading="lazy"
                     />
                 )}
-                {entry.csl?.title && (
-                    <span class="link-popover-title">{entry.csl.title}</span>
+                <span class="link-popover-title">{preview.title}</span>
+                {preview.meta.length > 0 && (
+                    <span class="link-popover-meta">
+                        {preview.meta.join(" · ")}
+                    </span>
                 )}
-                {metaLine && <span class="link-popover-meta">{metaLine}</span>}
-                {entry?.summary && (entry.summary.type === "html" ? (
-                    <span
-                        class="link-popover-description"
-                        set:html={entry.summary.content.replace("<p>", "<span>")
-                    .replace("</p>", "</span>")}
-                    />
-                ) : (
-                    <span
-                        class="link-popover-description"
-                        set:text={entry.summary.content}
-                    />
-                ))}
+                {preview.body &&
+                    (preview.body.type === "html" ? (
+                        <span
+                            class="link-popover-description"
+                            set:html={preview.body.content}
+                        />
+                    ) : (
+                        <span
+                            class="link-popover-description"
+                            set:text={preview.body.content}
+                        />
+                    ))}
             </span>
         </span>
     ) : (
@@ -107,7 +88,6 @@ const metaLine = metaParts.map(R.trim).filter(R.isNotEmpty).join(" · ");
             opacity 0.15s ease 0.3s,
             display 0.15s ease 0.4s;
         transition-behavior: allow-discrete;
-
     }
 
     .link-wrapper:hover .link-popover,
