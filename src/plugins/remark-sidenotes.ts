@@ -8,6 +8,7 @@
  */
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
 import { visit } from "unist-util-visit";
+import { match } from "ts-pattern";
 import type { Root, FootnoteDefinition } from "mdast";
 import type { MdxJsxTextElement } from "mdast-util-mdx-jsx";
 
@@ -31,16 +32,15 @@ const remarkSidenotes: RemarkPlugin = () => (tree: Root) => {
             if (inlineChildren.length > 0) {
                 inlineChildren.push({ type: "html", value: "<br/>" });
             }
-            if (block.type === "paragraph") {
-                inlineChildren.push(
-                    ...(block.children as MdxJsxTextElement["children"]),
-                );
-            } else {
-                // Non-paragraph blocks (code, lists, etc.) — keep as-is
-                inlineChildren.push(
-                    block as MdxJsxTextElement["children"][number],
-                );
-            }
+            inlineChildren.push(
+                ...match(block)
+                    .with({ type: "paragraph" }, ({ children }) => children)
+                    // Non-paragraph blocks (code, lists, etc.) are kept as-is,
+                    // which mdast's inline children type doesn't admit.
+                    .otherwise((block) => [
+                        block as MdxJsxTextElement["children"][number],
+                    ]),
+            );
         }
 
         const sidenote: MdxJsxTextElement = {

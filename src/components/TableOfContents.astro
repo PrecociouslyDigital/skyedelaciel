@@ -1,4 +1,6 @@
 ---
+import { match, P } from "ts-pattern";
+
 interface Heading {
     depth: number;
     slug: string;
@@ -11,38 +13,44 @@ interface TocNode {
     children: TocNode[];
 }
 
-interface Props {
-    headings?: Heading[];
-    nodes?: TocNode[];
+/** A section of the tree that is still open for children. */
+interface Frame {
+    depth: number;
+    children: TocNode[];
 }
 
-const { headings, nodes: providedNodes } = Astro.props;
+/**
+ * Exactly one of these: the root call passes the page's flat heading list,
+ * the <Astro.self> recursion below passes an already-built subtree.
+ */
+type Props =
+    | { headings: Heading[]; nodes?: never }
+    | { nodes: TocNode[]; headings?: never };
 
 /** Build nested tree from flat heading list */
 function buildTree(headings: Heading[]): TocNode[] {
-    const root: TocNode[] = [];
-    const stack: { depth: number; children: TocNode[] }[] = [
-        { depth: 0, children: root },
-    ];
+    const root: Frame = { depth: 0, children: [] };
+    /** Sections still open for children, outermost first. */
+    let open: Frame[] = [root];
 
     for (const { depth, slug, text } of headings) {
         const node: TocNode = { slug, text, children: [] };
 
-        // Pop until we find a parent at shallower depth
-        while (stack.length > 1 && stack[stack.length - 1].depth >= depth) {
-            stack.pop();
-        }
-
-        stack[stack.length - 1].children.push(node);
-        stack.push({ depth, children: node.children });
+        // Only a shallower section can still be this heading's ancestor
+        open = open.filter((frame) => frame.depth < depth);
+        (open.at(-1) ?? root).children.push(node);
+        open.push({ depth, children: node.children });
     }
 
-    return root;
+    return root.children;
 }
 
-const filteredHeadings = headings?.filter((h) => h.depth <= 3);
-const nodes =
-    providedNodes ?? (filteredHeadings ? buildTree(filteredHeadings) : []);
+const nodes = match(Astro.props)
+    .with({ headings: P.nonNullable }, ({ headings }) =>
+        buildTree(headings.filter((h) => h.depth <= 3)),
+    )
+    .with({ nodes: P.nonNullable }, ({ nodes }) => nodes)
+    .exhaustive();
 ---
 
 {

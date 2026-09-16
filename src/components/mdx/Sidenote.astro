@@ -12,11 +12,15 @@ export interface Props {
 
 const { id } = Astro.props;
 const inputId = `sn-${id}`;
+
+/* doc-noteref is DPub-ARIA. Astro's AriaRole union covers WAI-ARIA 1.2 only
+   and is a plain alias, so it can't be augmented — spread it in instead. */
+const noterefRole: Record<string, string> = { role: "doc-noteref" };
 ---
 
 <span class="sidenote-wrapper">
     <input type="checkbox" id={inputId} />
-    <label for={inputId} role="doc-noteref"></label>
+    <label for={inputId} {...noterefRole}></label>
     <small role="note">
         <label for={inputId}></label>
         <slot />
