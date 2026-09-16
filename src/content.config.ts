@@ -9,7 +9,7 @@ const pages = defineCollection({
         title: z.string(),
         abstract: z.string(),
         author: z.string().optional(),
-        bibliography: z.boolean().default(true),
+        bibliography: z.boolean().default(false),
         citation: z.array(cslData).default([]),
     }),
 });

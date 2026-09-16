@@ -49,7 +49,7 @@ const { frontmatter, headings } = Astro.props;
             <slot />
 
             {
-                frontmatter.bibliography !== false && frontmatter.linkMeta && (
+                frontmatter.bibliography && frontmatter.linkMeta && (
                     <Bibliography
                         linkMeta={frontmatter.linkMeta}
                         citations={frontmatter.citation}
