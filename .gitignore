@@ -20,6 +20,9 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
+# Inkscape crash backups, e.g. logo.svg.2026_01_25_23_44_10.0.svg
+*.[0-9][0-9][0-9][0-9]_[0-9][0-9]_[0-9][0-9]_*.svg
+
 # jetbrains setting folder
 .idea/
 

@@ -50,7 +50,10 @@
          <feColorMatrix id="mask-powermask-path-effect34566_primitive1" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="mask-powermask-path-effect34566_primitive2" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect38509">
+      <!-- Without an explicit region, SVG's default (-10%..110% of the viewport)
+           is placed in each layer's translated space, sliding it off the artwork
+           and clipping the lower right. Values here match the Inkscape page. -->
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect38509">
          <path id="mask-powermask-path-effect38509_box" style="fill:#ffffff;fill-opacity:1" d="m 399.75644,464.52518 h 369.6555 v 346.643 h -369.6555 z" />
          <path style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:42;stroke-linecap:butt;stroke-linejoin:bevel;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" id="path38507" sodipodi:type="arc" sodipodi:cx="587.12299" sodipodi:cy="351.38196" sodipodi:rx="171.82637" sodipodi:ry="171.82637" sodipodi:start="0.93237834" sodipodi:end="1.2873723" sodipodi:open="true" sodipodi:arc-type="arc" d="m 689.51875,489.36532 a 171.82637,171.82637 0 0 1 -54.34543,26.98775" />
       </mask>
@@ -62,7 +65,7 @@
          <feColorMatrix id="mask-powermask-path-effect38521_primitive1" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="mask-powermask-path-effect38521_primitive2" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect38531">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect38531">
          <path id="mask-powermask-path-effect38531_box" style="fill:#ffffff;fill-opacity:1" d="M 227.61913,462.83872 H 597.27462 V 809.48173 H 227.61913 Z" />
          <path style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" id="path38529" sodipodi:type="arc" sodipodi:cx="670.98047" sodipodi:cy="501.13327" sodipodi:rx="171.82637" sodipodi:ry="171.82637" sodipodi:start="1.7138554" sodipodi:end="2.5360894" sodipodi:arc-type="arc" sodipodi:open="true" d="M 646.48291,671.20435 A 171.82637,171.82637 0 0 1 529.70212,598.9327" />
       </mask>
@@ -78,7 +81,7 @@
          <feColorMatrix id="feColorMatrix44494" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="feColorMatrix44496" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect38630">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect38630">
          <path id="mask-powermask-path-effect38630_box" style="fill:#ffffff;fill-opacity:1" d="M 228.09203,314.62376 H 511.79317 V 684.22847 H 228.09203 Z" />
          <path style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" id="path38628" sodipodi:type="arc" sodipodi:cx="584.58557" sodipodi:cy="649.36218" sodipodi:rx="171.82637" sodipodi:ry="171.82637" sodipodi:start="2.8743878" sodipodi:end="3.507206" sodipodi:open="true" sodipodi:arc-type="arc" mask="none" d="m 418.85686,694.73062 a 171.82637,171.82637 0 0 1 5.25926,-106.80017" />
       </mask>
@@ -86,7 +89,7 @@
          <feColorMatrix id="mask-powermask-path-effect38630_primitive1" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="mask-powermask-path-effect38630_primitive2" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect38659">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect38659">
          <path id="mask-powermask-path-effect38659_box" style="fill:#ffffff;fill-opacity:1" d="m 229.87569,188.68411 h 369.65549 v 346.643 H 229.87569 Z" />
          <path style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" id="path38657" sodipodi:type="arc" sodipodi:cx="412.4455" sodipodi:cy="647.67572" sodipodi:rx="171.82637" sodipodi:ry="171.82637" sodipodi:start="3.9313059" sodipodi:end="4.5140637" sodipodi:open="true" sodipodi:arc-type="arc" mask="none" d="M 291.47131,525.65298 A 171.82637,171.82637 0 0 1 378.59094,479.2175" />
       </mask>
@@ -102,7 +105,7 @@
          <feColorMatrix id="mask-powermask-path-effect40171_primitive1" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="mask-powermask-path-effect40171_primitive2" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40182">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40182">
          <path id="mask-powermask-path-effect40182_box" style="fill:#ffffff;fill-opacity:1" d="m 402.29386,189.57596 h 369.6555 v 346.643 h -369.6555 z" />
          <path style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" id="path40180" sodipodi:type="arc" sodipodi:cx="327.00522" sodipodi:cy="499.42612" sodipodi:rx="171.82637" sodipodi:ry="171.82637" sodipodi:start="5.047183" sodipodi:end="5.6096244" sodipodi:open="true" sodipodi:arc-type="arc" mask="none" class="UnoptimicedTransforms" d="m 383.46301,337.13989 a 171.82637,171.82637 0 0 1 77.84263,55.10555" />
       </mask>
@@ -110,7 +113,7 @@
          <feColorMatrix id="mask-powermask-path-effect40182_primitive1" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="mask-powermask-path-effect40182_primitive2" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40223">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40223">
          <path id="mask-powermask-path-effect40223_box" style="fill:#ffffff;fill-opacity:1" d="M 486.19252,316.33091 H 769.89366 V 685.93563 H 486.19252 Z" />
          <path style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:40;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" id="path40221" sodipodi:type="arc" sodipodi:cx="414.70206" sodipodi:cy="350.49011" sodipodi:rx="171.82637" sodipodi:ry="171.82637" sodipodi:start="6.0848225" sodipodi:end="0.39677183" sodipodi:arc-type="arc" sodipodi:open="true" mask="none" d="m 583.159,316.62923 a 171.82637,171.82637 0 0 1 -9.9792,100.26198" />
       </mask>
@@ -118,27 +121,27 @@
          <feColorMatrix id="mask-powermask-path-effect40223_primitive1" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="mask-powermask-path-effect40223_primitive2" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40461">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40461">
          <path id="mask-powermask-path-effect40461_box" style="fill:#ffffff;fill-opacity:1" d="m 603.50594,304.3069 h 98.73714 v 55.33248 h -98.73714 z" />
          <path id="path40439" mask="none" d="m 740.64595,428.5506 a 171.82637,171.82637 0 0 1 -34.0498,46.32413" style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
       </mask>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40466">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40466">
          <path id="mask-powermask-path-effect40466_box" style="fill:#ffffff;fill-opacity:1" d="m 387.7758,452.53088 h 393.63614 v 370.6373 H 387.7758 Z" />
          <path id="path40443" mask="none" d="m 740.64595,428.5506 a 171.82637,171.82637 0 0 1 -34.0498,46.32413" style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
       </mask>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40471">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40471">
          <path id="mask-powermask-path-effect40471_box" style="fill:#ffffff;fill-opacity:1" d="M 215.61913,450.84442 H 609.25527 V 821.48173 H 215.61913 Z" />
          <path id="path40447" mask="none" d="m 740.64595,428.5506 a 171.82637,171.82637 0 0 1 -34.0498,46.32413" style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
       </mask>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40476">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40476">
          <path id="mask-powermask-path-effect40476_box" style="fill:#ffffff;fill-opacity:1" d="M 216.09203,302.65665 H 523.75471 V 696.19559 H 216.09203 Z" />
          <path id="path40451" mask="none" d="m 740.64595,428.5506 a 171.82637,171.82637 0 0 1 -34.0498,46.32413" style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
       </mask>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40481">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40481">
          <path id="mask-powermask-path-effect40481_box" style="fill:#ffffff;fill-opacity:1" d="m 217.87569,176.68411 h 393.63614 v 370.6373 H 217.87569 Z" />
          <path id="path40455" mask="none" d="m 740.64595,428.5506 a 171.82637,171.82637 0 0 1 -34.0498,46.32413" style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
       </mask>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40486">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40486">
          <path style="fill:#000000;fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" id="path40459" sodipodi:type="arc" sodipodi:cx="587.12299" sodipodi:cy="351.38196" sodipodi:rx="171.82637" sodipodi:ry="171.82637" sodipodi:start="0.46576706" sodipodi:end="0.80194056" sodipodi:open="true" sodipodi:arc-type="arc" mask="none" d="m 740.64595,428.5506 a 171.82637,171.82637 0 0 1 -34.0498,46.32413" />
       </mask>
       <filter id="mask-powermask-path-effect40461_inverse" inkscape:label="filtermask-powermask-path-effect40461" style="color-interpolation-filters:sRGB" height="100" width="100" x="-50" y="-50">
@@ -185,10 +188,10 @@
          <feColorMatrix id="mask-powermask-path-effect40631_primitive1" values="1" type="saturate" result="fbSourceGraphic" />
          <feColorMatrix id="mask-powermask-path-effect40631_primitive2" values="-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0 " in="fbSourceGraphic" />
       </filter>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect41323">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect41323">
          <path id="path41321" mask="none" style="fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round" d="m 693.58076,671.46685 a 171.82637,171.82637 0 0 1 -81.41,-8.88476 M 758.94936,351.38196 A 171.82637,171.82637 0 0 1 616.96032,520.5979 171.82637,171.82637 0 0 1 425.65901,410.15004 171.82637,171.82637 0 0 1 501.2098,202.57596 m 127.29614,132.06342 a 171.82637,171.82637 0 0 1 48.73714,-5.21831 M 498.67239,798.16818 A 171.82637,171.82637 0 0 1 423.1216,590.5941 171.82637,171.82637 0 0 1 614.42291,480.14624 171.82637,171.82637 0 0 1 756.41194,649.36218 m -515.79281,-1.68646 a 171.82637,171.82637 0 0 1 141.98904,-169.21594 171.82637,171.82637 0 0 1 191.3013,110.44787 171.82637,171.82637 0 0 1 -75.5508,207.57408 M 241.09203,350.62012 a 171.82637,171.82637 0 0 1 217.53982,38.35813 171.82637,171.82637 0 0 1 0,220.89573 171.82637,171.82637 0 0 1 -217.53982,38.35814 M 500.61525,201.68411 A 171.82637,171.82637 0 0 1 576.16603,409.2582 171.82637,171.82637 0 0 1 384.86471,519.70605 171.82637,171.82637 0 0 1 242.87569,350.49011" />
       </mask>
-      <mask maskUnits="userSpaceOnUse" id="mask-powermask-path-effect40631">
+      <mask maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" id="mask-powermask-path-effect40631">
          <path id="mask-powermask-path-effect41323_box" style="fill:#ffffff;fill-opacity:1" d="M 237.46129,272.36666 H 760.84694 V 729.89988 H 237.46129 Z" />
          <path id="mask-powermask-path-effect40631_box" style="fill:#ffffff;fill-opacity:1" d="M 237.46129,272.36666 H 760.84694 V 729.89988 H 237.46129 Z" />
          <path id="path41325" mask="none" style="fill-opacity:0;stroke:#000000;stroke-width:48;stroke-linecap:round;stroke-linejoin:round" d="m 693.58076,671.46685 a 171.82637,171.82637 0 0 1 -81.41,-8.88476 M 758.94936,351.38196 A 171.82637,171.82637 0 0 1 616.96032,520.5979 171.82637,171.82637 0 0 1 425.65901,410.15004 171.82637,171.82637 0 0 1 501.2098,202.57596 m 127.29614,132.06342 a 171.82637,171.82637 0 0 1 48.73714,-5.21831 M 498.67239,798.16818 A 171.82637,171.82637 0 0 1 423.1216,590.5941 171.82637,171.82637 0 0 1 614.42291,480.14624 171.82637,171.82637 0 0 1 756.41194,649.36218 m -515.79281,-1.68646 a 171.82637,171.82637 0 0 1 141.98904,-169.21594 171.82637,171.82637 0 0 1 191.3013,110.44787 171.82637,171.82637 0 0 1 -75.5508,207.57408 M 241.09203,350.62012 a 171.82637,171.82637 0 0 1 217.53982,38.35813 171.82637,171.82637 0 0 1 0,220.89573 171.82637,171.82637 0 0 1 -217.53982,38.35814 M 500.61525,201.68411 A 171.82637,171.82637 0 0 1 576.16603,409.2582 171.82637,171.82637 0 0 1 384.86471,519.70605 171.82637,171.82637 0 0 1 242.87569,350.49011" />
