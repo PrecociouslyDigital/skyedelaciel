@@ -147,6 +147,23 @@ const nodes = match(Astro.props)
         }
     }
 
+    /* Which side the collapse indicator sits on depends on which container
+       renders this component, not on viewport width — right in the sidebar,
+       left inline. See design.mdx, Table of contents. */
+    :global(.toc-portrait) .toc-list li {
+        grid-template-columns: 1em 1fr;
+
+        > a {
+            grid-column: 2;
+        }
+
+        > details > summary {
+            grid-column: 1;
+            padding-left: 0;
+            padding-right: 0.5ch;
+        }
+    }
+
     @media print {
         details {
             // Expand all for print

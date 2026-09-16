@@ -1,17 +1,13 @@
 {
-  "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*"],
-  "exclude": [
-    "dist"
-  ],
-  "compilerOptions": {
-    "strictNullChecks": true,
-    "noImplicitReturns": true,
-    "noUncheckedIndexedAccess": true,
-    "paths": {
-      "~/*": [
-        "./src/*"
-      ]
+    "extends": "astro/tsconfigs/strict",
+    "include": [".astro/types.d.ts", "**/*"],
+    "exclude": ["dist", "test-results", "playwright-report", ".gallery"],
+    "compilerOptions": {
+        "strictNullChecks": true,
+        "noImplicitReturns": true,
+        "noUncheckedIndexedAccess": true,
+        "paths": {
+            "~/*": ["./src/*"]
+        }
     }
-  }
 }

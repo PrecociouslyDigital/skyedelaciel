@@ -28,3 +28,11 @@ pnpm-debug.log*
 
 # link metadata cache
 .link-cache.json
+
+# test output
+test-results/
+playwright-report/
+# screenshot gallery — for reading, never a committed baseline
+.gallery/
+# browse daemon: socket, pidfile and log
+.browse.*

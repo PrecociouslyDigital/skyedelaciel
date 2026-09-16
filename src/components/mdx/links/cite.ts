@@ -1,7 +1,7 @@
 // @ts-expect-error — citeproc has no type declarations
 import CSL from "citeproc";
 import { match, P } from "ts-pattern";
-import type { CslData, CslDate, CslName } from "./types";
+import type { CslData, CslDate, CslName, LinkEntry } from "./types";
 import mlaStyle from "./mla.csl?raw";
 import enUSLocale from "./locale-en-US.xml?raw";
 
@@ -79,3 +79,34 @@ export const authorLine = (csl: CslData): string | undefined => {
         .filter((name) => name !== undefined);
     return names?.length ? names.join(", ") : undefined;
 };
+
+/**
+ * Whether a link points to a citable work rather than a page of this site.
+ * The bibliography and the printed citations must agree on this, so both
+ * call this instead of checking `entry.kind` on their own.
+ */
+export const isCitable = (entry: LinkEntry): boolean =>
+    entry.kind !== "internal";
+
+/** The year alone, at whatever granularity the date happens to carry. */
+export const cslYear = (date: CslDate | undefined): string | undefined => {
+    const year = date?.["date-parts"]?.[0]?.[0];
+    if (year !== undefined) return String(year);
+    return (date?.literal ?? date?.raw)?.match(/\d{4}/)?.[0];
+};
+
+/**
+ * MLA in-text citation — "(Author, Year)" — for print.
+ *
+ * A work is named by whatever identifies it in the bibliography: its first
+ * author's surname, or its title when it has no author. Undefined when it has
+ * neither, since "()" sends the reader nowhere.
+ */
+export function formatInlineCitation(csl: CslData): string | undefined {
+    const first = csl.author?.[0];
+    const named = (first && (first.family ?? formatAuthor(first))) ?? csl.title;
+    if (named === undefined) return undefined;
+
+    const year = cslYear(csl.issued);
+    return year ? `(${named}, ${year})` : `(${named})`;
+}

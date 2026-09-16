@@ -1,5 +1,5 @@
 ---
-import { formatCitation } from "./cite";
+import { formatCitation, isCitable } from "./cite";
 import type { LinkMeta, CslData } from "./types";
 
 interface Props {
@@ -11,7 +11,7 @@ const { linkMeta, citations = [] } = Astro.props;
 
 // Every outbound link, plus any citations added by hand in the frontmatter
 const cited = Object.values(linkMeta)
-    .filter((entry) => entry.kind !== "internal")
+    .filter(isCitable)
     .map((entry) => entry.csl)
     .concat(citations);
 
@@ -25,13 +25,20 @@ const entries = cited
         <section class="bibliography" aria-label="Works referenced">
             <h2>Works Referenced</h2>
             <ol>
+                {/* An entry with no URL has nothing to link to — an <a> with no
+                    href still gets announced as a link by screen readers — so
+                    it renders as plain text instead. */}
                 {entries.map(({ csl, formatted }) => (
                     <li>
-                        <a
-                            href={csl.URL}
-                            class="content-link"
-                            set:html={formatted}
-                        />
+                        {csl.URL ? (
+                            <a
+                                href={csl.URL}
+                                class="content-link"
+                                set:html={formatted}
+                            />
+                        ) : (
+                            <span set:html={formatted} />
+                        )}
                     </li>
                 ))}
             </ol>

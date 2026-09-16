@@ -21,10 +21,22 @@ const { frontmatter, headings } = Astro.props;
 
 <html lang="en">
     <head>
-        <script>
-            //Hack: Set a temporary field on the root element to prevent a FOUC
+        {
+            /*
+                Applies a stored scheme choice before first paint, so the page
+                never flashes the scheme the reader turned off. ThemeToggle
+                clears this attribute once it hydrates; colors.scss honours
+                either signal.
+
+                `is:inline` is required: without it, Astro bundles this as a
+                deferred `type="module"` script that runs after paint,
+                defeating the point. Being unprocessed, it must be plain
+                browser JS — no TypeScript, no imports.
+            */
+        }
+        <script is:inline>
             if (JSON.parse(localStorage.getItem("theme-override") ?? "false")) {
-                document.querySelector("html")!.dataset.themeChecked = "true";
+                document.documentElement.dataset.themeChecked = "true";
             }
         </script>
         <script src="~/components/toc-scroll.ts"></script>

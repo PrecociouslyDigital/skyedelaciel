@@ -8,7 +8,12 @@
         "preview": "astro preview",
         "astro": "astro",
         "check": "astro check",
-        "pretty": "prettier --write src/**/*"
+        "pretty": "prettier --write src/**/*",
+        "build:fixtures": "INCLUDE_FIXTURES=1 astro build",
+        "test": "playwright test",
+        "test:unit": "vitest run",
+        "gallery": "node tools/gallery.mjs",
+        "lint:css": "stylelint \"src/**/*.{scss,astro,svelte}\""
     },
     "dependencies": {
         "@astrojs/mdx": "^5.0.0-beta.2",
@@ -34,11 +39,24 @@
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.6",
+        "@axe-core/playwright": "^4.13.0",
         "@citation-js/plugin-isbn": "^0.4.0",
+        "@playwright/test": "^1.63.0",
         "@types/node": "^25.2.0",
         "@types/ramda": "^0.31.1",
+        "postcss-html": "^2.0.0",
         "prettier": "^3.8.1",
         "prettier-plugin-astro": "^0.14.1",
-        "prettier-plugin-svelte": "^3.4.1"
+        "prettier-plugin-svelte": "^3.4.1",
+        "stylelint": "^17.15.0",
+        "stylelint-config-standard-scss": "^17.0.0",
+        "vite": "^7.3.6",
+        "vitest": "^5.0.1"
+    },
+    "engines": {
+        "node": ">=24"
+    },
+    "overrides": {
+        "vite": "$vite"
     }
 }

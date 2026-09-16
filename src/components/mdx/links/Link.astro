@@ -1,5 +1,6 @@
 ---
-import { getLinkMeta } from "./store";
+import { formatInlineCitation, isCitable } from "./cite";
+import { getLinkMeta, hasBibliography } from "./store";
 import { buildPreview } from "./preview";
 
 export interface Props {
@@ -12,14 +13,24 @@ const { href, showImage = false, ...rest } = Astro.props;
 
 const entry = getLinkMeta(href);
 const preview = entry && buildPreview(entry);
+
+/**
+ * Printed pages can't be clicked, so this is what appears in the link's
+ * place: the "(Author, Year)" citation when the target is in the
+ * bibliography, otherwise its raw address.
+ */
+const inBibliography = hasBibliography() && entry && isCitable(entry);
+const citation =
+    (inBibliography && formatInlineCitation(entry.csl)) || `(${href})`;
 ---
 
-{
-    preview ? (
-        <span class="link-wrapper">
-            <a href={href} {...rest} class:list={["content-link", rest.class]}>
-                <slot />
-            </a>
+<span class="link-wrapper">
+    <a href={href} {...rest} class:list={["content-link", rest.class]}>
+        <slot />
+    </a>
+    <span class="link-cite"> {citation}</span>
+    {
+        preview && (
             <span class="link-popover" role="tooltip">
                 {showImage && preview.image && (
                     <img
@@ -48,18 +59,19 @@ const preview = entry && buildPreview(entry);
                         />
                     ))}
             </span>
-        </span>
-    ) : (
-        <a href={href} {...rest} class:list={["content-link", rest.class]}>
-            <slot />
-        </a>
-    )
-}
+        )
+    }
+</span>
 
 <style lang="scss">
     .link-wrapper {
         position: relative;
         display: inline;
+    }
+
+    /* Screens have the link itself; only paper needs it spelled out. */
+    .link-cite {
+        display: none;
     }
 
     .link-popover {
@@ -117,6 +129,10 @@ const preview = entry && buildPreview(entry);
     @media print {
         .link-popover {
             display: none !important;
+        }
+
+        .link-cite {
+            display: inline;
         }
     }
 </style>

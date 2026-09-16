@@ -14,5 +14,65 @@
             "type": "html",
             "content": "<p>Welcome to the Crossref REST API. This page contains basic information about the API, including details about available endpoints and request parameters, and options to try requests yourself. You can find additional information on <a rel=\"noopener noreferrer\" target=\"_blank\" href=\"https://www.crossref.org/documentation/retrieve-metadata/rest-api/\">our documentation website</a>.</p>"
         }
+    },
+
+    "https://example.com/fixture-article": {
+        "csl": {
+            "type": "webpage",
+            "id": "https://example.com/fixture-article",
+            "URL": "https://example.com/fixture-article",
+            "title": "An Ordinary External Article",
+            "container-title": "Fixture Publication",
+            "author": [{ "given": "Ada", "family": "Placeholder" }],
+            "issued": { "date-parts": [[2024, 6, 1]] },
+            "accessed": { "date-parts": [[2026, 9, 16]] }
+        },
+        "kind": "external",
+        "summary": {
+            "type": "text",
+            "content": "A summary long enough to make the popover wrap onto several lines, so that the fixed maximum size and the scrolling behaviour described in the Popover section both have something to act on."
+        }
+    },
+
+    "https://doi.org/10.0000/fixture.doi.2026": {
+        "csl": {
+            "type": "article-journal",
+            "id": "https://doi.org/10.0000/fixture.doi.2026",
+            "URL": "https://doi.org/10.0000/fixture.doi.2026",
+            "DOI": "10.0000/fixture.doi.2026",
+            "title": "Marginal Notes as an Interface Element",
+            "container-title": "Journal of Fixture Studies",
+            "volume": "4",
+            "issue": "2",
+            "page": "11-29",
+            "author": [
+                { "given": "Bo", "family": "Marginalia" },
+                { "given": "Rae", "family": "Gutter" }
+            ],
+            "issued": { "date-parts": [[2026, 3]] },
+            "abstract": "Fixture abstract standing in for the metadata the Crossref API would supply for a real DOI."
+        },
+        "kind": "doi",
+        "summary": {
+            "type": "text",
+            "content": "Fixture abstract standing in for the metadata the Crossref API would supply for a real DOI."
+        }
+    },
+
+    "https://en.wikipedia.org/wiki/Fixture_article": {
+        "csl": {
+            "type": "webpage",
+            "id": "https://en.wikipedia.org/wiki/Fixture_article",
+            "URL": "https://en.wikipedia.org/wiki/Fixture_article",
+            "title": "Fixture article",
+            "container-title": "Wikipedia",
+            "issued": { "date-parts": [[2026, 1, 20]] }
+        },
+        "kind": "wikipedia",
+        "summary": {
+            "type": "html",
+            "content": "<p>A <b>fixture article</b> stands in for a real Wikipedia page so the popover's title, summary and image can be exercised without a network round trip.</p>"
+        },
+        "imageUrl": "/logo.svg"
     }
 }

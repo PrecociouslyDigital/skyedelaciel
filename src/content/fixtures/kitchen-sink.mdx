@@ -1,0 +1,80 @@
+---
+title: Kitchen Sink
+abstract: Every claim in the design spec that the real pages do not happen to exercise — all four popover styles, a bibliography, adjacent sidenotes crowding each other, and headings nested deeper than the table of contents renders.
+author: Fixture Author
+bibliography: true
+citation:
+    - type: book
+      id: tufte-visual-display
+      title: The Visual Display of Quantitative Information
+      publisher: Graphics Press
+      publisher-place: Cheshire, Connecticut
+      edition: "2"
+      issued:
+          date-parts: [[2001]]
+      author:
+          - given: Edward R.
+            family: Tufte
+---
+
+# Links
+
+Every link kind the spec describes appears in this paragraph, so a single
+selector can reach all four popover styles at once.
+
+## Default Style
+
+An [ordinary external link](https://example.com/fixture-article) resolves through
+OpenGraph tags, and its popover leads with title, then metadata, then summary.
+
+## Internal Pages
+
+A link to the [design specification](/design) shows the title and abstract of the
+page it points at, and this site's name — but no author and no date.
+
+## DOIs
+
+A [digital object identifier](https://doi.org/10.0000/fixture.doi.2026) carries
+the full apparatus of a journal article: authors, container title, issue and an
+abstract.
+
+## Wikipedia
+
+A [Wikipedia article](https://en.wikipedia.org/wiki/Fixture_article) contributes
+a summary and an image, and no author line at all.
+
+# Sidenotes
+
+Two markers set one sentence apart[^first] is the case that matters[^second]:
+the notes are long enough that, laid out at their natural positions, they would
+overlap. Three in a row[^third] is the same problem with one more term.
+
+# Nesting
+
+## Second level
+
+### Third level
+
+#### Fourth level
+
+The table of contents stops at the third level, so this heading has an anchor
+and a copy icon but no entry in the contents.
+
+##### Fifth level
+
+###### Sixth level
+
+[^first]:
+    The first note runs long on purpose. Its whole job is to occupy more
+    vertical space than the gap between its own marker and the next one, so that
+    the note below it has to be pushed down rather than drawn on top of it.
+
+[^second]:
+    The second note is also long, because a collision needs two
+    participants. If these two ever render overlapping, the spec sentence
+    "sidenotes that are close together should not overlap, but instead make
+    space for each other" has been broken.
+
+[^third]:
+    A third note, so that the pushing-down is transitive rather than a
+    single special case between one pair.

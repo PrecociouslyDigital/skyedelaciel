@@ -31,4 +31,14 @@
         color: var(--color-muted);
         transition: opacity 0.15s;
     }
+
+    /* Kept here rather than in Heading.astro, next to the `all: unset` that
+       would otherwise undo it: Svelte scopes both rules with the same class,
+       so this one wins on source order. An outside rule on `.copy-anchor`
+       carries less specificity and loses to `all` without saying so. */
+    @media print {
+        .copy-anchor {
+            display: none;
+        }
+    }
 </style>

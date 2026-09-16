@@ -5,7 +5,9 @@ $themes: (
     "light": (
         "background": #c7cdd4,
         "text": #101011,
-        "primary": #6185c4,
+        // Same hue as the dark scheme's primary, darkened to clear WCAG AA
+        // contrast against this lighter background.
+        "primary": #35558d,
         "secondary": #7f6a8d,
         "warning": #84a9c0,
         "error": #cd9fcc,
@@ -47,6 +49,12 @@ $themes: (
     --color-border: #{color.scale(map.get($theme, "text"), $lightness: 60%)};
 }
 
+// Matches either sign of an override: the checkbox (works without JS, but
+// only for the session) or `data-theme-checked` (set by an inline script
+// before first paint, so a stored choice applies immediately). Defined once
+// and interpolated below so the two selectors can't drift out of sync.
+$override: "html:has(#theme-toggle:checked), html[data-theme-checked]";
+
 // Default: light theme
 :root {
     @include apply-theme("light");
@@ -59,14 +67,12 @@ $themes: (
     }
 }
 
-// User override: checkbox toggles opposite theme
-html:has(#theme-toggle:checked) {
+#{$override} {
     @include apply-theme("dark");
 }
 
 @media (prefers-color-scheme: dark) {
-    html:has(#theme-toggle:checked),
-    html[data-theme-checked] {
+    #{$override} {
         @include apply-theme("light");
     }
 }
@@ -74,8 +80,7 @@ html:has(#theme-toggle:checked) {
 // Print always uses print theme
 @media print {
     :root,
-    html:has(#theme-toggle:checked),
-    html[data-theme-checked] {
+    #{$override} {
         @include apply-theme("print");
     }
 }

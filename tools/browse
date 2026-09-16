@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Drive a headless browser one command at a time; see browser/client.mjs.
+#
+# The client lives in browser/client.mjs rather than here so that `astro check`
+# type-checks it — an extensionless file is invisible to the compiler.
+exec node "$(dirname "${BASH_SOURCE[0]}")/browser/client.mjs" "$@"

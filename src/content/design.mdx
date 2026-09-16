@@ -50,6 +50,7 @@ When there is enough space for both the navbar and sidenotes, the navbar sits to
 The navbar is horizontal, in line with the content, before the title. It should match the content's maximum width so they align visually.
 
 ### Print
+
 The Navbar should not be shown on print pages, and should make space so that the content is aligned to the left edge of the page.
 
 ### Content
@@ -72,8 +73,8 @@ The table of contents should have each level be collapsible (so you'd expand a s
 
 The table of contents is in line with the content, after the abstract, in a collapsible section. Each level should also be collapsible. Collapse should be controlled by an indicator to the _left_ of that element. All are collapsed by default. This table of contents should _not_ auto-expand and collapse.
 
-
 ### Print
+
 In print, the table of contents should be in line with the content, but always expanded.
 
 ## Headings
@@ -106,7 +107,7 @@ Links to [Wikipedia](https://en.wikipedia.org/wiki/Wikipedia) should include the
 
 ### Print
 
-When printed, links should appear as regular text. The link originally referenced should be inline-cited in MLA format: e.g. (Author, Year), if the [Bibliography](#bibliography) is turned on. If not, it should print the full link in plaintext.
+When printed, links should appear as regular text, since a printed link cannot be followed. A link with an entry in the [Bibliography](#bibliography) should be inline-cited in MLA format: e.g. (Author, Year). A link without one should print its full address in plaintext instead — that covers pages with no bibliography at all, and links to this site's own pages, which are never entries.
 
 ## Bibliography
 
@@ -117,9 +118,11 @@ If `bibliography: true` is set in the frontmatter, the article should include a 
 Articles can provide an additional list of citations under the `citation` frontmatter property. The list of citations should be in [bibjson](https://rufuspollock-okfn.github.io/bibjson/) format, validated by Astro's support for [frontmatter schema](https://rufuspollock-okfn.github.io/bibjson/).
 
 ## Sidenotes
+
 When there is enough horizontal space and in print, footnotes should be displayed to the right of content, aligned with their footnote marker as much as possible. Hovering over the footnote marker should visually highlight the associated sidenote. Sidenotes that are close together should not overlap, but instead make space for each other. [^demo]
-On narrow viewports, sidenotes should be hidden by default. Clicking them should display the sidenote in line with the content, and clicking the sidenote or the sidenote marker should re-hide the sidenote. 
+On narrow viewports, sidenotes should be hidden by default. Clicking them should display the sidenote in line with the content, and clicking the sidenote or the sidenote marker should re-hide the sidenote.
 This behavior should not require javascript.[^scripter]
 
 [^demo]: So for example, this sidenote, which is much much much longer than it really needs to be for demonstration purposes, should not overlap with the sidenote below in any way. Instead, the following note is pushed down, so that the notes are completely readable, but still roughly on eye-level with their note locations.
+
 [^scripter]: Thanks to [A Scripter's notes](https://scripter.co/sidenotes-using-only-css/) for sharing a bunch of CSS tricks that make this possible.

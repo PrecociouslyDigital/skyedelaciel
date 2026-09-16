@@ -2,13 +2,24 @@
 import { getCollection, render } from "astro:content";
 import Layout from "~/layouts/prelude/md.astro";
 import { mdxComponents } from "~/components/mdx";
-import { setLinkMeta } from "~/components/mdx/links/store";
+import { setLinkContext } from "~/components/mdx/links/store";
 import { resolveInternalLinks } from "~/components/mdx/links/resolve";
 import { linkFrontmatter } from "~/components/mdx/links/types";
 
+/**
+ * Fixtures are a test surface rather than content, so a plain `astro build`
+ * emits none of them. `npm run build:fixtures` sets INCLUDE_FIXTURES to add
+ * their routes. Read inside getStaticPaths because Astro hoists that function
+ * out of this module's scope.
+ */
 export async function getStaticPaths() {
-    const pages = await getCollection("pages");
-    return pages.map((entry) => ({
+    const routable = [
+        ...(await getCollection("pages")),
+        ...(process.env.INCLUDE_FIXTURES
+            ? await getCollection("fixtures")
+            : []),
+    ];
+    return routable.map((entry) => ({
         params: { slug: entry.id },
         props: { entry },
     }));
@@ -21,8 +32,13 @@ const { links, linkMeta: remoteLinks } = linkFrontmatter.parse(
     remarkPluginFrontmatter,
 );
 
-// Internal links need no network: resolve them from the collection itself.
-const pages = await getCollection("pages");
+// Internal links need no network: resolve them from the collections themselves.
+// Fixtures are included whether or not they are routable, so a link to one
+// still gets its popover — only the page's own route is withheld.
+const pages = [
+    ...(await getCollection("pages")),
+    ...(await getCollection("fixtures")),
+];
 const internalLinks = resolveInternalLinks(
     links,
     new Map(pages.map((page) => [page.id, page.data])),
@@ -30,8 +46,11 @@ const internalLinks = resolveInternalLinks(
 
 const linkMeta = { ...remoteLinks, ...internalLinks };
 
-// Populate the module store so <Link> components can look up metadata
-setLinkMeta(linkMeta);
+// Populate the module store so <Link> components can look up page context
+setLinkContext({
+    meta: linkMeta,
+    bibliography: Boolean(entry.data.bibliography),
+});
 ---
 
 <Layout frontmatter={{ ...entry.data, links, linkMeta }} headings={headings}>

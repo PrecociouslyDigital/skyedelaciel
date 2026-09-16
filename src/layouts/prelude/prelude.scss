@@ -32,7 +32,9 @@ article {
 }
 
 .title {
-    font-size: 2rem;
+    // A step above the 2rem an <h1> in the body gets, so the article's own
+    // title outweighs the first section heading under it rather than tying.
+    font-size: 2.5rem;
     margin: 0;
     line-height: 1.2;
 }
