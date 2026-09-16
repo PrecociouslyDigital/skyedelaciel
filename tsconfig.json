@@ -6,6 +6,8 @@
   ],
   "compilerOptions": {
     "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "~/*": [
         "./src/*"
