@@ -99,6 +99,42 @@ section("Links", () => {
             expect(["scroll", "auto"]).toContain(overflowY);
         });
 
+        test("the pointer can travel from the link into the popover", async ({
+            page,
+        }) => {
+            // Scrolling a popover means reaching it first, so the standoff it
+            // keeps from its link has to be ground the pointer can stand on.
+            // Crossing it here is deliberately slow: the popover is given
+            // longer than its own fade to close, and has to still be there.
+            const FADE_OUT = 1000;
+
+            const wrapper = page
+                .locator(".link-wrapper")
+                .filter({ hasText: "ordinary external link" })
+                .first();
+            await wrapper.locator("a").hover();
+
+            const popover = wrapper.locator(".link-popover");
+            await expect(popover).toBeVisible();
+
+            const link = (await wrapper.locator("a").boundingBox())!;
+            const box = (await popover.boundingBox())!;
+
+            await page.mouse.move(
+                link.x + link.width / 2,
+                (box.y + box.height + link.y) / 2,
+            );
+            await page.waitForTimeout(FADE_OUT);
+            await expect(popover).toBeVisible();
+
+            await page.mouse.move(
+                box.x + box.width / 2,
+                box.y + box.height / 2,
+            );
+            await page.waitForTimeout(FADE_OUT);
+            await expect(popover).toBeVisible();
+        });
+
         test("every popover is the same width, however long its contents", async ({
             page,
         }) => {

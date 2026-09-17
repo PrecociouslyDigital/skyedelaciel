@@ -32,33 +32,35 @@ const citation =
     <span class="link-cite"> {citation}</span>
     {
         preview && (
-            <span class="link-popover" role="tooltip">
-                {showImage && preview.image && (
-                    <img
-                        class="link-popover-image"
-                        src={preview.image}
-                        alt=""
-                        loading="lazy"
-                    />
-                )}
-                <span class="link-popover-title">{preview.title}</span>
-                {preview.meta.length > 0 && (
-                    <span class="link-popover-meta">
-                        {preview.meta.join(" · ")}
-                    </span>
-                )}
-                {preview.body &&
-                    (preview.body.type === "html" ? (
-                        <span
-                            class="link-popover-description"
-                            set:html={preview.body.content}
+            <span class="link-popover-anchor">
+                <span class="link-popover" role="tooltip">
+                    {showImage && preview.image && (
+                        <img
+                            class="link-popover-image"
+                            src={preview.image}
+                            alt=""
+                            loading="lazy"
                         />
-                    ) : (
-                        <span
-                            class="link-popover-description"
-                            set:text={preview.body.content}
-                        />
-                    ))}
+                    )}
+                    <span class="link-popover-title">{preview.title}</span>
+                    {preview.meta.length > 0 && (
+                        <span class="link-popover-meta">
+                            {preview.meta.join(" · ")}
+                        </span>
+                    )}
+                    {preview.body &&
+                        (preview.body.type === "html" ? (
+                            <span
+                                class="link-popover-description"
+                                set:html={preview.body.content}
+                            />
+                        ) : (
+                            <span
+                                class="link-popover-description"
+                                set:text={preview.body.content}
+                            />
+                        ))}
+                </span>
             </span>
         )
     }
@@ -77,28 +79,18 @@ const citation =
         display: none;
     }
 
-    /* A slip of paper laid over the page: raised stock, the light frame, and
-       enough of a cast shadow to lift it off. */
-    .link-popover {
-        @include ornaments.frame-light(0 6px 18px var(--color-shadow));
+    /* The popover stands half a line clear of its link, and that standoff is
+       padding here rather than margin on the paper: a gap the pointer can be
+       over is a gap it can cross, so the popover no longer closes under a
+       mouse on its way up to it. */
+    .link-popover-anchor {
         display: none;
-        flex-direction: column;
-        gap: 0.3rem;
         position: absolute;
         bottom: 100%;
-        margin-bottom: 1lh;
+        padding-bottom: 0.5lh;
         left: 50%;
         transform: translateX(-50%);
         z-index: 10;
-        width: 22rem;
-        max-height: 16rem;
-        overflow-y: auto;
-        padding: 0.85rem 1.05rem;
-        background: var(--color-raised);
-        color: var(--color-text);
-        font-size: var(--text-small);
-        line-height: 1.45;
-        font-weight: normal;
 
         opacity: 0;
         transition:
@@ -107,11 +99,30 @@ const citation =
         transition-behavior: allow-discrete;
     }
 
-    .link-wrapper:hover .link-popover,
-    .link-wrapper:focus-within .link-popover,
-    .link-popover:hover {
-        display: flex;
+    /* Hovering the popover is hovering the wrapper it hangs from, so holding
+       the link open and holding the popover open are the same rule. */
+    .link-wrapper:hover .link-popover-anchor,
+    .link-wrapper:focus-within .link-popover-anchor {
+        display: block;
         opacity: 1;
+    }
+
+    /* A slip of paper laid over the page: raised stock, the light frame, and
+       enough of a cast shadow to lift it off. */
+    .link-popover {
+        @include ornaments.frame-light(0 6px 18px var(--color-shadow));
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        width: 22rem;
+        max-height: 16rem;
+        overflow-y: auto;
+        padding: 0.7rem 0.9rem;
+        background: var(--color-raised);
+        color: var(--color-text);
+        font-size: var(--text-small);
+        line-height: 1.45;
+        font-weight: normal;
     }
 
     .link-popover-image {
@@ -142,7 +153,7 @@ const citation =
     }
 
     @media print {
-        .link-popover {
+        .link-popover-anchor {
             display: none !important;
         }
 
