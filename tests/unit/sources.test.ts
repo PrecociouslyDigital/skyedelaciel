@@ -1,5 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
-import { isCitable, sourceFor, sourceOf } from "~/components/mdx/links/sources";
+import {
+    isCitable,
+    isResolved,
+    sourceFor,
+    sourceOf,
+} from "~/components/mdx/links/sources";
 import type { LinkEntry, LinkKind } from "~/components/mdx/links/types";
 import { linkKind } from "~/components/mdx/links/types";
 
@@ -62,6 +67,49 @@ describe("the registry", () => {
             (kind) => sourceOf(kind).resolve === undefined,
         );
         expect(unfetched).toEqual(["internal"]);
+    });
+
+    /**
+     * `Record<LinkKind, Source>` already makes a kind without a mark a compile
+     * error. What it cannot see is two kinds wearing the same one, which would
+     * leave a reader unable to tell them apart with nothing going red.
+     */
+    test("no two kinds wear the same provenance mark", () => {
+        const marks = linkKind.options.map((kind) => sourceOf(kind).mark);
+        expect(new Set(marks).size).toBe(marks.length);
+    });
+});
+
+/**
+ * Whether a link is known is a question about the lookup, not about the URL,
+ * and the two sit next to each other everywhere a link is rendered — so the
+ * cases where they come apart are worth pinning.
+ */
+describe("isResolved", () => {
+    const entry = (resolution: LinkEntry["resolution"]): LinkEntry => ({
+        resolution,
+        kind: "external",
+        csl: { type: "webpage", id: "https://example.com/a" },
+    });
+
+    test("a lookup that answered", () => {
+        expect(isResolved("https://example.com/a", entry("resolved"))).toBe(
+            true,
+        );
+    });
+
+    test("a lookup that failed", () => {
+        expect(isResolved("https://example.com/a", entry("unresolved"))).toBe(
+            false,
+        );
+    });
+
+    test("a link no lookup ever produced an entry for", () => {
+        expect(isResolved("/not-a-page", undefined)).toBe(false);
+    });
+
+    test("a fragment of this page, which was never looked up", () => {
+        expect(isResolved("#colors", undefined)).toBe(true);
     });
 });
 

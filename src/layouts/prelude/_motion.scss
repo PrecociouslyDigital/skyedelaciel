@@ -1,0 +1,37 @@
+/// How the page moves: barely, and all at once.
+///
+/// A machine's readout snaps to where it belongs rather than easing into it,
+/// so a transition here is a short linear step on geometry or colour and
+/// nothing else. Two facts follow from that, and both are about the whole site
+/// rather than any one component — which is why every transition in the repo
+/// is written through `snap` and none is written by hand.
+
+/// The longest a transition may run. Checked by the compiler, because a
+/// duration that creeps up is easy to miss by eye.
+$limit: 120ms;
+
+/// One transition, snapped and guarded.
+///
+/// `$properties` and `$delay` may be comma lists, for a call site that stages
+/// two properties against each other. The reduced-motion answer is emitted
+/// alongside rather than once globally: Astro and Svelte scope component
+/// selectors, so a single global block could only reach into them by shouting
+/// `!important` over every rule on the page.
+@mixin snap($properties, $duration: $limit, $delay: 0s) {
+    @if $duration > $limit {
+        @error "a transition of #{$duration} is longer than the #{$limit} this design moves in.";
+    }
+
+    // Longhands rather than the shorthand, because the block below overrides
+    // the duration on its own — which a shorthand could only do by restating
+    // the properties and delays alongside it, in a second place to keep in step.
+    /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
+    transition-property: $properties;
+    transition-duration: $duration;
+    transition-delay: $delay;
+    transition-timing-function: linear;
+
+    @media (prefers-reduced-motion: reduce) {
+        transition-duration: 0s;
+    }
+}

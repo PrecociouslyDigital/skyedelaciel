@@ -1,6 +1,6 @@
 ---
 import { formatInlineCitation } from "./cite";
-import { isCitable } from "./sources";
+import { isCitable, isResolved, sourceFor } from "./sources";
 import { getLinkMeta, hasBibliography } from "./store";
 import { buildPreview } from "./preview";
 
@@ -23,11 +23,23 @@ const preview = entry && buildPreview(entry);
 const inBibliography = hasBibliography() && entry && isCitable(entry);
 const citation =
     (inBibliography && formatInlineCitation(entry.csl)) || `(${href})`;
+
+/**
+ * Where the link leads, and whether anything was found there. Both are facts
+ * the machine layer draws — see design.mdx, Annotation — and they are
+ * independent: the glyph says which kind of address this is, its colour says
+ * whether the address answered.
+ */
+const { mark } = sourceFor(href);
+const resolved = isResolved(href, entry);
 ---
 
 <span class="link-wrapper">
     <a href={href} {...rest} class:list={["content-link", rest.class]}>
-        <slot />
+        <slot /><span
+            class:list={["link-mark", !resolved && "unresolved"]}
+            aria-hidden="true">{mark}</span
+        >
     </a>
     <span class="link-cite"> {citation}</span>
     {
@@ -67,6 +79,7 @@ const citation =
 </span>
 
 <style lang="scss">
+    @use "../../../layouts/prelude/motion";
     @use "../../../layouts/prelude/ornaments";
 
     .link-wrapper {
@@ -77,6 +90,23 @@ const citation =
     /* Screens have the link itself; only paper needs it spelled out. */
     .link-cite {
         display: none;
+    }
+
+    /* The machine's note on where this goes, set inside the anchor so it
+       travels with the link and is underlined along with it. Malachite while
+       the address answered; ochre when it did not, which leaves both facts
+       legible at once rather than spending a second glyph on the second one. */
+    .link-mark {
+        margin-left: 0.12em;
+        font-weight: 400;
+        font-size: 0.68em;
+        vertical-align: 0.42em;
+        letter-spacing: 0.04em;
+        color: var(--color-signal);
+
+        &.unresolved {
+            color: var(--color-attention);
+        }
     }
 
     /* The popover stands half a line clear of its link, and that standoff is
@@ -92,10 +122,11 @@ const citation =
         transform: translateX(-50%);
         z-index: 10;
 
+        /* The delays are the standoff in time that the padding above is in
+           space: long enough that a pointer crossing a link on its way
+           somewhere else never summons one. The fades themselves snap. */
+        @include motion.snap((opacity, display), 120ms, (0.3s, 0.4s));
         opacity: 0;
-        transition:
-            opacity 0.15s ease 0.3s,
-            display 0.15s ease 0.4s;
         transition-behavior: allow-discrete;
     }
 
@@ -108,9 +139,14 @@ const citation =
     }
 
     /* A slip of paper laid over the page: raised stock, the light frame, and
-       enough of a cast shadow to lift it off. */
+       enough of a cast shadow to lift it off. The machine's ticks are painted
+       on the slip rather than around it, because the slip scrolls and anything
+       outside it would be clipped. */
     .link-popover {
         @include ornaments.frame-light(0 6px 18px var(--color-shadow));
+        // 4px clears the frame above: 2px of channel, 1px of inner rule, and
+        // a pixel of air so the two figures read as separate.
+        @include ornaments.corner-ticks(var(--color-signal), 0.6rem, 1px, 4px);
         display: flex;
         flex-direction: column;
         gap: 0.3rem;
@@ -118,7 +154,7 @@ const citation =
         max-height: 16rem;
         overflow-y: auto;
         padding: 0.7rem 0.9rem;
-        background: var(--color-raised);
+        background-color: var(--color-raised);
         color: var(--color-text);
         font-size: var(--text-small);
         line-height: 1.45;
@@ -155,6 +191,12 @@ const citation =
     @media print {
         .link-popover-anchor {
             display: none !important;
+        }
+
+        /* A printed link cannot be followed, so saying where it would have
+           gone is noise. The citation below says it in words instead. */
+        .link-mark {
+            display: none;
         }
 
         .link-cite {

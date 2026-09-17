@@ -45,17 +45,23 @@ function buildTree(headings: Heading[]): TocNode[] {
     return root.children;
 }
 
-const nodes = match(Astro.props)
-    .with({ headings: P.nonNullable }, ({ headings }) =>
-        buildTree(headings.filter((h) => h.depth <= 3)),
-    )
-    .with({ nodes: P.nonNullable }, ({ nodes }) => nodes)
+/**
+ * `root` separates the page's own list from the ones the recursion below
+ * renders. Only the outermost list carries the tracker, and only it is
+ * positioned for the tracker to be measured against.
+ */
+const { nodes, root } = match(Astro.props)
+    .with({ headings: P.nonNullable }, ({ headings }) => ({
+        nodes: buildTree(headings.filter((h) => h.depth <= 3)),
+        root: true,
+    }))
+    .with({ nodes: P.nonNullable }, ({ nodes }) => ({ nodes, root: false }))
     .exhaustive();
 ---
 
 {
     nodes.length > 0 && (
-        <ol class="toc-list">
+        <ol class:list={["toc-list", root && "toc-root"]}>
             {nodes.map((node) => (
                 <li>
                     <a href={`#${node.slug}`}>{node.text}</a>
@@ -72,6 +78,34 @@ const nodes = match(Astro.props)
 }
 
 <style lang="scss">
+    @use "../layouts/prelude/motion";
+    @use "../layouts/prelude/ornaments";
+
+    /* The tracker: a box the machine holds around whatever it has decided you
+       are reading, sliding from one entry to the next as you scroll.
+
+       It is the outer list's own ::before rather than an element, so there is
+       nothing in the markup to hide when there is nothing to track — and
+       nothing to hide when scripting is off, since `data-current` is set by
+       toc-scroll.ts and the box only exists while one is set. That module
+       supplies the two lengths below; they are the contract between it and
+       this file. */
+    .toc-root {
+        position: relative;
+
+        &:has(a[data-current])::before {
+            @include ornaments.corner-ticks(var(--color-signal), 0.45rem, 1px);
+            @include motion.snap((transform, height), 110ms);
+            content: "";
+            position: absolute;
+            inset-inline: 0;
+            top: 0;
+            height: var(--toc-tracker-height, 0);
+            transform: translateY(var(--toc-tracker-top, 0));
+            pointer-events: none;
+        }
+    }
+
     .toc-list {
         font-family: var(--font-prose);
         font-size: var(--text-small);
@@ -93,11 +127,12 @@ const nodes = match(Astro.props)
                 color: var(--color-text);
             }
 
-            // Marked in vermilion rather than bolded: the sidebar is
-            // shrink-wrapped, so a heavier entry would widen it and drag the
-            // grouping line sideways as the reader scrolls.
+            // Coloured rather than bolded: the sidebar is shrink-wrapped, so
+            // a heavier entry would widen it and drag the grouping line
+            // sideways as the reader scrolls. Ochre, because the current
+            // entry is the one transient thing here.
             &[data-current] {
-                color: var(--color-accent);
+                color: var(--color-attention);
             }
         }
 
@@ -130,8 +165,8 @@ const nodes = match(Astro.props)
                     }
 
                     &::before {
+                        @include motion.snap(transform);
                         content: "▸";
-                        transition: transform 0.15s ease;
                         display: inline-block;
                     }
                 }

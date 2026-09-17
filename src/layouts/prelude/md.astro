@@ -27,6 +27,20 @@ export interface Props {
 }
 
 const { frontmatter, headings } = Astro.props;
+
+/**
+ * What identifies this page to a machine: which page, made when, from which
+ * revision. prelude.scss sets it down the left rail — see design.mdx,
+ * Annotation. Outside a git checkout the revision is empty and simply drops
+ * out, which is the whole of the fallback.
+ */
+const rail = [
+    Astro.url.pathname.replaceAll("/", " ").trim() || "index",
+    __BUILD_DATE__,
+    __GIT_REVISION__ && `rev ${__GIT_REVISION__}`,
+]
+    .filter(Boolean)
+    .join(" · ");
 ---
 
 <html lang="en">
@@ -66,7 +80,7 @@ const { frontmatter, headings } = Astro.props;
                 <TableOfContents headings={headings} />
             </nav>
         </aside>
-        <article>
+        <article data-rail={rail}>
             <header class="front-matter">
                 <div class="title-line">
                     <h1 class="title">{frontmatter.title}</h1>

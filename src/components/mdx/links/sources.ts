@@ -21,6 +21,13 @@ export interface Source {
     readonly claims: (url: URL) => boolean;
 
     /**
+     * The glyph a link of this kind wears in the margin of its own text, so a
+     * reader can see where it leads without following it. One character, and
+     * borrowed from the apparatus of a printed page rather than invented.
+     */
+    readonly mark: string;
+
+    /**
      * Look the link up. Absent for a source that is not fetched — this site's
      * own pages are resolved from the page collection instead.
      */
@@ -46,6 +53,8 @@ const workMeta = (csl: CslData) => [
 const internal: Source = {
     kind: "internal",
     claims: (url) => url.hostname === SITE_HOST,
+    // The section mark: another part of the same work.
+    mark: "§",
     // design.mdx, Internal Pages: title, abstract and site name, nothing else.
     meta: (csl) => [csl["container-title"]],
     citable: false,
@@ -77,6 +86,8 @@ const doi: Source = {
     // DOIs always begin with the "10." prefix.
     claims: (url) =>
         url.hostname.includes("doi.org") && /^\/10\./.test(url.pathname),
+    // The pilcrow: a published passage, with an identifier of its own.
+    mark: "¶",
     resolve: async (url) => {
         for (const endpoint of doiEndpoints(extractDoi(url))) {
             try {
@@ -125,6 +136,7 @@ function extractWikiTitle(url: string): string {
 const wikipedia: Source = {
     kind: "wikipedia",
     claims: (url) => url.hostname.endsWith(".wikipedia.org"),
+    mark: "W",
     resolve: async (url) => {
         const lang = url.match(/(\w+)\.wikipedia/)?.[1] ?? "en";
         const title = encodeURIComponent(extractWikiTitle(url));
@@ -159,6 +171,8 @@ const external: Source = {
     kind: "external",
     // The fallback: whatever no other source claimed.
     claims: () => true,
+    // An arrow off the page, for the one kind of link that leaves it.
+    mark: "↗",
     resolve: async (url) => {
         const { result, html } = await ogs({ url });
 
@@ -242,3 +256,21 @@ export const sourceOf = (kind: LinkKind): Source => byKind[kind];
  */
 export const isCitable = (entry: LinkEntry): boolean =>
     sourceOf(entry.kind).citable;
+
+/**
+ * Whether anything is known about what is at the other end of a link.
+ *
+ * `resolution` is a property of the lookup rather than of the URL, so it is a
+ * separate question from `sourceFor` — a link of any kind can come back
+ * unknown. Two cases share the answer: a lookup that failed, and a link no
+ * lookup ever produced an entry for, which is what a path to a page that does
+ * not exist leaves behind.
+ *
+ * A same-document fragment is the exception, and not an oversight: it
+ * addresses the page the reader is already on, so there was never anything to
+ * look up and nothing is missing.
+ */
+export const isResolved = (
+    href: string,
+    entry: LinkEntry | undefined,
+): boolean => href.startsWith("#") || entry?.resolution === "resolved";

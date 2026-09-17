@@ -20,11 +20,27 @@ document
     .querySelectorAll("article :is(h1,h2,h3)[id]")
     .forEach((h) => observer.observe(h));
 
+/**
+ * Put the tracker box around the current entry.
+ *
+ * The box is `.toc-root`'s own ::before — see TableOfContents.astro — so all
+ * that crosses between here and the stylesheet is where it goes and how tall
+ * it is. Measured after the expanding below, since opening a section moves
+ * everything under it.
+ */
+function trackCurrent(link: HTMLElement) {
+    const list = link.closest<HTMLElement>(".toc-root");
+    if (!list) return;
+
+    list.style.setProperty("--toc-tracker-top", `${link.offsetTop}px`);
+    list.style.setProperty("--toc-tracker-height", `${link.offsetHeight}px`);
+}
+
 function expandTocSection(slug: string) {
     const toc = document.querySelector(".toc-sidebar");
     if (!toc) return;
 
-    const link = toc.querySelector(`a[href="#${slug}"]`);
+    const link = toc.querySelector<HTMLElement>(`a[href="#${slug}"]`);
     if (!link) return;
 
     // Clear previous highlight
@@ -46,4 +62,6 @@ function expandTocSection(slug: string) {
         }
         el = el.parentElement;
     }
+
+    trackCurrent(link);
 }

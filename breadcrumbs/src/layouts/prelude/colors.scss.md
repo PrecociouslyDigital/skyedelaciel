@@ -67,3 +67,47 @@ That last one also fixed a test. `colors.spec.ts` reads `--color-muted` off
 plain hex literal would have come back as `#6a6257` and parsed to `NaN`.
 Registering the property makes the computed value a resolved colour, which is
 what the test was assuming all along.
+
+## 2026-09-17 — three chromas, and one of them is not the designer's
+
+The palette grew from eight tokens to ten. `signal` and `attention` are not
+decoration: they are the two halves of a job `accent` had been quietly doing
+three different ways. Vermilion was marking provenance (the seal, the front
+rule, sidenote numbers), marking *state* (the current entry in the contents),
+and marking *interaction* (the underline under a hovered link) — three
+meanings one colour cannot hold apart.
+
+They are split by whose hand drew them, not by hue:
+
+- `accent` is the author's. Stamped, rare, permanent.
+- `signal` is the machine's. Ambient and constant: it is on the page whether
+  or not anyone is looking at it.
+- `attention` is right now. It touches exactly one thing and moves when you do.
+
+The useful consequence is that a rule reading `--color-accent` is now a claim
+about authorship, and a rule reading `--color-attention` is a claim about
+transience. Either can be wrong, and being wrong is visible.
+
+The hues came second. Malachite and ochre are what a Chinese painter had
+beside cinnabar, so the machine layer reads as another pigment on the same
+page rather than as a screen colour dropped onto it. All three land between
+6.2:1 and 6.7:1 on the light ground, which is deliberate: none of them can
+shout over the others by contrast, only by where it is used.
+
+## 2026-09-17 — "print is the boldest scheme" is now a build error
+
+`tests/design/colors.spec.ts` asserts that print's text/background contrast
+beats both screen schemes'. That was comfortable while the light ground was
+eggshell. It is not comfortable now: the light scheme is `#ffffff`, and its
+text at 19.1:1 sits two points under print's 21:1 — near enough that an
+innocent darkening of `text` would take the margin out.
+
+So the same claim is made here, over the map, after each theme has been
+checked on its own. The Playwright test stays: it reads the rendered page,
+which is the only place a cascade bug can show up. What moved into the
+compiler is the arithmetic, which needs no browser and names the offending
+theme in the error.
+
+The light scheme's `text` therefore has a floor it cannot be written below:
+strictly lighter than pure black. That is the whole constraint, and it is
+otherwise invisible in the file.

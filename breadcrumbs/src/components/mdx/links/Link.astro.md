@@ -41,3 +41,28 @@ hovered, which makes the travel from link to popover continuous by construction
 rather than by beating the fade-out. The visible slip of paper stays
 `.link-popover` — it is what the design tests measure, and what carries the
 frame, the width cap and the scroll.
+
+## 2026-09-17 — the mark goes inside the anchor, and the fixture's dead link is internal
+
+The provenance glyph is rendered *inside* the `<a>`, not after it. Two things
+follow that would not if it were a sibling: it is underlined along with the
+link on hover, so the link and its mark read as one object; and it travels
+with the anchor wherever the anchor goes. It carries `aria-hidden` so it stays
+out of the accessible name, and `display: none` under `@media print`, since a
+printed link cannot be followed and saying where it would have gone is noise.
+
+It changes nothing the resting-link tests measure: `tests/design/links.spec.ts`
+reads `fontWeight`, `color` and `textDecorationLine` off the anchor's own
+computed style, which a child span does not touch.
+
+**Why `kitchen-sink.mdx`'s deliberately-unresolvable link points at
+`/not-a-page` rather than at a dead external URL.** The fixture needs one link
+whose mark comes out in `--color-attention`. The obvious choice is an
+unreachable `https://` address, and it would break
+`tests/design/links.spec.ts`: that file asserts every `http(s)` prose link
+prints as `(Author, Year)`, and an unresolved external link has neither — it
+is nonetheless citable, so it lands in the bibliography as a bare URL with
+nothing to cite it by. An internal path to a page that does not exist produces
+the same unresolved state (no entry at all), prints its address like every
+other internal link, and is never a bibliography entry. It is also the more
+honest fixture: a broken internal link is the thing the ochre mark is for.

@@ -25,6 +25,8 @@
 
 <style lang="scss">
     @use "../layouts/prelude/breakpoints";
+    @use "../layouts/prelude/motion";
+
     .theme-toggle {
         cursor: pointer;
         display: flex;
@@ -42,6 +44,7 @@
     /* A square rather than a disc: the seal, the frame and the manuscript grid
        are all boxes, and this is the smallest of them. */
     .toggle-icon {
+        @include motion.snap(transform);
         box-sizing: border-box;
         width: 1.25rem;
         height: 1.25rem;
@@ -52,7 +55,6 @@
             var(--color-text) 50%,
             transparent 50%
         );
-        transition: transform 0.2s ease;
     }
 
     input:checked + .toggle-icon {

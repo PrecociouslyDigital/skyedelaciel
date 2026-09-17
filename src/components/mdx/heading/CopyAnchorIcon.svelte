@@ -20,16 +20,20 @@
     {copied ? "Copied!" : "#"}
 </button>
 
-<style>
+<style lang="scss">
+    @use "../../../layouts/prelude/motion";
+
     .copy-anchor {
+        /* The transition has to follow `all: unset`, which would otherwise
+           reset it along with everything else the button inherited. */
         all: unset;
+        @include motion.snap(opacity);
         cursor: pointer;
         opacity: 0;
         margin-left: 0.3em;
         font-family: var(--font-prose);
         font-size: 0.75em;
         color: var(--color-muted);
-        transition: opacity 0.15s;
     }
 
     .copy-anchor:hover {

@@ -11,6 +11,8 @@ Inspirations include Edward Tufte and Gwern.net.
 
 The visual vocabulary is borrowed from Chinese calligraphy and the page furniture of a woodblock book. Paper and ink give the two screen schemes their names and a vermilion seal gives them their one accent. A frame of a thick rule outside a thin one holds the text block. Notes sit outside that frame, as marginal commentary does. Rules between sections are single tapered brush strokes rather than hairlines. No Chinese characters are used as ornament; only the shapes are.
 
+A second hand has since read the page and marked it up. Surveillance interfaces share the grammar of scholarly apparatus — a box drawn around a subject, a readout in the margin, a timestamp that authenticates the record — and differ only in who drew them, so the machine's layer is added to the page rather than substituted for it. Where the scholar ruled a frame in ink, a machine sets corner ticks outside it in malachite; where the seal authenticates the document by human authority, a revision stamp down the left rail authenticates it by build. Both are visible at once, and neither is allowed to set running text. See [Annotation](#annotation).
+
 # Article Defaults
 
 Most content on this site is a single article on a single page.
@@ -43,9 +45,29 @@ A blockquote is set in from a rule of solid ink on its left. Bullets are marked 
 
 There should be three color schemes: paper (light), ink (dark) and print. Paper and ink should default to the system preference, based on the css media query `prefers-color-scheme`, but should also be toggleable by the user (see [Navbar](#navbar)). Once a user sets a theme preference, that preference should be persisted to local storage and reloaded as early as possible in page load. Print is a scheme of its own and follows no preference.
 
-Every scheme names the same roles, and only those: a `background`, a `raised` surface for what sits on top of it, `text` and a quieter `muted` for apparatus and marginal notes, a `border` rule with a fainter `border-faint` for tinted ground, an `accent`, and a `shadow`. A scheme that omits a role, or invents one, should fail the build, as should one whose text falls below 7:1 against its own background or whose muted text or accent falls below 4.5:1.
+Every scheme names the same roles, and only those: a `background`, a `raised` surface for what sits on top of it, `text` and a quieter `muted` for apparatus and marginal notes, a `border` rule with a fainter `border-faint` for tinted ground, three chromas — `accent`, `signal` and `attention` — and a `shadow`. A scheme that omits a role, or invents one, should fail the build, as should one whose text falls below 7:1 against its own background or whose muted text or any of whose chromas falls below 4.5:1. Print is the boldest of the three schemes, and that too is a build error rather than a matter of taste.
 
-The accent is the vermilion of a seal pressed onto a document, and it marks rather than writes: the logo, sidenote numbers, the current entry in the table of contents, bullets, the underline under a hovered link, and the focus ring. It should never be used to set running text.
+The three chromas are three hands, and none of them ever sets running text.
+
+| Role        | Whose hand it is                                    | Where it appears                                                                                            |
+| ----------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `accent`    | the author — stamped, rare, permanent               | the logo, the rule closing the front matter, sidenote numbers, bullets, the focus ring                      |
+| `signal`    | the machine that read the page — ambient, constant  | corner ticks, the rail slug, link provenance marks                                                          |
+| `attention` | right now — hot, transient, gone when you look away | the current entry in the table of contents, the underline under a hovered link, a link that did not resolve |
+
+`accent` is the vermilion of a seal pressed onto a document; `signal` is malachite and `attention` ochre, which is the traditional pairing beside vermilion rather than an import from a screen. In the light scheme all three sit between 6 and 7:1 against the background, so no one of them shouts louder than the others by contrast alone.
+
+## Annotation
+
+The machine layer is one idea, and everything drawn in `signal` belongs to it: a second reader has been over this page and left its working visible. It never writes words of its own — it draws boxes and it stamps identifiers, which is the whole of its vocabulary.
+
+It draws a **bounding box** as four corner ticks, a right angle at each corner with the edges between them left open, around anything it has taken as a subject: the article, outside the ink frame rather than replacing it, so that both readers' boxes stand; a code block; the popover on a link. Where the thing it has boxed can scroll, the ticks are painted on it rather than around it, since a box drawn outside a scrolling element would be clipped.
+
+It draws a **rail slug** down the left margin of a framed article, set vertically in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. It names the page, the day the build was made, and the revision it was made from. Outside a git checkout the revision is simply absent.
+
+It draws a **provenance mark** after every link in the prose: a single glyph naming what kind of address it is — `§` for a page of this site, `↗` for anywhere else, `¶` for a DOI, `W` for Wikipedia. The mark is a property of the kind, so a kind without one should fail to compile. Whether the link resolved is a separate question and is answered by colour rather than by a second glyph: a link nothing answered for keeps its own mark, drawn in `attention`. A same-document fragment is not unresolved — there was nothing to look up.
+
+None of it is printed. Paper carries no live annotation, and a tick drawn on a sheet is a mark no reader can follow up.
 
 ## Typography
 
@@ -54,6 +76,12 @@ Prose is set in Source Serif 4, the Latin companion of Source Han Serif and so t
 Both families are variable, and both are self-hosted: every font file a page loads should come from this site's own origin, so that reading a page announces the reader to nobody else.
 
 The scale runs from the article title, which is the largest thing on the page, down through the six heading levels to body text at 1.0625rem on a line height of 1.6. Figures in prose are old-style, so that a number sits in the line of text rather than standing above it; figures in tables and in ordered-list markers are lining and tabular, so that columns of them align.
+
+## Motion
+
+A readout snaps to where it belongs rather than easing into it. Every transition on the site is linear, runs no longer than 120ms, and moves only geometry or colour; a longer one should fail the build rather than be caught by eye. Delays are exempt from that limit and are a separate tool — the link popover waits before it appears, so that a pointer crossing a link on its way somewhere else never summons one.
+
+A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it.
 
 # Components
 
@@ -87,7 +115,7 @@ The logo is drawn as a seal: the mark in accent-coloured line, inside a square b
 
 When there is enough space for both the table of contents and sidenotes, the table of contents sits to the left of the content, arranged vertically, underneath the navbar. As the user scrolls, the top of the table of contents should "stick" to the top of the viewport (with pleasant margin, of course).
 
-The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the _right_ of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, headings should auto-expand and collapse as a user scrolls through the document.
+The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the _right_ of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, headings should auto-expand and collapse as a user scrolls through the document, and the current entry is tracked twice over: its own text turns to the attention colour, and a [bounding box](#annotation) slides down the list to enclose it. Without javascript there is no current entry and so no box.
 
 ### Narrow viewports
 
@@ -103,7 +131,7 @@ Hedings should be in a different font from the main content. They should be [anc
 
 ## Links
 
-Links in content should be semi-bold, but not a different color or underlined.
+Links in content should be semi-bold, but not a different color or underlined. Each carries a [provenance mark](#annotation) inside the anchor, so that the glyph travels with the link and is underlined along with it when hovered; it is hidden from screen readers, and from paper.
 
 ### Popover
 
@@ -139,7 +167,7 @@ Articles can provide an additional list of citations under the `citation` frontm
 
 ## Sidenotes
 
-When there is enough horizontal space and in print, footnotes should be displayed to the right of content, aligned with their footnote marker as much as possible. Out there they are marginal commentary: set in the lighter ink, held by a hairline on their left, and beginning outside the article's frame rather than on top of it. Their markers and numbers are in the accent colour. Hovering over the footnote marker should visually highlight the associated sidenote, bringing it up to full ink and turning its rule to the accent colour. Sidenotes that are close together should not overlap, but instead make space for each other. [^demo]
+When there is enough horizontal space and in print, footnotes should be displayed to the right of content, aligned with their footnote marker as much as possible. Out there they are marginal commentary: set in the lighter ink, held by a hairline on their left, and beginning outside the article's frame — and outside the [corner ticks](#annotation) that reach past it — rather than on top of either. Their markers and numbers are in the accent colour. Hovering over the footnote marker should visually highlight the associated sidenote, bringing it up to full ink and turning its rule to the accent colour. Sidenotes that are close together should not overlap, but instead make space for each other. [^demo]
 On narrow viewports, sidenotes should be hidden by default. Clicking them should display the sidenote in line with the content, and clicking the sidenote or the sidenote marker should re-hide the sidenote.
 This behavior should not require javascript.[^scripter]
 

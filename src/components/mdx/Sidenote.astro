@@ -43,11 +43,12 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         box-sizing: border-box;
         /* Size to the right gutter, set by prelude.scss */
         width: var(--sidenote-width, 14rem);
-        /* Clear the grid gutter and the article's frame, so a note begins
-           outside the ruled edge rather than on top of it. */
-        margin-right: calc(
-            -1 * var(--sidenote-width, 14rem) - 2rem - var(--frame-inset, 0px)
-        );
+        /* How far past the text column a note has to begin to clear
+           everything drawn on the article's edge: the grid gutter, the frame,
+           and the corner ticks that reach outside it. Both lengths are
+           registered by prelude.scss, so neither needs a fallback. */
+        --standoff: calc(-2rem - var(--frame-inset) - var(--tick-reach));
+        margin-right: calc(var(--standoff) - var(--sidenote-width, 14rem));
         margin-bottom: 0.5rem;
         padding: 0 0 0 1ch;
         border: 0;

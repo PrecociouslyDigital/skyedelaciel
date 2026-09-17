@@ -14,34 +14,46 @@ $tokens: (
     "border",
     "border-faint",
     "accent",
+    "signal",
+    "attention",
     "shadow"
 );
 
 /// Paper, ink, and print.
 ///
-/// The light scheme is xuan paper under warm black ink; the dark scheme is that
-/// inverted. `muted` is the lighter of the five tones of ink a brush carries,
-/// not a grey. `accent` is the vermilion of a seal, and marks things — a
-/// number, a rule, the current entry — rather than setting running text.
+/// The light scheme is a bare sheet under warm black ink; the dark scheme is
+/// that inverted. `muted` is the lighter of the five tones of ink a brush
+/// carries, not a grey.
+///
+/// Three chromas, three hands, and none of them ever sets running text:
+/// `accent` is the vermilion of a seal and marks what the author vouched for;
+/// `signal` is malachite and belongs to the machine that read the page
+/// afterwards; `attention` is ochre and touches only what the reader is
+/// looking at this second. 朱 and 赭 beside each other is the traditional
+/// pairing, which is why the machine's hand does not read as an import.
 $themes: (
     "light": (
-        "background": #f4efe4,
-        "raised": #faf7ef,
-        "text": #1f1c18,
-        "muted": #6a6257,
-        "border": #cbc2b0,
-        "border-faint": #e6dfcf,
+        "background": #fff,
+        "raised": #fbfbfa,
+        "text": #0e100f,
+        "muted": #565c58,
+        "border": #d6d9d4,
+        "border-faint": #edeeea,
         "accent": #a8321e,
-        "shadow": rgb(0 0 0 / 14%),
+        "signal": #2a6a4a,
+        "attention": #7e5a19,
+        "shadow": rgb(0 0 0 / 12%),
     ),
     "dark": (
-        "background": #171614,
-        "raised": #201e1b,
-        "text": #e6dfcf,
-        "muted": #a39a89,
-        "border": #3e3a34,
-        "border-faint": #26231f,
-        "accent": #e0654c,
+        "background": #141715,
+        "raised": #1c201d,
+        "text": #e3e7e1,
+        "muted": #969d97,
+        "border": #353a37,
+        "border-faint": #212522,
+        "accent": #e86a4f,
+        "signal": #5fbf92,
+        "attention": #e0ae4a,
         "shadow": rgb(0 0 0 / 45%),
     ),
     "print": (
@@ -52,11 +64,18 @@ $themes: (
         "border": #999,
         "border-faint": #ddd,
         "accent": #8a1f14,
+        "signal": #1f4a35,
+        "attention": #5a3f10,
         // Paper carries no shadow, but the token still has to exist so that
         // every rule reading it stays valid under `@media print`.
         "shadow": transparent,
     ),
 );
+
+/// Each theme's body-text contrast, filled in by the loop below so that the
+/// schemes can be compared against each other once they have all been checked
+/// on their own.
+$text-ratios: ();
 
 @each $name, $theme in $themes {
     @each $token in $tokens {
@@ -89,12 +108,29 @@ $themes: (
         $background,
         "#{$name} muted text"
     );
-    @include contrast.assert-at-least(
-        4.5,
-        map.get($theme, "accent"),
-        $background,
-        "#{$name} accent"
-    );
+    @each $chroma in ("accent", "signal", "attention") {
+        @include contrast.assert-at-least(
+            4.5,
+            map.get($theme, $chroma),
+            $background,
+            "#{$name} #{$chroma}"
+        );
+    }
+
+    $text-ratios: map.set($text-ratios, $name, $text-ratio);
+}
+
+/// Ink on paper is the boldest of the three schemes.
+///
+/// tests/design/colors.spec.ts asserts this of the rendered page, which is the
+/// right place for it to be read out of a browser — but the light scheme is a
+/// stark white sheet now, two points short of print's 21:1, so the claim is
+/// close enough to failing to be worth failing a build over.
+$print-ratio: map.get($text-ratios, "print");
+@each $name, $ratio in $text-ratios {
+    @if $name != "print" and $ratio >= $print-ratio {
+        @error "the #{$name} theme's text is at least as bold as print's, so paper is no longer the boldest scheme.";
+    }
 }
 
 /// Declare each token as a typed custom property.

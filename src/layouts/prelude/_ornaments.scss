@@ -1,4 +1,4 @@
-/// The two shapes this design draws with, each written once.
+/// The shapes this design draws with, each written once.
 ///
 /// Mixins only, like _typography.scss: components include them into their own
 /// scoped stylesheets.
@@ -51,4 +51,43 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
         1px,
         $cast
     );
+}
+
+/// The machine's bounding box: a right angle at each of the four corners,
+/// with the edges between them left open.
+///
+/// Eight background gradients on one element, not four positioned children,
+/// so the figure survives on elements that clip or scroll their own content.
+/// A gradient between one colour and itself is just a fill, so `$rule` takes
+/// any colour like a plain background would. Only the four background
+/// longhands are set, so a call site's own `background-color` survives.
+///
+/// `$inset` holds the corners off the edge, for a box already wearing a frame
+/// of its own: `frame` draws with inset shadows, which paint over the
+/// background, so ticks on the edge of a framed box would be invisible.
+@mixin corner-ticks($rule, $len, $weight, $inset: 0) {
+    $arm: linear-gradient($rule, $rule);
+    $near: $inset;
+    $far: if($inset == 0, 100%, calc(100% - #{$inset}));
+
+    background-image: $arm, $arm, $arm, $arm, $arm, $arm, $arm, $arm;
+    background-size:
+        $len $weight,
+        $weight $len,
+        $len $weight,
+        $weight $len,
+        $len $weight,
+        $weight $len,
+        $len $weight,
+        $weight $len;
+    background-position:
+        $near $near,
+        $near $near,
+        $far $near,
+        $far $near,
+        $near $far,
+        $near $far,
+        $far $far,
+        $far $far;
+    background-repeat: no-repeat;
 }

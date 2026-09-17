@@ -1,5 +1,6 @@
 @use "colors";
 @use "breakpoints";
+@use "motion";
 @use "ornaments";
 @use "typography";
 
@@ -25,6 +26,18 @@
 /// that the `ch` in it resolves against the article's own font rather than
 /// against whatever reads it — Sidenote.astro reads it at 0.82rem.
 @property --frame-inset {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 0;
+}
+
+/// How far the machine's corner ticks reach outside that frame.
+///
+/// The second length the article publishes to its own margin, and registered
+/// for its own reason: Sidenote.astro adds it to a `calc()`, and an
+/// unregistered custom property carrying anything but a length would take the
+/// whole expression down with it rather than falling back to zero.
+@property --tick-reach {
     syntax: "<length>";
     inherits: true;
     initial-value: 0;
@@ -58,10 +71,11 @@ body {
     outline-offset: 2px;
 }
 
-/* Links. Ink for the text, vermilion for the mark under it. */
+/* Links. Ink for the text; the only rule that ever shows under one is the one
+   drawn while it is hovered, so it is ochre — the colour of right now. */
 a {
     color: inherit;
-    text-decoration-color: var(--color-accent);
+    text-decoration-color: var(--color-attention);
     text-decoration-thickness: 1px;
     text-underline-offset: 0.15em;
 
@@ -76,7 +90,7 @@ a {
     text-decoration-line: none;
 
     // Longhands, not the shorthand: `text-decoration: underline` would reset
-    // the colour to `currentColor` and take the vermilion back off again.
+    // the colour to `currentColor` and take the ochre back off again.
     &:hover {
         text-decoration-line: underline;
         text-decoration-thickness: 2px;
@@ -84,10 +98,12 @@ a {
 }
 
 article {
+    position: relative;
     box-sizing: border-box;
     max-width: 80ch;
     margin: 0 auto;
     --frame-inset: 0px;
+    --tick-reach: 0px;
 }
 
 /* — Front matter — */
@@ -232,8 +248,13 @@ code {
     border-radius: 2px;
 }
 
+/* Painted on the block itself rather than on a pseudo-element outside it: a
+   code block scrolls sideways, and `overflow-x: auto` would clip anything
+   drawn beyond its edge. A background stays with the border box while the
+   contents move under it, so the ticks hold still. */
 pre {
-    background: var(--color-raised);
+    @include ornaments.corner-ticks(var(--color-signal), 0.6rem, 1px);
+    background-color: var(--color-raised);
     border: 1px solid var(--color-border);
     padding: 0.9rem 1.2rem;
     overflow-x: auto;
@@ -340,9 +361,9 @@ figcaption {
     }
 
     .toc-list {
+        @include motion.snap(max-height);
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease-out;
     }
 
     &:has(#toc-toggle:checked) {
@@ -393,7 +414,43 @@ figcaption {
         // 3px of that is the frame itself, so the text clears its inner rule
         // by about 2ch either side.
         --frame-inset: calc(2ch + 3px);
+        --tick-reach: 0.8rem;
         padding: 2.5rem var(--frame-inset) 2rem;
+    }
+
+    /* The second reader's box, drawn clear of the first one's. The woodblock
+       frame says where the text block ends; these say what a machine decided
+       the subject was. Two frames, two authors — which is why the ticks sit
+       outside the rule rather than replacing it. */
+    article::before {
+        @include ornaments.corner-ticks(var(--color-signal), 1rem, 1.5px);
+        content: "";
+        position: absolute;
+        inset: calc(-1 * var(--tick-reach));
+        pointer-events: none;
+    }
+
+    /* 書口, carrying what identifies this copy to a machine rather than a
+       title and fascicle number — see design.mdx, Annotation.
+
+       The empty alternative text after the slash keeps it out of the
+       accessibility tree: it is a stamp, not a sentence to be read aloud. */
+    article::after {
+        content: attr(data-rail) / "";
+        position: absolute;
+        top: 0;
+        right: calc(100% + var(--tick-reach) + 0.5rem);
+        writing-mode: vertical-rl;
+        white-space: nowrap;
+        pointer-events: none;
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        /* Set sideways, the line box is the slug's width, and the gutter it
+           has to fit in is 2rem less what the ticks already take. */
+        line-height: 1;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--color-signal);
     }
 }
 
@@ -428,6 +485,14 @@ figcaption {
 
     article {
         margin: 0; // left-align instead of centering
+    }
+
+    /* Nothing the machine drew survives the press. The article's own ticks and
+       rail slug are already gone — they are declared inside a `screen` query —
+       but a code block's are painted on the block itself, so they have to be
+       taken off by hand. */
+    pre {
+        background-image: none;
     }
 
     .sidebar {

@@ -40,3 +40,32 @@ draws both.
 outer shadow off the same property. A `null` default works because Sass omits
 nulls when it serialises a comma list, so the popover gets three shadows and
 the article two, from one declaration.
+
+## 2026-09-17 — corner ticks are eight gradients, not four elements
+
+The machine layer's bounding box is a right angle at each corner with the
+edges left open. The obvious implementation is four absolutely positioned
+children, each with two borders and two suppressed — which is what the
+prototype did, and it is wrong here for three separate reasons.
+
+It needs four boxes in the layout, and the figure has to go on a
+pseudo-element (`article::before`), which gets exactly one. It cannot be put
+on an element whose overflow is clipped — `pre` scrolls sideways, so anything
+drawn outside it disappears. And a child of a scroll container scrolls with
+the content, so the ticks on a code block would slide off as you read it.
+
+Eight `linear-gradient` backgrounds on one element solve all three at once. A
+gradient from a colour to itself is a fill, so the arms take
+`var(--color-signal)` like anything else and cost no asset. `background-size`
+gives each arm its length and weight, `background-position` puts two at each
+corner, and `background-attachment` defaults to `scroll`, which — despite the
+name — pins the paint to the border box while the contents move underneath.
+
+Only the four background longhands are emitted, never the shorthand, so a call
+site keeps the `background-color` it already had. `pre` and `.link-popover`
+both rely on that.
+
+`$inset` exists because of one call site and is worth the parameter. `frame`
+draws with inset box-shadows, and those paint *over* the background — so ticks
+laid on the padding edge of an already-framed box are painted out entirely and
+silently. The popover is 4px in: two of channel, one of inner rule, one of air.

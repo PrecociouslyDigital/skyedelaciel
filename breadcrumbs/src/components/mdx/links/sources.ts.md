@@ -86,3 +86,29 @@ It now answers by call order and records what was asked, and each case asserts
 that both rungs were walked and that the second is what answered. The same
 substring still appears, but as an assertion rather than as routing — so a
 renamed endpoint fails the test instead of hiding inside it.
+
+## 2026-09-17 — the provenance mark is a field, so a kind cannot ship without one
+
+Every link in the prose now wears a glyph saying where it leads — `§`, `↗`,
+`¶`, `W`. The tempting shape is a lookup table beside the registry, keyed by
+kind. That is exactly the shape this file exists to have removed: a second
+list to keep in step with `byKind`, and nothing to notice when it drifts.
+
+`mark` is a field on `Source` instead, so the `Record<LinkKind, Source>`
+annotation that already made a missing source a compile error now makes a
+missing glyph one too, for free. The one thing the type cannot see is two
+kinds sharing a glyph, which would leave a reader unable to tell them apart
+with nothing going red — `tests/unit/sources.test.ts` carries that as a
+distinctness property.
+
+`isResolved` is here for adjacency rather than because it is about a source.
+Every render site asks both questions at once — which kind of address is this,
+and did anything answer — and they are genuinely independent: `resolution` is
+a property of the lookup, `kind` of the URL. Keeping the pair together is what
+stops a call site deciding for itself that "no entry" means "internal", or
+that "unresolved" deserves a fifth glyph.
+
+The one case worth stating is the exception in it. A bare `#fragment`
+addresses the page the reader is already on, so no lookup was ever attempted
+and nothing is missing; without that clause every in-page cross-reference in
+design.mdx would be marked as a dead end.
