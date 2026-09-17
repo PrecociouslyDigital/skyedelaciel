@@ -23,3 +23,28 @@ or to generate the served file from the Inkscape master via a build step.
 
 Verified in Chrome and librsvg; `viewBox` itself was always correct — it is a
 tight bbox of the artwork, so the logo has no built-in padding.
+
+## 2026-09-17 — the served file is now generated
+
+`public/logo.svg` is written by `tools/logo.mjs` and is no longer an Inkscape
+save, so the mask-region bug above cannot recur: the generated file has no
+`<mask>` elements at all. The Inkscape master moved to
+`src/assets/logo.inkscape.svg`, out of the served directory.
+
+`public/favicon.svg` is the same generator's second output, drawn for sixteen
+pixels in a tab: heavier, cropped close, and with the hexagon dropped. At that
+size the frame becomes a ring of specks that fills the gaps between the petals
+and turns the mark into a blot, while the rosette alone still reads as a
+flower. `md.astro` had been linking that path since before it existed.
+
+See `breadcrumbs/tools/logo.mjs.md` for the geometry and the interlace rule.
+
+`public/favicon.ico`, for browsers that still prefer one, was the old mark with
+the same clipping bug — cropped at the top left, off its own axis. It is now
+derived from `favicon.svg`, and being a binary it is the one file here the
+drift test cannot check, so the recipe lives here instead:
+
+```
+rsvg-convert -w 256 -h 256 public/favicon.svg -o /tmp/icon.png
+magick /tmp/icon.png -define icon:auto-resize=48,32,16 public/favicon.ico
+```

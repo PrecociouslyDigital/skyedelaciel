@@ -73,15 +73,15 @@ const nodes = match(Astro.props)
 
 <style lang="scss">
     .toc-list {
-        font-family: sans-serif;
-        font-size: 0.85rem;
+        font-family: var(--font-prose);
+        font-size: var(--text-small);
         list-style: none;
         padding-left: 0;
         margin: 0;
 
         .toc-list {
             padding-left: 1ch;
-            border-left: 1px solid var(--color-muted);
+            border-left: 1px solid var(--color-border);
             margin-left: 0.5ch;
         }
 
@@ -90,13 +90,14 @@ const nodes = match(Astro.props)
             color: var(--color-muted);
 
             &:hover {
-                text-decoration: underline;
+                color: var(--color-text);
             }
 
+            // Marked in vermilion rather than bolded: the sidebar is
+            // shrink-wrapped, so a heavier entry would widen it and drag the
+            // grouping line sideways as the reader scrolls.
             &[data-current] {
-                color: var(--color-fg);
-                // Use a text shadow here to avoid shifting the vertical bar
-                text-shadow: 0px 0px 1px black;
+                color: var(--color-accent);
             }
         }
 
@@ -121,6 +122,7 @@ const nodes = match(Astro.props)
                     cursor: pointer;
                     list-style: none;
                     padding-left: 0.5ch;
+                    color: var(--color-muted);
 
                     &::marker,
                     &::-webkit-details-marker {

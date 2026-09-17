@@ -1,52 +1,124 @@
+@use "sass:list";
 @use "sass:map";
-@use "sass:color";
+@use "contrast";
 
+/// The vocabulary every theme speaks, and the only one.
+///
+/// A theme that misses a token, or invents one, is a build error rather than a
+/// `var()` that silently resolves to nothing at render time.
+$tokens: (
+    "background",
+    "raised",
+    "text",
+    "muted",
+    "border",
+    "border-faint",
+    "accent",
+    "shadow"
+);
+
+/// Paper, ink, and print.
+///
+/// The light scheme is xuan paper under warm black ink; the dark scheme is that
+/// inverted. `muted` is the lighter of the five tones of ink a brush carries,
+/// not a grey. `accent` is the vermilion of a seal, and marks things — a
+/// number, a rule, the current entry — rather than setting running text.
 $themes: (
     "light": (
-        "background": #c7cdd4,
-        "text": #101011,
-        // Same hue as the dark scheme's primary, darkened to clear WCAG AA
-        // contrast against this lighter background.
-        "primary": #35558d,
-        "secondary": #7f6a8d,
-        "warning": #84a9c0,
-        "error": #cd9fcc,
-        "lightscale": 20%,
+        "background": #f4efe4,
+        "raised": #faf7ef,
+        "text": #1f1c18,
+        "muted": #6a6257,
+        "border": #cbc2b0,
+        "border-faint": #e6dfcf,
+        "accent": #a8321e,
+        "shadow": rgb(0 0 0 / 14%),
     ),
     "dark": (
-        "background": #101011,
-        "text": #ddd8b8,
-        "primary": #b3cbb9,
-        "secondary": #465775,
-        "warning": #cd9fcc,
-        "error": #84a9c0,
-        "lightscale": -20%,
+        "background": #171614,
+        "raised": #201e1b,
+        "text": #e6dfcf,
+        "muted": #a39a89,
+        "border": #3e3a34,
+        "border-faint": #26231f,
+        "accent": #e0654c,
+        "shadow": rgb(0 0 0 / 45%),
     ),
     "print": (
-        "background": #ffffff,
-        "text": #000000,
-        "primary": #6185c4,
-        "secondary": #7f6a8d,
-        "warning": #84a9c0,
-        "error": #cd9fcc,
-        "lightscale": 0%,
+        "background": #fff,
+        "raised": #fff,
+        "text": #000,
+        "muted": #444,
+        "border": #999,
+        "border-faint": #ddd,
+        "accent": #8a1f14,
+        // Paper carries no shadow, but the token still has to exist so that
+        // every rule reading it stays valid under `@media print`.
+        "shadow": transparent,
     ),
 );
 
-// Mixin to output CSS custom properties from a theme
-@mixin apply-theme($theme-name) {
-    $theme: map.get($themes, $theme-name);
-    --color-background: #{map.get($theme, "background")};
-    --color-text: #{map.get($theme, "text")};
-    --color-primary: #{map.get($theme, "primary")};
-    --color-secondary: #{map.get($theme, "secondary")};
-    --color-warning: #{map.get($theme, "warning")};
-    --color-error: #{map.get($theme, "error")};
+@each $name, $theme in $themes {
+    @each $token in $tokens {
+        @if not map.has-key($theme, $token) {
+            @error "the #{$name} theme is missing the #{$token} token.";
+        }
+    }
+    @each $token, $value in $theme {
+        @if not list.index($tokens, $token) {
+            @error "the #{$name} theme defines #{$token}, which is not a token.";
+        }
+    }
 
-    // Derived colors using lightscale
-    $scale: map.get($theme, "lightscale");
-    --color-muted: #{color.scale(map.get($theme, "text"), $lightness: 40%)};
-    --color-border: #{color.scale(map.get($theme, "text"), $lightness: 60%)};
+    $background: map.get($theme, "background");
+    $text-ratio: contrast.contrast(map.get($theme, "text"), $background);
+    $muted-ratio: contrast.contrast(map.get($theme, "muted"), $background);
+    @if $muted-ratio >= $text-ratio {
+        @error "the #{$name} theme's muted text is no quieter than its body text.";
+    }
+
+    @include contrast.assert-at-least(
+        7,
+        map.get($theme, "text"),
+        $background,
+        "#{$name} text"
+    );
+    @include contrast.assert-at-least(
+        4.5,
+        map.get($theme, "muted"),
+        $background,
+        "#{$name} muted text"
+    );
+    @include contrast.assert-at-least(
+        4.5,
+        map.get($theme, "accent"),
+        $background,
+        "#{$name} accent"
+    );
+}
+
+/// Declare each token as a typed custom property.
+///
+/// Two things follow from the type. A value that is not a color is rejected at
+/// computed-value time and the token falls back to its initial, instead of
+/// poisoning every rule that reads it; and `getComputedStyle` hands back a
+/// resolved color rather than the literal that was written, which is what
+/// tests/design/colors.spec.ts reads a token's contrast out of.
+///
+/// The light theme supplies the initials, from the same map, so the fallback
+/// is a real scheme rather than a second palette that could drift.
+@each $token, $value in map.get($themes, "light") {
+    @property --color-#{$token} {
+        syntax: "<color>";
+        inherits: true;
+        initial-value: #{$value};
+    }
+}
+
+@mixin apply-theme($theme-name) {
+    @each $token, $value in map.get($themes, $theme-name) {
+        --color-#{$token}: #{$value};
+    }
 }
 
 // Matches either sign of an override: the checkbox (works without JS, but

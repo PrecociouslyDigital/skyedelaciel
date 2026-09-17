@@ -1,25 +1,41 @@
 {
-    "extends": ["stylelint-config-standard-scss"],
+    "extends": [
+        "stylelint-config-standard-scss"
+    ],
     "overrides": [
         {
-            "files": ["**/*.astro", "**/*.svelte"],
+            "files": [
+                "**/*.astro",
+                "**/*.svelte"
+            ],
             "customSyntax": "postcss-html"
+        },
+        {
+            "files": [
+                "src/layouts/prelude/_contrast.scss"
+            ],
+            "rules": {
+                "number-max-precision": 5
+            }
         }
     ],
     "rules": {
         "selector-class-pattern": null,
         "custom-property-pattern": null,
         "no-descending-specificity": null,
-
         "selector-pseudo-class-no-unknown": [
             true,
-            { "ignorePseudoClasses": ["global"] }
+            {
+                "ignorePseudoClasses": [
+                    "global"
+                ]
+            }
         ],
-
         "comment-empty-line-before": null,
         "custom-property-empty-line-before": null,
         "declaration-empty-line-before": null,
         "rule-empty-line-before": null,
-        "scss/double-slash-comment-empty-line-before": null
+        "scss/double-slash-comment-empty-line-before": null,
+        "at-rule-empty-line-before": null
     }
 }

@@ -39,11 +39,14 @@
         height: 0;
     }
 
+    /* A square rather than a disc: the seal, the frame and the manuscript grid
+       are all boxes, and this is the smallest of them. */
     .toggle-icon {
-        width: 1.5rem;
-        height: 1.5rem;
-        border-radius: 50%;
-        border: 2px solid var(--color-text);
+        box-sizing: border-box;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 2px;
+        border: 1.5px solid var(--color-text);
         background: linear-gradient(
             135deg,
             var(--color-text) 50%,
@@ -57,7 +60,7 @@
     }
 
     input:focus-visible + .toggle-icon {
-        outline: 2px solid var(--color-primary);
+        outline: 2px solid var(--color-accent);
         outline-offset: 2px;
     }
 

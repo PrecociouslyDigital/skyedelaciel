@@ -1,0 +1,4 @@
+# Prettier has no SVG parser, and it must not acquire one here: public/logo.svg
+# and public/favicon.svg are generated, and tests/unit/logo.test.ts asserts they
+# match tools/logo.mjs byte for byte.
+*.svg

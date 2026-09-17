@@ -7,15 +7,21 @@
 /// The sidebar tier exists because the grid biases content leftward at
 /// narrower widths to make room for sidenotes, leaving too little space
 /// for the sidebar. At 72rem+ the left gutter reaches ~8rem.
+///
+/// The widths are exported as well as wrapped, because prelude.scss builds two
+/// complementary queries of its own out of `$wide`.
+
+$wide: 60rem;
+$wide-sidebar: 72rem;
 
 @mixin wide {
-    @media (min-width: 60rem) {
+    @media (min-width: $wide) {
         @content;
     }
 }
 
 @mixin wide-sidebar {
-    @media (min-width: 72rem) {
+    @media (min-width: $wide-sidebar) {
         @content;
     }
 }

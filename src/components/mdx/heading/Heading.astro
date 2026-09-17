@@ -19,24 +19,20 @@ const { as: Tag, id, ...rest } = Astro.props;
 >
 
 <style lang="scss">
-    .heading {
-        font-family: sans-serif;
-
-        &:hover :global(.copy-anchor) {
-            opacity: 1;
-        }
+    /* The type scale itself lives in prelude.scss, where the bibliography's
+       own <h2> and the front matter's <h1> can reach it too. */
+    .heading:hover :global(.copy-anchor) {
+        opacity: 1;
     }
 
     .heading-anchor {
-        color: inherit;
-        text-decoration: none;
+        text-decoration-line: none;
 
-        &:visited {
-            color: inherit;
-        }
-
+        // Longhand, so the underline keeps the accent colour prelude.scss
+        // gives every link rather than resetting to `currentColor`.
         &:hover {
-            text-decoration: underline;
+            text-decoration-line: underline;
+            text-decoration-thickness: 2px;
         }
     }
 </style>

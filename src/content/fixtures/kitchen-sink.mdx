@@ -1,6 +1,6 @@
 ---
 title: Kitchen Sink
-abstract: Every claim in the design spec that the real pages do not happen to exercise — all four popover styles, a bibliography, adjacent sidenotes crowding each other, and headings nested deeper than the table of contents renders.
+abstract: Every claim in the design spec that the real pages do not happen to exercise — all four popover styles, a bibliography, adjacent sidenotes crowding each other, headings nested deeper than the table of contents renders, and the block elements of prose.
 author: Fixture Author
 bibliography: true
 citation:
@@ -48,6 +48,52 @@ a summary and an image, and no author line at all.
 Two markers set one sentence apart[^first] is the case that matters[^second]:
 the notes are long enough that, laid out at their natural positions, they would
 overlap. Three in a row[^third] is the same problem with one more term.
+
+# Prose
+
+The block elements the spec describes, which the real pages happen not to use.
+They are here so that the gallery and the accessibility sweep both see them.
+
+## Quotations and lists
+
+> The brush is the ink's servant, and the ink the paper's. A page that forgets
+> which is which ends up looking like a screen.
+
+- A bulleted item, whose marker is set in the accent colour
+- A second one, run long enough to wrap onto a line of its own, so that the
+  hanging indent has something to hang
+- A third, for the rhythm of it
+
+1. A numbered item, whose marker is set in lining figures
+2. A second, so that two numbers can be seen to align
+3. A third
+
+## Code
+
+Inline `--color-accent` sits on a faintly tinted ground, and a block of it sits
+on the raised surface inside a single hairline:
+
+```scss
+@mixin frame-heavy {
+    border: 3px solid var(--color-text);
+    box-shadow:
+        inset 0 0 0 3px var(--color-background),
+        inset 0 0 0 4px var(--color-text);
+}
+```
+
+## Tables
+
+| Token      | Paper  | Ink    |
+| ---------- | ------ | ------ |
+| background | f4efe4 | 171614 |
+| text       | 1f1c18 | e6dfcf |
+| accent     | a8321e | e0654c |
+
+---
+
+A brush stroke stands above this paragraph, in place of the hairline a
+horizontal rule would otherwise draw.
 
 # Nesting
 

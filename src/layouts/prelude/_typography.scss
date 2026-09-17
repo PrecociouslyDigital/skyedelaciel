@@ -1,0 +1,42 @@
+/// The three faces and the scale they are set on.
+///
+/// Mixins only, no top-level rules: components `@use` this for `apparatus`, and
+/// a partial that emitted CSS would be copied into every one of their scoped
+/// stylesheets. prelude.scss includes `tokens` once, on `:root`.
+///
+/// Source Serif 4 is the Latin companion of Source Han Serif, so it is the text
+/// face that sits comfortably beside Song-style CJK. Cormorant supplies the
+/// display voice: its high contrast and drawn-out terminals read as brush work
+/// at title sizes. Both are self-hosted; see md.astro.
+
+/// Prose blocks — everything that is read as running text rather than as
+/// furniture. Named once because several rules below are about all of them.
+$prose-blocks: "p, li, blockquote, dd, dt, figcaption, .abstract";
+
+@mixin tokens {
+    --font-prose:
+        "Source Serif 4 Variable", "Georgia", "Times New Roman", serif;
+    --font-display: "Cormorant Variable", "Georgia", "Times New Roman", serif;
+    --font-mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+
+    --text-body: 1.0625rem;
+    --text-title: 2.75rem;
+    --text-h1: 2.125rem;
+    --text-h2: 1.625rem;
+    --text-h3: 1.3rem;
+    --text-h4: 1.15rem;
+    --text-h5: 1.05rem;
+    --text-h6: 0.95rem;
+    --text-small: 0.85rem;
+}
+
+/// Apparatus: the labels around the text rather than the text itself — nav
+/// links, the byline, column headers, the "Contents" toggle. The prose face,
+/// letterspaced and set as small caps, so it stays in the same voice while
+/// reading as a caption.
+@mixin apparatus($size: 0.95rem) {
+    font-family: var(--font-prose);
+    font-variant-caps: all-small-caps;
+    font-size: $size;
+    letter-spacing: 0.08em;
+}

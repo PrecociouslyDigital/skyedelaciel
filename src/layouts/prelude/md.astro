@@ -2,6 +2,16 @@
 import type { MarkdownHeading } from "astro";
 import type { CollectionEntry } from "astro:content";
 import "./prelude.scss";
+
+/* Self-hosted faces, bundled into the build rather than fetched from a CDN.
+   `standard` is the file carrying both of Source Serif 4's axes — weight and
+   optical size; `index`/`wght` drop the latter. Each declares every subset with
+   a `unicode-range`, so a Latin page downloads four files. */
+import "@fontsource-variable/source-serif-4/standard.css";
+import "@fontsource-variable/source-serif-4/standard-italic.css";
+import "@fontsource-variable/cormorant";
+import "@fontsource-variable/cormorant/wght-italic.css";
+
 import Navbar from "~/components/Navbar.astro";
 import TableOfContents from "~/components/TableOfContents.astro";
 import Bibliography from "~/components/mdx/links/Bibliography.astro";
@@ -41,6 +51,7 @@ const { frontmatter, headings } = Astro.props;
         </script>
         <script src="~/components/toc-scroll.ts"></script>
         <meta charset="utf-8" />
+        <meta name="color-scheme" content="light dark" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width" />

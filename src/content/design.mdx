@@ -9,13 +9,15 @@ Content on this site should be optimized for **reading prose on desktop**. Where
 
 Inspirations include Edward Tufte and Gwern.net.
 
+The visual vocabulary is borrowed from Chinese calligraphy and the page furniture of a woodblock book. Paper and ink give the two screen schemes their names and a vermilion seal gives them their one accent. A frame of a thick rule outside a thin one holds the text block. Notes sit outside that frame, as marginal commentary does. Rules between sections are single tapered brush strokes rather than hairlines. No Chinese characters are used as ornament; only the shapes are.
+
 # Article Defaults
 
 Most content on this site is a single article on a single page.
 
 ## Front Matter
 
-An article's front matter (not to be conflated with markdown's `yaml` frontmatter) contains human-relevant metadata about the article. It should begin every article, visually set apart
+An article's front matter (not to be conflated with markdown's `yaml` frontmatter) contains human-relevant metadata about the article. It should begin every article, visually set apart, closed off by a brush rule in the accent colour. Where the article itself is not framed — a narrow viewport, or paper — the front matter wears the frame instead, so a reader always meets one ruled block before the text.
 
 ### Title
 
@@ -31,11 +33,27 @@ The abstract should follow the title and author. It should be formatted similarl
 
 ## Content
 
-The main content of the article should have a maximum width of 80 characters.
+The main content of the article should have a maximum width of 80 characters. Where there is room on either side of it, the article is framed: a thick rule outside a thin one, with a channel of paper between them, and the text held off that frame by about two characters.
+
+### Block elements
+
+A blockquote is set in from a rule of solid ink on its left. Bullets are marked in the accent colour and numbers in muted ink. Inline code sits on a faintly tinted ground; a code block sits on the raised surface inside a single hairline. A table rules its header row off with a stroke of ink and each body row with a hairline, and sets its column headers in the same small caps as the rest of the apparatus. A horizontal rule is a brush stroke, centred and well short of the measure.
 
 ## Colors
 
-There should be three color schemes, dark, light and print. Dark and light color schemes should default to the system preference, based on the css media query `prefers-color-scheme`, but should also be toggleable by the user (see [Navbar](#navbar)). Once a user sets a theme preference, that preference should be persisted to local storage and reloaded as early as possible in page load.
+There should be three color schemes: paper (light), ink (dark) and print. Paper and ink should default to the system preference, based on the css media query `prefers-color-scheme`, but should also be toggleable by the user (see [Navbar](#navbar)). Once a user sets a theme preference, that preference should be persisted to local storage and reloaded as early as possible in page load. Print is a scheme of its own and follows no preference.
+
+Every scheme names the same roles, and only those: a `background`, a `raised` surface for what sits on top of it, `text` and a quieter `muted` for apparatus and marginal notes, a `border` rule with a fainter `border-faint` for tinted ground, an `accent`, and a `shadow`. A scheme that omits a role, or invents one, should fail the build, as should one whose text falls below 7:1 against its own background or whose muted text or accent falls below 4.5:1.
+
+The accent is the vermilion of a seal pressed onto a document, and it marks rather than writes: the logo, sidenote numbers, the current entry in the table of contents, bullets, the underline under a hovered link, and the focus ring. It should never be used to set running text.
+
+## Typography
+
+Prose is set in Source Serif 4, the Latin companion of Source Han Serif and so the text face that sits comfortably beside Song-style type. Display type — an article's title and every heading — is set in Cormorant, whose high contrast and drawn-out terminals read as brush work at display sizes. Apparatus — navigation links, the byline, column headers, the contents toggle — is the prose face set as letterspaced small caps, so that labels stay in the same voice as the text while reading as captions. Code is set in whatever monospace the reader already has.
+
+Both families are variable, and both are self-hosted: every font file a page loads should come from this site's own origin, so that reading a page announces the reader to nobody else.
+
+The scale runs from the article title, which is the largest thing on the page, down through the six heading levels to body text at 1.0625rem on a line height of 1.6. Figures in prose are old-style, so that a number sits in the line of text rather than standing above it; figures in tables and in ordered-list markers are lining and tabular, so that columns of them align.
 
 # Components
 
@@ -61,6 +79,8 @@ The navbar contains, in order
 - Links to various internal and external landing pages
 - A button that toggles the [Color Scheme](#colors)
 
+The logo is drawn as a seal: the mark in accent-coloured line, inside a square border of the same colour. It is painted rather than served as an image, so that it reads in both schemes without a second copy of the artwork. The scheme toggle is a small square, matching the seal and the frame rather than the circle it used to be.
+
 ## Table of contents
 
 ### Wide viewports
@@ -79,7 +99,7 @@ In print, the table of contents should be in line with the content, but always e
 
 ## Headings
 
-Hedings should be in a different font from the main content. They should be [anchor links](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a) to themselves. On platforms with javascript enabled, an icon should appear on hover that copies the full anchor link to the clipboard.
+Hedings should be in a different font from the main content. They should be [anchor links](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a) to themselves. On platforms with javascript enabled, an icon should appear on hover that copies the full anchor link to the clipboard. A top-level heading is underscored by a short brush stroke in ink, which is the same figure the front matter closes with, in the quieter colour.
 
 ## Links
 
@@ -87,7 +107,7 @@ Links in content should be semi-bold, but not a different color or underlined.
 
 ### Popover
 
-Hovering over a link should show a popover, fixed to above the link, with a short preview. The popover can include any html content, but in general the first line should be the title, the second metadata in italics, and then the content. The popover should have a fixed maximum size, and can be scrolled if its contents are long.
+Hovering over a link should show a popover, fixed to above the link, with a short preview. The popover can include any html content, but in general the first line should be the title, the second metadata in italics, and then the content. The popover should have a fixed maximum size, and can be scrolled if its contents are long. It reads as a slip of paper laid on the page: the raised surface, a lighter version of the article's frame around it, a cast shadow to lift it, and its title in the display face.
 
 #### Default Style
 
@@ -119,7 +139,7 @@ Articles can provide an additional list of citations under the `citation` frontm
 
 ## Sidenotes
 
-When there is enough horizontal space and in print, footnotes should be displayed to the right of content, aligned with their footnote marker as much as possible. Hovering over the footnote marker should visually highlight the associated sidenote. Sidenotes that are close together should not overlap, but instead make space for each other. [^demo]
+When there is enough horizontal space and in print, footnotes should be displayed to the right of content, aligned with their footnote marker as much as possible. Out there they are marginal commentary: set in the lighter ink, held by a hairline on their left, and beginning outside the article's frame rather than on top of it. Their markers and numbers are in the accent colour. Hovering over the footnote marker should visually highlight the associated sidenote, bringing it up to full ink and turning its rule to the accent colour. Sidenotes that are close together should not overlap, but instead make space for each other. [^demo]
 On narrow viewports, sidenotes should be hidden by default. Clicking them should display the sidenote in line with the content, and clicking the sidenote or the sidenote marker should re-hide the sidenote.
 This behavior should not require javascript.[^scripter]
 

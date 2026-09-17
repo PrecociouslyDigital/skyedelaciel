@@ -1,11 +1,11 @@
-import { expect, FIXTURE_PAGE, onlyIn, section, test } from "./_harness";
-
-/**
- * The headings of the article body. MDX puts them directly under <article>,
- * which excludes the front matter's own <h1 class="title"> — that one belongs
- * to the Front Matter section of the spec, and has no anchor by design.
- */
-const CONTENT_HEADINGS = "article > :is(h1,h2,h3,h4,h5,h6)";
+import {
+    CONTENT_HEADINGS,
+    expect,
+    FIXTURE_PAGE,
+    onlyIn,
+    section,
+    test,
+} from "./_harness";
 
 section("Headings", () => {
     test.beforeEach(async ({ page }) => {

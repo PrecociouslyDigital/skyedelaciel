@@ -1,47 +1,135 @@
 @use "colors";
 @use "breakpoints";
+@use "ornaments";
+@use "typography";
+
+/// Where the page's frame goes.
+///
+/// A framed article needs clear margin on both sides, so the frame is drawn
+/// around it only on a wide screen. Everywhere else — a narrow window, and
+/// paper, whatever the width of the sheet — the title block wears it instead.
+/// The two queries are complements, so exactly one of them ever fires.
+@mixin framed-article {
+    @media screen and (min-width: breakpoints.$wide) {
+        @content;
+    }
+}
+
+@mixin framed-title {
+    @media not screen and (min-width: breakpoints.$wide) {
+        @content;
+    }
+}
+
+/// How far the frame holds the text off the article's outer edge. Registered so
+/// that the `ch` in it resolves against the article's own font rather than
+/// against whatever reads it — Sidenote.astro reads it at 0.82rem.
+@property --frame-inset {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 0;
+}
+
+:root {
+    @include typography.tokens;
+}
 
 /* Base typography */
 body {
-    font-family: serif;
+    font-family: var(--font-prose);
+    font-size: var(--text-body);
     line-height: 1.6;
     margin: 0;
-    padding: 2rem;
+    padding: 1.5rem;
     background-color: var(--color-background);
     color: var(--color-text);
     counter-reset: sidenote;
+    /* Figures are set on the prose blocks rather than here: a non-initial
+       font-variant on <body> makes the `font` shorthand unserialisable, which
+       is how tests/design/content.spec.ts measures the 80-character line. */
+}
+
+::selection {
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Links. Ink for the text, vermilion for the mark under it. */
+a {
+    color: inherit;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.15em;
+
+    &:visited {
+        color: inherit;
+    }
+}
+
+/* Content links: semi-bold, inherit color, no underline */
+.content-link {
+    font-weight: 600;
+    text-decoration-line: none;
+
+    // Longhands, not the shorthand: `text-decoration: underline` would reset
+    // the colour to `currentColor` and take the vermilion back off again.
+    &:hover {
+        text-decoration-line: underline;
+        text-decoration-thickness: 2px;
+    }
 }
 
 article {
+    box-sizing: border-box;
     max-width: 80ch;
     margin: 0 auto;
+    --frame-inset: 0px;
 }
 
-/* Front matter */
+/* — Front matter — */
 .front-matter {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 2.5rem;
+
+    /* The brush rule that closes the title block. In vermilion: it is the one
+       ornament a reader meets before the text, and it stands for the seal. */
+    &::after {
+        @include ornaments.brush-rule(18, var(--color-accent));
+        content: "";
+        width: 9rem;
+        margin-top: 1.25rem;
+    }
+}
+
+@include framed-title {
+    .front-matter {
+        @include ornaments.frame-heavy;
+        padding: 1.75rem 2ch 1.5rem;
+    }
 }
 
 .title-line {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.5rem 1.5rem;
+    gap: 0.25rem 1.5rem;
 }
 
 .title {
-    // A step above the 2rem an <h1> in the body gets, so the article's own
-    // title outweighs the first section heading under it rather than tying.
-    font-size: 2.5rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    // A step above the h1 a section heading gets, so the article's own title
+    // outweighs the first heading under it rather than tying.
+    font-size: var(--text-title);
+    line-height: 1.1;
     margin: 0;
-    line-height: 1.2;
 }
 
 .author {
-    font-family: sans-serif;
-    font-size: 0.9rem;
+    @include typography.apparatus;
     color: var(--color-muted);
 }
 
@@ -50,47 +138,176 @@ article {
     margin: 1rem 0 0;
 }
 
-/* Links */
-a {
-    color: var(--color-primary);
-}
-
-a:visited {
-    color: var(--color-secondary);
-}
-
-/* Content links: semi-bold, inherit color, no underline */
-.content-link {
+/* — Headings —
+   Global rather than scoped inside Heading.astro, because the bibliography
+   writes its own <h2> and the front matter its own <h1>. One scale, one place. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
     font-weight: 600;
-    color: inherit;
-    text-decoration: none;
+    line-height: 1.15;
+    margin: 2.25rem 0 0.6rem;
+}
 
-    &:visited {
-        color: inherit;
-    }
+h1 {
+    font-size: var(--text-h1);
+}
 
-    &:hover {
-        text-decoration: underline;
+h2 {
+    font-size: var(--text-h2);
+}
+
+h3 {
+    font-size: var(--text-h3);
+    font-style: italic;
+}
+
+h4 {
+    font-size: var(--text-h4);
+}
+
+h5 {
+    font-size: var(--text-h5);
+}
+
+h6 {
+    font-size: var(--text-h6);
+    letter-spacing: 0.04em;
+}
+
+/* A stroke under each part heading. The title block has its own, in vermilion. */
+h1.heading::after {
+    @include ornaments.brush-rule(12);
+    content: "";
+    width: 5rem;
+    margin-top: 0.4rem;
+}
+
+/* — Prose blocks — */
+article :is(#{typography.$prose-blocks}) {
+    font-variant-numeric: oldstyle-nums proportional-nums;
+}
+
+p {
+    margin: 0 0 1em;
+}
+
+strong {
+    // Heavier than a link's 600, so emphasis and reference stay distinct.
+    font-weight: 650;
+}
+
+blockquote {
+    margin: 1.25em 0;
+    padding: 0.1em 0 0.1em 1.5ch;
+    border-left: 2px solid var(--color-text);
+}
+
+ul {
+    padding-left: 2ch;
+
+    li::marker {
+        color: var(--color-accent);
     }
 }
 
-/* Bibliography */
+ol {
+    padding-left: 2.5ch;
+
+    li::marker {
+        color: var(--color-muted);
+        font-variant-numeric: lining-nums tabular-nums;
+    }
+}
+
+code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--color-border-faint);
+    padding: 0.05em 0.35em;
+    border-radius: 2px;
+}
+
+pre {
+    background: var(--color-raised);
+    border: 1px solid var(--color-border);
+    padding: 0.9rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.86rem;
+    line-height: 1.5;
+
+    code {
+        background: none;
+        padding: 0;
+        font-size: inherit;
+    }
+}
+
+table {
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+th,
+td {
+    padding: 0.35em 1ch;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+}
+
+th {
+    @include typography.apparatus(0.9rem);
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-text);
+}
+
+/* The ink is named rather than taken from `currentColor`, which every other
+   ornament here uses: the HTML standard's own stylesheet sets `hr { color:
+   gray }`, so the stroke would come out half-tone in both schemes. */
+hr {
+    @include ornaments.brush-rule(20, var(--color-text));
+    width: 30%;
+    margin: 2.5rem auto;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+figure {
+    margin: 1.75em 0;
+}
+
+figcaption {
+    font-size: var(--text-small);
+    font-style: italic;
+    color: var(--color-muted);
+}
+
+/* — Bibliography — */
 .bibliography {
     margin-top: 3rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--color-border);
 
-    h2 {
-        font-size: 1.3rem;
+    &::before {
+        @include ornaments.brush-rule(24);
+        content: "";
+        width: 40%;
+        margin: 0 auto 1.75rem;
     }
 
-    ol {
-        padding-left: 1.5rem;
+    h2 {
+        margin-top: 0;
     }
 
     li {
         margin-bottom: 0.5rem;
-        font-size: 0.9rem;
+        font-size: 0.92rem;
     }
 }
 
@@ -101,25 +318,24 @@ a:visited {
 
 /* Portrait TOC - collapsible checkbox hack */
 .toc-portrait {
-    margin-top: 1rem;
+    margin-top: 1.25rem;
 
     input[type="checkbox"] {
         display: none;
     }
 
     label {
+        @include typography.apparatus(0.9rem);
         cursor: pointer;
-        font-family: sans-serif;
-        font-size: 0.9rem;
         color: var(--color-muted);
 
         &::before {
             content: "▸ ";
-            color: var(--color-text);
+            color: var(--color-accent);
         }
 
         &:hover {
-            text-decoration: underline;
+            color: var(--color-text);
         }
     }
 
@@ -171,6 +387,16 @@ a:visited {
     }
 }
 
+@include framed-article {
+    article {
+        @include ornaments.frame-heavy;
+        // 3px of that is the frame itself, so the text clears its inner rule
+        // by about 2ch either side.
+        --frame-inset: calc(2ch + 3px);
+        padding: 2.5rem var(--frame-inset) 2rem;
+    }
+}
+
 @include breakpoints.wide-sidebar {
     .sidebar {
         grid-column: 1;
@@ -206,10 +432,6 @@ a:visited {
 
     .sidebar {
         display: none;
-    }
-
-    .front-matter {
-        border-bottom: none;
     }
 
     .toc-portrait {

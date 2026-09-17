@@ -1,0 +1,54 @@
+/// The two shapes this design draws with, each written once.
+///
+/// Mixins only, like _typography.scss: components include them into their own
+/// scoped stylesheets.
+
+/// One tapered horizontal — a 橫 — filled in a 400 x 20 box that stretches to
+/// whatever the call site is. Carried as a mask rather than an image so the
+/// stroke takes `currentColor` and needs no second copy for the dark scheme.
+$stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 20' preserveAspectRatio='none'%3E%3Cpath d='M5.6 6C7.2 3.6 12.4 3.4 15.6 5.4C19.2 7.6 23 8.6 30 8.8C100 9.6 190 8.2 268 7.2C320 6.6 354 5.6 376 4.2C387 3.4 396 4.8 398 7.8C400 11 397.8 14.4 392 16C385 17.6 378 17.2 371.6 15.8C348 14 318 13.6 268 14.4C190 15.4 100 16.2 28 14.8C13 14.6 5.8 11.6 5.6 6Z'/%3E%3C/svg%3E");
+
+/// A brush rule. The call site sets a width; the height follows from `$ratio`,
+/// so the stroke can never be squashed into a bar by mistake. Longer rules want
+/// a larger ratio — a sweep of the same brush is relatively thinner than a
+/// flick of it.
+@mixin brush-rule($ratio: 20, $ink: currentColor) {
+    display: block;
+    aspect-ratio: $ratio;
+    border: 0;
+    background-color: $ink;
+    mask: $stroke 0 0 / 100% 100% no-repeat;
+}
+
+/// 文武線: a heavy rule outside, a hairline inside, and a channel of ground
+/// between them. `border-style: double` divides its width into three equal
+/// parts and so cannot draw a thick/thin pair; two stacked inset shadows can,
+/// because the outer one paints over the inner.
+///
+/// `$ground` has to be the element's own background, or the channel shows the
+/// wrong paper. `$cast` is an outer shadow to hang off the same property, for
+/// a frame that floats above the page rather than being printed on it.
+@mixin frame($rule, $ground, $outer, $gap, $inner, $cast: null) {
+    border: $outer solid $rule;
+    box-shadow:
+        inset 0 0 0 $gap $ground,
+        inset 0 0 0 ($gap + $inner) $rule,
+        $cast;
+}
+
+/// The frame around a page of a woodblock book: thick outside, thin inside.
+@mixin frame-heavy {
+    @include frame(var(--color-text), var(--color-background), 3px, 3px, 1px);
+}
+
+/// The same figure at the weight of a slip of paper laid on the page.
+@mixin frame-light($cast: null) {
+    @include frame(
+        var(--color-border),
+        var(--color-raised),
+        1px,
+        2px,
+        1px,
+        $cast
+    );
+}

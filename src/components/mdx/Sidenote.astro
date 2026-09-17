@@ -30,6 +30,36 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
 <style lang="scss">
     @use "../../layouts/prelude/breakpoints";
 
+    /**
+     * 旁批: commentary set outside the frame, in lighter ink, with a thin rule
+     * holding the column. Written once because the margin is where a note
+     * lives on a wide screen and on paper alike, and paper is narrower than
+     * the wide breakpoint.
+     */
+    @mixin in-the-margin($size) {
+        display: block;
+        float: right;
+        clear: right;
+        box-sizing: border-box;
+        /* Size to the right gutter, set by prelude.scss */
+        width: var(--sidenote-width, 14rem);
+        /* Clear the grid gutter and the article's frame, so a note begins
+           outside the ruled edge rather than on top of it. */
+        margin-right: calc(
+            -1 * var(--sidenote-width, 14rem) - 2rem - var(--frame-inset, 0px)
+        );
+        margin-bottom: 0.5rem;
+        padding: 0 0 0 1ch;
+        border: 0;
+        border-left: 1px solid var(--color-border);
+        font-size: $size;
+
+        /* Label is not interactive out here, just a number */
+        > label {
+            cursor: default;
+        }
+    }
+
     .sidenote-wrapper {
         /* Inline context for the marker; block for the note is handled per mode */
         display: inline;
@@ -43,8 +73,10 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
     label[role="doc-noteref"] {
         cursor: pointer;
         vertical-align: super;
-        font-size: 0.75em;
+        font-size: 0.72em;
         line-height: 0;
+        font-weight: 600;
+        color: var(--color-accent);
         counter-increment: sidenote;
 
         &::after {
@@ -57,6 +89,7 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         display: none;
         font-size: 0.82rem;
         line-height: 1.45;
+        color: var(--color-muted);
 
         /* Dismiss label (narrow viewports only) */
         > label {
@@ -64,7 +97,9 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
             font-size: 0.75em;
             vertical-align: super;
             line-height: 0;
-            margin-right: 0.25em;
+            margin-right: 0.35em;
+            font-weight: 600;
+            color: var(--color-accent);
 
             &::after {
                 content: counter(sidenote) ".";
@@ -77,53 +112,28 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         display: block;
         margin: 0.5rem 0;
         padding-left: 1rem;
-        border-left: 2px solid var(--color-border);
+        border-left: 2px solid var(--color-accent);
     }
 
     /* — Wide: always visible in right margin — */
     @include breakpoints.wide {
-        small[role="note"] {
-            display: block;
-            float: right;
-            clear: right;
-            /* Size to the right gutter, set by prelude.scss */
-            width: var(--sidenote-width, 14rem);
-            margin-right: calc(-1 * var(--sidenote-width, 14rem) - 2rem);
-            margin-bottom: 0.5rem;
-            padding: 0;
-            border: none;
-            /* Label is not interactive at wide viewports, just a number */
-            > label {
-                cursor: default;
-            }
-        }
-
-        /* Highlight sidenote when marker is hovered */
-        .sidenote-wrapper:has(label[role="doc-noteref"]:hover) > small {
-            color: var(--color-primary);
-        }
-
-        /* Override: narrow toggle should not change layout */
+        small[role="note"],
+        /* Out here the narrow toggle must not change the layout. */
         .sidenote-wrapper:has(input:checked) > small[role="note"] {
-            padding: 0;
-            border: none;
+            @include in-the-margin(0.82rem);
+        }
+
+        /* Bring a note up to full ink while its marker is hovered. */
+        .sidenote-wrapper:has(label[role="doc-noteref"]:hover) > small {
+            color: var(--color-text);
+            border-left-color: var(--color-accent);
         }
     }
 
-    /* — Print: same as landscape — */
+    /* — Print: the margin again, on a sheet narrower than the wide tier — */
     @media print {
         small[role="note"] {
-            display: block;
-            float: right;
-            clear: right;
-            width: 14rem;
-            margin-right: -16rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.78rem;
-
-            > label {
-                cursor: default;
-            }
+            @include in-the-margin(0.78rem);
         }
     }
 </style>

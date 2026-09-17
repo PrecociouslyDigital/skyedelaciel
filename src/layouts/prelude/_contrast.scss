@@ -1,0 +1,41 @@
+/// WCAG relative luminance and contrast, evaluated by the compiler.
+///
+/// tests/design/colors.spec.ts makes the same claims about the rendered page.
+/// Having them here as well is not duplication: a palette that fails is a build
+/// that fails, naming the offending token, rather than a browser that has to be
+/// started before anyone finds out.
+
+@use "sass:color";
+@use "sass:math";
+
+/// One sRGB channel, 0–255, linearised the way WCAG 2 defines it.
+@function channel-luminance($value) {
+    $c: math.div($value, 255);
+    @if $c <= 0.03928 {
+        @return math.div($c, 12.92);
+    } @else {
+        @return math.pow(math.div($c + 0.055, 1.055), 2.4);
+    }
+}
+
+@function luminance($color) {
+    $r: channel-luminance(color.channel($color, "red", $space: rgb));
+    $g: channel-luminance(color.channel($color, "green", $space: rgb));
+    $b: channel-luminance(color.channel($color, "blue", $space: rgb));
+    @return 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+}
+
+/// Contrast ratio between two colors, from 1 (identical) to 21 (black on white).
+@function contrast($a, $b) {
+    $x: luminance($a);
+    $y: luminance($b);
+    @return math.div(math.max($x, $y) + 0.05, math.min($x, $y) + 0.05);
+}
+
+/// Fail the build unless `$color` reads clearly against `$against`.
+@mixin assert-at-least($ratio, $color, $against, $what) {
+    $measured: contrast($color, $against);
+    @if $measured < $ratio {
+        @error "#{$what}: #{$color} on #{$against} is #{math.div(math.round($measured * 100), 100)}:1, below the #{$ratio}:1 this design asks for.";
+    }
+}

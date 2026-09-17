@@ -15,6 +15,7 @@ import { visit } from "unist-util-visit";
 import { resolveRemoteLinks } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
+import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
 
 loadCache();
 
@@ -46,7 +47,11 @@ const extractLinks: RemarkPlugin = () => async (tree, file) => {
 export default defineConfig({
     integrations: [mdx(), svelte()],
     markdown: {
+        // Shiki would stamp its own theme's colours and background inline on
+        // every code block, which no stylesheet can then re-ink for the reader's
+        // scheme. Code is set in ink on paper like the rest of the page.
+        syntaxHighlight: false,
         remarkPlugins: [extractLinks, remarkSidenotes],
-        rehypePlugins: [rehypeSlug],
+        rehypePlugins: [rehypeSlug, rehypeCodeBlocks],
     },
 });

@@ -26,10 +26,14 @@
         cursor: pointer;
         opacity: 0;
         margin-left: 0.3em;
-        font-family: sans-serif;
+        font-family: var(--font-prose);
         font-size: 0.75em;
         color: var(--color-muted);
         transition: opacity 0.15s;
+    }
+
+    .copy-anchor:hover {
+        color: var(--color-accent);
     }
 
     /* Kept here rather than in Heading.astro, next to the `all: unset` that

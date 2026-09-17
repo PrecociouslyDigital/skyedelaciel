@@ -67,6 +67,15 @@ export const WIDE: ProfileName[] = ["wide", "nojs"];
  */
 export const PROSE_LINKS = "article a.content-link:not(.bibliography a)";
 
+/**
+ * The headings of the article body.
+ *
+ * MDX puts them directly under <article>, which excludes the front matter's own
+ * <h1 class="title"> — that one belongs to the Front Matter section of the spec,
+ * and has no anchor by design.
+ */
+export const CONTENT_HEADINGS = "article > :is(h1,h2,h3,h4,h5,h6)";
+
 /** Rectangles as `boundingBox()` gives them, or null for a hidden element. */
 export type Box = { x: number; y: number; width: number; height: number };
 

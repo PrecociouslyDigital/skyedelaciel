@@ -32,3 +32,38 @@ the lightest it can be and still pass.
 the dark scheme, too light in the light one), because `color.scale($lightness:
 40%)` moves toward white rather than away from the background. Left alone
 pending a decision about what muted should mean.
+
+## 2026-09-17 — the palette is chosen, and the compiler now checks it
+
+The old palette was a placeholder: a blue-grey ground, three tokens nothing
+read (`warning`, `error`, `lightscale`), and one the table of contents read
+that no theme defined (`--color-fg`, which resolved to nothing). It is now
+paper and ink with a vermilion accent, eight tokens, all of them used.
+
+`--color-muted` is the note left open in the entry above. It is no longer
+derived. `color.scale($lightness: 40%)` moves a colour toward white, which
+makes muted text *lower* contrast in the light scheme and *higher* in the dark
+one — it was failing WCAG from one side or the other depending on the scheme.
+Both are now picked by hand against their own background: 5.2:1 on paper,
+6.5:1 on ink.
+
+Three things are enforced at compile time rather than left to a browser:
+
+- A `$tokens` list, checked in both directions, so a theme that misses a token
+  or invents one is an `@error`. This is what makes an unresolvable `var()`
+  like `--color-fg` unspellable.
+- `_contrast.scss` computes WCAG luminance in Sass, and each theme asserts text
+  at 7:1, muted and accent at 4.5:1, and muted quieter than text. These are the
+  same claims `tests/design/colors.spec.ts` makes about the rendered page; the
+  point of having both is that the compiler answers in a second and names the
+  token.
+- Each token is declared with `@property { syntax: "<color>" }`, generated from
+  the light theme so the initials cannot drift. A non-colour assigned to one now
+  falls back to its initial instead of poisoning every rule that reads it.
+
+That last one also fixed a test. `colors.spec.ts` reads `--color-muted` off
+`:root` and parses it as `rgb(...)`; it was passing only because
+`color.scale` produced fractional channels that Sass could not write as hex. A
+plain hex literal would have come back as `#6a6257` and parsed to `NaN`.
+Registering the property makes the computed value a resolved colour, which is
+what the test was assuming all along.
