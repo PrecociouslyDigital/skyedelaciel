@@ -18,3 +18,19 @@ the type, hold the element in a variable, or match on shape with `ts-pattern`
 (which does narrow an array to a tuple, so `p[0]` is safe inside a
 `{ "date-parts": [[P._, P._, P._]] }` arm). Turning the flag back off would
 re-admit exactly the class of bug it caught.
+
+## 2026-09-16 — `@astrojs/ts-plugin` only fixes the language service
+
+`@astrojs/ts-plugin` is registered under `compilerOptions.plugins` so a plain
+tsserver — VS Code, `typescript-language-server`, an agent's LSP — can resolve
+`import Foo from "./Foo.astro"`. Without it, those imports raise TS2307 in
+every editor, while `astro check` reports zero errors on the same tree
+because it runs the Astro language server instead.
+
+The plugin resolves real prop types, not an `any` shim — passing an unknown
+prop to a `.astro` component is still an error.
+
+`compilerOptions.plugins` only affects the language service: `npx tsc --noEmit`
+does not load it, so bare `tsc` still reports TS2307 on the `.astro` imports.
+Those errors come from using the wrong tool, not a defect — `npm run check`
+(`astro check`) is this repo's typechecker.

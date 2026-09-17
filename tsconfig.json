@@ -8,6 +8,9 @@
         "noUncheckedIndexedAccess": true,
         "paths": {
             "~/*": ["./src/*"]
-        }
+        },
+        // Teaches plain tsserver to resolve `.astro` imports, so editors and
+        // language-server clients agree with `astro check`.
+        "plugins": [{ "name": "@astrojs/ts-plugin" }]
     }
 }

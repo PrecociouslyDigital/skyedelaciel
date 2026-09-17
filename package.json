@@ -45,6 +45,7 @@
     },
     "devDependencies": {
         "@astrojs/check": "^0.9.6",
+        "@astrojs/ts-plugin": "^1.10.12",
         "@axe-core/playwright": "^4.13.0",
         "@citation-js/plugin-isbn": "^0.4.0",
         "@playwright/test": "^1.63.0",
