@@ -1,0 +1,93 @@
+{
+    "publisher-location": "New York, NY, USA",
+    "publisher": "ACM",
+    "published-print": {
+        "date-parts": [[2021, 3, 3]]
+    },
+    "DOI": "10.1145/3442188.3445922",
+    "type": "proceedings-article",
+    "page": "610-623",
+    "title": "On the Dangers of Stochastic Parrots",
+    "author": [
+        {
+            "given": "Emily M.",
+            "family": "Bender",
+            "sequence": "first",
+            "affiliation": [
+                {
+                    "name": "University of Washington, Seattle, WA, USA"
+                }
+            ],
+            "role": [
+                {
+                    "vocabulary": "crossref",
+                    "role": "author"
+                }
+            ]
+        },
+        {
+            "given": "Timnit",
+            "family": "Gebru",
+            "sequence": "additional",
+            "affiliation": [
+                {
+                    "name": "Black in AI, Palo Alto, CA, USA"
+                }
+            ],
+            "role": [
+                {
+                    "vocabulary": "crossref",
+                    "role": "author"
+                }
+            ]
+        },
+        {
+            "given": "Angelina",
+            "family": "McMillan-Major",
+            "sequence": "additional",
+            "affiliation": [
+                {
+                    "name": "University of Washington, Seattle, WA, USA"
+                }
+            ],
+            "role": [
+                {
+                    "vocabulary": "crossref",
+                    "role": "author"
+                }
+            ]
+        },
+        {
+            "given": "Shmargaret",
+            "family": "Shmitchell",
+            "sequence": "additional",
+            "affiliation": [
+                {
+                    "name": "The Aether"
+                }
+            ],
+            "role": [
+                {
+                    "vocabulary": "crossref",
+                    "role": "author"
+                }
+            ]
+        }
+    ],
+    "published-online": {
+        "date-parts": [[2021, 3]]
+    },
+    "event": "FAccT '21: 2021 ACM Conference on Fairness, Accountability, and Transparency",
+    "container-title": "Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency",
+    "original-title": [],
+    "subtitle": ["Can Language Models Be Too Big? 🦜"],
+    "short-title": [],
+    "issued": {
+        "date-parts": [[2021, 3]]
+    },
+    "URL": "http://dx.doi.org/10.1145/3442188.3445922",
+    "subject": [],
+    "published": {
+        "date-parts": [[2021, 3]]
+    }
+}

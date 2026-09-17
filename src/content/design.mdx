@@ -99,7 +99,7 @@ Internal pages should show the title, abstract, and site name, but not any other
 
 #### DOIs
 
-Links to https://doi.org that represent a valid Digital Object Identifier should pull title, author, date published, abstract and other metadata directly from the [CrossRef DOI Api](https://api.crossref.org/swagger-ui/index.html).
+Links to https://doi.org that represent a valid Digital Object Identifier should pull title, author, date published, abstract and other metadata from the registrar that issued them: the [CrossRef DOI Api](https://api.crossref.org/swagger-ui/index.html) where it knows the identifier, and [content negotiation](https://citation.doi.org/docs.html) against doi.org otherwise, which is what reaches DOIs registered elsewhere. A registrar describes a work in its own vocabulary, so what it answers is translated into CSL-JSON before the site uses it; a DOI whose metadata cannot be translated is treated as unresolved rather than shown in part.
 
 #### Wikipedia
 

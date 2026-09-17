@@ -33,3 +33,39 @@ then DOI links resolve to the `unresolved` variant: no popover, and a bare-URL
 MLA entry in the bibliography. That is at least visible now — under the old
 per-resolver `catch` it was indistinguishable from a successful lookup that
 happened to find nothing.
+
+## 2026-09-16 — DOI resolution works; both halves were needed
+
+The post-mortem above called for a URL change *and* a normalisation step, and
+that held: fixing either alone still resolved nothing.
+
+The endpoint is now a two-rung ladder. Crossref's
+`/works/{doi}/transform/application/vnd.citationstyles.csl+json` answers where
+the old `Accept`-header request got a 406, and it is the richer source. But
+Crossref only knows its own DOIs — `10.48550/arXiv.1706.03762` is a DataCite
+DOI and Crossref answers **404** for it — so content negotiation against
+`https://doi.org/{doi}` is the second rung rather than an alternative to the
+first. Both are load-bearing: four real DOIs across Crossref journal,
+Crossref conference and DataCite preprint now resolve, and a nonexistent one
+still falls through to `unresolved`.
+
+Normalisation moved to `crossref.ts`. What stayed here is the decision that a
+registrar answering with an unusable payload is a *failed* lookup: `toCsl`
+throws rather than returning something partial, so the existing catch turns it
+into the `unresolved` variant and nothing is cached. That is the same rule the
+date bugs taught — a lookup that half-worked must not be indistinguishable
+from one that worked.
+
+`extractDoi` also kept any query string or fragment the author wrote, which
+would have been sent to the registrar as part of the identifier.
+
+## 2026-09-16 — what is left here
+
+The three resolvers and the URL classification moved to `sources.ts`; see that
+breadcrumb for why. What stays is the part that is about a *document's worth*
+of links rather than about any one source: deduplication, the cache lookup
+that precedes every fetch, the rule that failures are never cached, and the
+`unresolved` variant that a failed lookup collapses to.
+
+`classify` is gone as a name. It was a hand-written if-chain that had to stay
+in step with the `LinkKind` enum, and it is now the registry's claiming order.

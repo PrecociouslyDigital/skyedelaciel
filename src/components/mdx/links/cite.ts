@@ -1,7 +1,7 @@
 // @ts-expect-error — citeproc has no type declarations
 import CSL from "citeproc";
 import { match, P } from "ts-pattern";
-import type { CslData, CslDate, CslName, LinkEntry } from "./types";
+import type { CslData, CslDate, CslName } from "./types";
 import mlaStyle from "./mla.csl?raw";
 import enUSLocale from "./locale-en-US.xml?raw";
 
@@ -29,6 +29,28 @@ export function formatCitation(csl: CslData): string {
     const formatted = entries[0]?.trim() ?? "";
     return csl.URL ? wrapUrl(formatted, csl.URL) : formatted;
 }
+
+/** Today as a CSL date-parts value. */
+export const todayParts = (): CslDate => {
+    const d = new Date();
+    return {
+        "date-parts": [[d.getFullYear(), d.getMonth() + 1, d.getDate()]],
+    };
+};
+
+/**
+ * Parse a date string into CSL form. Unparseable input is kept as CSL's own
+ * `raw` variant rather than becoming a date made of NaNs.
+ */
+export const parseCslDate = (s: string): CslDate => {
+    if (Number.isNaN(Date.parse(s))) return { raw: s };
+    const d = new Date(s);
+    return {
+        "date-parts": [
+            [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()],
+        ],
+    };
+};
 
 /** One cell of a CSL date-parts array: a year, month or day. */
 type DatePart = string | number;
@@ -79,14 +101,6 @@ export const authorLine = (csl: CslData): string | undefined => {
         .filter((name) => name !== undefined);
     return names?.length ? names.join(", ") : undefined;
 };
-
-/**
- * Whether a link points to a citable work rather than a page of this site.
- * The bibliography and the printed citations must agree on this, so both
- * call this instead of checking `entry.kind` on their own.
- */
-export const isCitable = (entry: LinkEntry): boolean =>
-    entry.kind !== "internal";
 
 /** The year alone, at whatever granularity the date happens to carry. */
 export const cslYear = (date: CslDate | undefined): string | undefined => {

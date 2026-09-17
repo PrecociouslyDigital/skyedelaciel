@@ -15,6 +15,8 @@ export default getViteConfig(
         test: {
             include: ["tests/unit/**/*.test.ts"],
             environment: "node",
+            // A test that stubs `fetch` cannot leak it into the next one.
+            unstubGlobals: true,
         },
     }),
 );

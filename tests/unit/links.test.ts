@@ -5,7 +5,6 @@ import {
     formatCitation,
     formatCslDate,
     formatInlineCitation,
-    isCitable,
 } from "~/components/mdx/links/cite";
 import { buildPreview } from "~/components/mdx/links/preview";
 import { resolveInternalLinks } from "~/components/mdx/links/resolve";
@@ -121,9 +120,9 @@ describe("buildPreview", () => {
                 summary: { type: "text", content: "A summary." },
             });
 
-        // "Internal pages should show the title, abstract, and site name, but
-        // not any other information" — so the site name and nothing beside it.
-        // Which site that is belongs to resolveInternalLinks, below.
+        // design.mdx, Internal Pages: title, abstract and site name, nothing
+        // else — so meta contributes only the site name here. The title and
+        // abstract belong to resolveInternalLinks, below.
         expect(preview("internal")?.meta).toEqual([
             csl.internal["container-title"],
         ]);
@@ -255,12 +254,6 @@ describe("formatInlineCitation", () => {
                 URL: "https://example.com/a",
             }),
         ).toBeUndefined();
-    });
-
-    test("every kind of link is a work to cite, except this site's own pages", () => {
-        for (const entry of entries) {
-            expect(isCitable(entry)).toBe(entry.kind !== "internal");
-        }
     });
 });
 
