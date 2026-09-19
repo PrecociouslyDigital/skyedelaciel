@@ -45,3 +45,17 @@ Wikipedia article that does not exist — with matching entries in
 
 That keeps the fixture build hermetic, and keeps its citation metadata from ever
 being mistaken for a real work's.
+
+## 2026-09-18 — `published` is required, `updated` is not
+
+The rail slug dates the page rather than naming it, so the dates had to come
+from somewhere a build could not shrug off. `published` is required: a page
+that forgets it fails the content sync rather than shipping an undated stamp.
+`updated` is optional because its absence is meaningful — an unedited page has
+no second date, and `md.astro` drops the segment rather than printing a
+placeholder.
+
+Both are `z.coerce.date()` rather than a string with a regex, so that an
+impossible day is caught by the parser instead of being printed. YAML hands
+them over as dates at UTC midnight, which is why `md.astro` reads them back out
+in UTC: any local-time formatter would shift half the world's pages by a day.

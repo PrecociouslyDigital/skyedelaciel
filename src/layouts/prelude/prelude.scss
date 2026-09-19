@@ -22,6 +22,16 @@
     }
 }
 
+/// Where the rail slug is set: the wide screen the frame needs, and paper as
+/// well, whatever the width of the sheet. It is the one mark of the machine's
+/// that survives the press — see design.mdx, Annotation — so it is gated on
+/// its own query rather than riding along with `framed-article`.
+@mixin stamped {
+    @media screen and (min-width: breakpoints.$wide), print {
+        @content;
+    }
+}
+
 /// How far the frame holds the text off the article's outer edge. Registered so
 /// that the `ch` in it resolves against the article's own font rather than
 /// against whatever reads it — Sidenote.astro reads it at 0.82rem.
@@ -429,9 +439,17 @@ figcaption {
         inset: calc(-1 * var(--tick-reach));
         pointer-events: none;
     }
+}
 
+@include stamped {
     /* 書口, carrying what identifies this copy to a machine rather than a
        title and fascicle number — see design.mdx, Annotation.
+
+       It stands just outside the article's right edge. On screen that is the
+       band between the corner ticks and where a sidenote is allowed to begin;
+       on paper it is the strip between the left-aligned text block and the
+       edge of the sheet. Both are measured from the same edge, and on paper
+       the ticks reach nothing, so one offset serves both.
 
        The empty alternative text after the slash keeps it out of the
        accessibility tree: it is a stamp, not a sentence to be read aloud. */
@@ -439,16 +457,24 @@ figcaption {
         content: attr(data-rail) / "";
         position: absolute;
         top: 0;
-        right: calc(100% + var(--tick-reach) + 0.5rem);
+        left: calc(100% + var(--tick-reach) + 0.5rem);
+        /* The column runs downward, but each character stands up in it, the
+           way a seal's characters do — the line is vertical, the glyphs are
+           not turned on their side. */
         writing-mode: vertical-rl;
+        text-orientation: upright;
         white-space: nowrap;
         pointer-events: none;
         font-family: var(--font-mono);
         font-size: 0.6rem;
-        /* Set sideways, the line box is the slug's width, and the gutter it
-           has to fit in is 2rem less what the ticks already take. */
+        /* Set sideways, the line box is the slug's width. Screen is the
+           tighter of the two fits: 1.5rem between the ticks and the sidenote
+           column, where paper leaves the rest of the sheet. */
         line-height: 1;
-        letter-spacing: 0.22em;
+        /* Upright, this is the gap between stacked characters rather than
+           between letters of a word, so it is set much tighter than it would
+           be in a horizontal line of small caps. */
+        letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--color-signal);
     }
@@ -487,10 +513,11 @@ figcaption {
         margin: 0; // left-align instead of centering
     }
 
-    /* Nothing the machine drew survives the press. The article's own ticks and
-       rail slug are already gone — they are declared inside a `screen` query —
-       but a code block's are painted on the block itself, so they have to be
-       taken off by hand. */
+    /* Of what the machine drew, only the stamp survives the press — it is a
+       dateline, and `stamped` hands it to paper deliberately. The boxes do
+       not: the article's own ticks are already gone, being declared inside a
+       `screen` query, but a code block's are painted on the block itself, so
+       they have to be taken off by hand. */
     pre {
         background-image: none;
     }

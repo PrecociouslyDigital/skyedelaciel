@@ -69,3 +69,22 @@ both rely on that.
 draws with inset box-shadows, and those paint *over* the background — so ticks
 laid on the padding edge of an already-framed box are painted out entirely and
 silently. The popover is 4px in: two of channel, one of inner rule, one of air.
+
+## 2026-09-18 — `corner-ticks` picks its far edge with `@if`, not `if()`
+
+Sass 1.93 deprecated the comma form `if($cond, $then, $else)` in favour of a
+CSS-shaped `if(sass($cond): $then; else: $else)`. The modern form compiles and
+is the upstream suggestion, but Prettier does not know it yet: it reflows the
+call across three lines and appends a trailing comma inside the parentheses,
+so the result reads like the deprecated argument list it replaced. A
+`@if`/`@else` statement is not deprecated, formats stably, and every SCSS
+reader already knows it, so the branch is written out instead.
+
+`$far` has to be seeded at `100%` before the `@if` rather than assigned in
+both arms: a variable first written inside a block is local to that block, so
+an `@if`/`@else` pair would leave `$far` undefined at the point of use.
+
+The branch itself is still load-bearing. `$inset` defaults to the unitless
+`0`, and `calc(100% - 0)` is invalid CSS — a percentage and a plain number are
+not the same type — so the no-inset case has to reach `100%` without the
+`calc`.

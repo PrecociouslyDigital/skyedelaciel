@@ -17,3 +17,11 @@ the overflow is reachable only with a pointer. Markdown offers no way to write
 an attribute onto a fence, so it is added in a plugin rather than asked for at
 each call site. It showed up the moment `kitchen-sink.mdx` gained a code block
 narrow enough to overflow the 420px profile.
+
+## 2026-09-18 — `__BUILD_DATE__` is gone
+
+The rail slug used to carry the day the build was made. It now carries the
+page's own dates, which come from frontmatter, so the clock is no longer a
+build input — only the checkout is. `__GIT_REVISION__` stays; the stamp is
+still about which copy of the site you are reading, and that is what a revision
+answers.

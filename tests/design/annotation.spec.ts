@@ -51,7 +51,17 @@ const drawn = (page: Page) =>
             slug: {
                 content: slug.content,
                 writingMode: slug.writingMode,
+                orientation: slug.textOrientation,
                 colour: slug.color,
+                /* Where the stamp actually lands, in viewport coordinates, so
+                   it can be compared against the notes sharing its margin.
+                   `slug.left` is measured from the article's padding box,
+                   which is where an absolutely positioned child begins. */
+                left:
+                    article.getBoundingClientRect().x +
+                    parseFloat(getComputedStyle(article).borderLeftWidth) +
+                    parseFloat(slug.left),
+                width: parseFloat(slug.width),
             },
             rail: article.dataset.rail ?? "",
             reach: parseFloat(
@@ -99,21 +109,52 @@ section("Annotation", () => {
         });
 
         /**
-         * The rail names the copy: which page, made when, from which revision.
-         * The revision is absent outside a git checkout, by design, so only
-         * the first two are asserted here.
+         * The rail dates the copy: published, edited, revision. Only the first
+         * is always there — an unedited page has no second date, and a build
+         * outside a git checkout has no revision — so the shape is asserted
+         * whole rather than segment by segment. Nothing else may join it,
+         * which is what pins the regex at both ends.
          */
-        test("the rail slug runs down the margin, naming the build", async ({
-            page,
-        }) => {
+        test("the rail slug dates the page", async ({ page }) => {
             const { slug, rail } = await drawn(page);
 
             expect(slug.content).not.toBe("none");
-            expect(slug.writingMode).toMatch(/^vertical/);
             expect(slug.colour).toBe(await token(page, "signal"));
 
-            expect(rail, "the page it belongs to").toContain("kitchen-sink");
-            expect(rail, "the day it was built").toMatch(/\d{4}-\d{2}-\d{2}/);
+            expect(rail).toMatch(
+                /^\d{4}-\d{2}-\d{2}( · ed \d{4}-\d{2}-\d{2})?( · rev [0-9a-f]+)?$/,
+            );
+        });
+
+        /**
+         * A vertical line of upright characters, the way a seal is cut —
+         * not a horizontal line turned on its side.
+         */
+        test("the rail slug stands its characters up", async ({ page }) => {
+            const { slug } = await drawn(page);
+
+            expect(slug.writingMode).toMatch(/^vertical/);
+            expect(slug.orientation).toBe("upright");
+        });
+
+        /**
+         * The stamp and the notes are both set in the right margin, by two
+         * different hands, and neither may be written over the other.
+         */
+        test("the rail slug clears the frame and the notes", async ({
+            page,
+        }) => {
+            const { slug, reach } = await drawn(page);
+            const article = (await page.locator("article").boundingBox())!;
+            const note = (await page
+                .locator("article small[role='note']")
+                .first()
+                .boundingBox())!;
+
+            expect(slug.left).toBeGreaterThanOrEqual(
+                article.x + article.width + reach,
+            );
+            expect(slug.left + slug.width).toBeLessThanOrEqual(note.x);
         });
     });
 
@@ -169,11 +210,12 @@ section("Annotation", () => {
     section("Print", () => {
         onlyIn("print");
 
-        test("none of it survives the press", async ({ page }) => {
-            const { ticks, slug, reach } = await drawn(page);
+        test("the boxes and the marks do not survive the press", async ({
+            page,
+        }) => {
+            const { ticks, reach } = await drawn(page);
 
             expect(ticks.image, "no ticks around the article").toBe("none");
-            expect(slug.content, "no rail slug").toBe("none");
             expect(reach, "and nothing holding the margin open for them").toBe(
                 0,
             );
@@ -191,6 +233,25 @@ section("Annotation", () => {
                     .first()
                     .evaluate((pre) => getComputedStyle(pre).backgroundImage),
             ).toBe("none");
+        });
+
+        /**
+         * The one exception, and the reason it is one: a dateline is what a
+         * sheet separated from its address has no other way to carry.
+         */
+        test("the stamp does", async ({ page }) => {
+            const { slug } = await drawn(page);
+            const article = (await page.locator("article").boundingBox())!;
+
+            expect(slug.content).not.toBe("none");
+            expect(slug.writingMode).toMatch(/^vertical/);
+            expect(slug.orientation).toBe("upright");
+            expect(slug.colour).toBe(await token(page, "signal"));
+
+            expect(
+                slug.left,
+                "beside the text block, not over it",
+            ).toBeGreaterThanOrEqual(article.x + article.width);
         });
     });
 });

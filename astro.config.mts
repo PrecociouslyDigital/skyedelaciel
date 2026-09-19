@@ -66,13 +66,10 @@ function revision(): string {
 export default defineConfig({
     integrations: [mdx(), svelte()],
     vite: {
-        // Build facts, not runtime ones: baked in here so that a page can
-        // carry them without every layout reaching for a shell.
+        // A build fact, not a runtime one: baked in here so that a page can
+        // carry it without every layout reaching for a shell.
         define: {
             __GIT_REVISION__: JSON.stringify(revision()),
-            __BUILD_DATE__: JSON.stringify(
-                new Date().toISOString().slice(0, 10),
-            ),
         },
     },
     markdown: {

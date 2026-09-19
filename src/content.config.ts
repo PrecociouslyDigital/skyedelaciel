@@ -7,6 +7,12 @@ const pageSchema = z.object({
     title: z.string(),
     abstract: z.string(),
     author: z.string().optional(),
+    /* Dates the page carries itself, as distinct from the build's. A page
+       cannot ship without saying when it was published; `updated` is absent
+       until there is a revision worth naming. Both are read as dates rather
+       than strings so that an impossible one fails the build. */
+    published: z.coerce.date(),
+    updated: z.coerce.date().optional(),
     bibliography: z.boolean().default(false),
     citation: z.array(cslData).default([]),
 });

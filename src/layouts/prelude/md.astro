@@ -28,15 +28,20 @@ export interface Props {
 
 const { frontmatter, headings } = Astro.props;
 
+/* A frontmatter date is a day, not an instant: it parses to UTC midnight, and
+   reading it back out in UTC is what returns the day that was written down. */
+const day = (date: Date) => date.toISOString().slice(0, 10);
+
 /**
- * What identifies this page to a machine: which page, made when, from which
- * revision. prelude.scss sets it down the left rail — see design.mdx,
- * Annotation. Outside a git checkout the revision is empty and simply drops
- * out, which is the whole of the fallback.
+ * What identifies this copy of the page: when it was published, when it was
+ * last revised if it has been, and the revision it was built from.
+ * prelude.scss sets it down the right rail — see design.mdx, Annotation.
+ * Either of the last two may be absent — an unedited page, a build outside a
+ * git checkout — and simply drops out.
  */
 const rail = [
-    Astro.url.pathname.replaceAll("/", " ").trim() || "index",
-    __BUILD_DATE__,
+    day(frontmatter.published),
+    frontmatter.updated && `ed ${day(frontmatter.updated)}`,
     __GIT_REVISION__ && `rev ${__GIT_REVISION__}`,
 ]
     .filter(Boolean)

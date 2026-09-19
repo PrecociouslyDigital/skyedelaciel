@@ -68,7 +68,10 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
 @mixin corner-ticks($rule, $len, $weight, $inset: 0) {
     $arm: linear-gradient($rule, $rule);
     $near: $inset;
-    $far: if($inset == 0, 100%, calc(100% - #{$inset}));
+    $far: 100%;
+    @if $inset != 0 {
+        $far: calc(100% - #{$inset});
+    }
 
     background-image: $arm, $arm, $arm, $arm, $arm, $arm, $arm, $arm;
     background-size:

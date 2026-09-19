@@ -1,6 +1,8 @@
 ---
 title: Design Specification
 abstract: This is a living document describing the desired visual design of the website. It is intended to be a useful reference for human and machine alike.
+published: 2026-02-01
+updated: 2026-09-18
 ---
 
 # Design Goals
@@ -11,7 +13,7 @@ Inspirations include Edward Tufte and Gwern.net.
 
 The visual vocabulary is borrowed from Chinese calligraphy and the page furniture of a woodblock book. Paper and ink give the two screen schemes their names and a vermilion seal gives them their one accent. A frame of a thick rule outside a thin one holds the text block. Notes sit outside that frame, as marginal commentary does. Rules between sections are single tapered brush strokes rather than hairlines. No Chinese characters are used as ornament; only the shapes are.
 
-A second hand has since read the page and marked it up. Surveillance interfaces share the grammar of scholarly apparatus — a box drawn around a subject, a readout in the margin, a timestamp that authenticates the record — and differ only in who drew them, so the machine's layer is added to the page rather than substituted for it. Where the scholar ruled a frame in ink, a machine sets corner ticks outside it in malachite; where the seal authenticates the document by human authority, a revision stamp down the left rail authenticates it by build. Both are visible at once, and neither is allowed to set running text. See [Annotation](#annotation).
+A second hand has since read the page and marked it up. Surveillance interfaces share the grammar of scholarly apparatus — a box drawn around a subject, a readout in the margin, a timestamp that authenticates the record — and differ only in who drew them, so the machine's layer is added to the page rather than substituted for it. Where the scholar ruled a frame in ink, a machine sets corner ticks outside it in malachite; where the seal authenticates the document by human authority, a revision stamp down the right rail authenticates it by build. Both are visible at once, and neither is allowed to set running text. See [Annotation](#annotation).
 
 # Article Defaults
 
@@ -63,11 +65,11 @@ The machine layer is one idea, and everything drawn in `signal` belongs to it: a
 
 It draws a **bounding box** as four corner ticks, a right angle at each corner with the edges between them left open, around anything it has taken as a subject: the article, outside the ink frame rather than replacing it, so that both readers' boxes stand; a code block; the popover on a link. Where the thing it has boxed can scroll, the ticks are painted on it rather than around it, since a box drawn outside a scrolling element would be clipped.
 
-It draws a **rail slug** down the left margin of a framed article, set vertically in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. It names the page, the day the build was made, and the revision it was made from. Outside a git checkout the revision is simply absent.
+It draws a **rail slug** down the right margin of a framed article, set in a vertical column in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. The column runs downward but the characters stand upright in it, as they do on a seal, rather than being turned on their side. It dates the page: published, edited if it has been, and the revision the build was made from. An unedited page carries no edited date, and outside a git checkout the revision is simply absent.
 
 It draws a **provenance mark** after every link in the prose: a single glyph naming what kind of address it is — `§` for a page of this site, `↗` for anywhere else, `¶` for a DOI, `W` for Wikipedia. The mark is a property of the kind, so a kind without one should fail to compile. Whether the link resolved is a separate question and is answered by colour rather than by a second glyph: a link nothing answered for keeps its own mark, drawn in `attention`. A same-document fragment is not unresolved — there was nothing to look up.
 
-None of it is printed. Paper carries no live annotation, and a tick drawn on a sheet is a mark no reader can follow up.
+The boxes and the marks are not printed: paper carries no live annotation, and a tick drawn on a sheet is a mark no reader can follow up. The rail slug is the exception and prints with the page, standing in the clear strip the text block leaves beside it. It is a dateline rather than an affordance, and a sheet separated from its address has nothing else to say when it was written or which revision it is.
 
 ## Typography
 

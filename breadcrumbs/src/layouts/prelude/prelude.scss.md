@@ -72,3 +72,45 @@ The content comes from `data-rail` on the article, written by md.astro, and is
 read with `content: attr(data-rail) / ""`. The empty string after the slash is
 the generated content's alternative text: without it the stamp is announced by
 screen readers as if it were a sentence someone wrote.
+
+## 2026-09-18 — the rail slug moved right and stood its characters up
+
+Two changes to `article::after`, both asked for directly.
+
+`right: calc(100% + …)` became `left: calc(100% + …)`. The right margin is the
+better home for it: at the `wide` breakpoint the grid puts the whole gutter on
+that side — `--left-col` computes to `0` until about 72rem — so on the left the
+slug was squeezed into the body's 2rem padding, while on the right it has the
+sidenote gutter to stand in. It sits in the band between 0.5rem and 2rem past
+the corner ticks, which is exactly the clearance `Sidenote.astro` leaves ahead
+of itself, so the stamp and the notes share a margin without touching.
+
+`text-orientation: upright` is what stops the glyphs being turned on their
+side. `writing-mode: vertical-rl` alone rotates Latin text ninety degrees;
+`upright` keeps the column vertical but sets each character the right way up,
+which is how a seal is cut and how the 書口 it imitates reads.
+
+That changes what `letter-spacing` means: upright, it is the gap between
+stacked characters rather than between letters of a word, and the 0.22em that
+looked right in a rotated line of small caps made a very long ladder. 0.1em is
+the equivalent. `line-height: 1` still sets the slug's width, for the same
+reason as before.
+
+## 2026-09-18 — the stamp prints, and needed a query of its own
+
+`framed-article` is `@media screen and (min-width: $wide)`, so everything
+declared inside it is screen-only by construction. That was right for the whole
+machine layer while the rail slug named the page. It stopped being right when
+the slug became a dateline: paper is the copy that most needs one, having been
+separated from its address.
+
+So the slug moved out of `framed-article` into `stamped`,
+`@media screen and (min-width: $wide), print`. The two are no longer
+complements — `framed-article` and `framed-title` still are, and `stamped`
+deliberately overlaps both — which is why it is a third mixin rather than a
+condition bolted onto an existing one.
+
+Nothing about the rule itself had to change. `left: calc(100% + var(--tick-reach) + 0.5rem)`
+works on paper because `--tick-reach` is `0px` there: the offset collapses to
+half a rem from the text block, which is the clear strip the centred column
+leaves. One offset, two media, no print-only override.
