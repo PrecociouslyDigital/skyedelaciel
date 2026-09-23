@@ -88,3 +88,42 @@ The branch itself is still load-bearing. `$inset` defaults to the unitless
 `0`, and `calc(100% - 0)` is invalid CSS — a percentage and a plain number are
 not the same type — so the no-inset case has to reach `100%` without the
 `calc`.
+
+## 2026-09-23 — `glass` replaces `frame-light`: a hard pane inset from its ticks
+
+`frame-light` had one call site, the link popover, and the popover is no longer
+a slip of paper. It is a pane of machine glass — the reference is the industrial
+overlays of Person of Interest's Samaritan and Mirror's Edge Catalyst, built with
+the technique in Josh Comeau's "Next-level frosted glass with backdrop-filter".
+
+**What was tried and rejected, because the reasons are the design.** A
+`signal`-tinted fill read as a green card. A fill lit by a gradient with a halo
+read as a rounded, glowing object. A flat opaque plane inside the 文武線 read as
+a card with a bezel — paper needs a frame to say where it ends, glass does not.
+An 86% fill read as not translucent at all. A pane whose edges faded out under a
+mask read as soft, where this idiom is hard-edged.
+
+**The pane stops `$gap` short of the ticks.** The ticks sit at the element's
+corners; the glass is a rectangle `$gap` inside them. The element is therefore
+larger than the visible glass, which is Comeau's point about extending the
+backdrop: `backdrop-filter` only samples what is directly behind its element,
+so a blur that ends at its own edge thins out there. Here it has `$gap` of page
+to draw on past the cut.
+
+**The cut is a mask of the rectangle *plus* the tick arms.** A mask that was just
+the rectangle would trim the ticks off with the glass, since they are painted on
+the same element (it has to be the same element — the popover scrolls, and a
+background is the one thing pinned to a scroller's box). Both the paint and the
+mask are laid out by `tick-arms`, so they cannot drift apart; `corner-ticks` now
+uses it too.
+
+**No outer box-shadow.** `mask-clip` is the border box, so a cast shadow is
+masked away entirely; `glass` takes no `$cast` rather than silently ignoring one.
+
+**The pane has no hue, and the blur does not saturate.** Every surface token in
+the ink scheme leans faintly green, so a plane mixed from them came out green in
+dark mode; `oklch(from … l 0 h / 70%)` keeps its lightness and drops its chroma.
+A `saturate()` in the backdrop filter did the same damage from the other side,
+pulling the page's own hue up through the glass, and is gone. A 1px white lit
+edge along the top, after Comeau's glass-thickness edge, was barely visible on
+paper and a hard white rule on ink; it is gone too.

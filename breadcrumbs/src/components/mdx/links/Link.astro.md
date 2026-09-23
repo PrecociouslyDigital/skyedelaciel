@@ -66,3 +66,45 @@ nothing to cite it by. An internal path to a page that does not exist produces
 the same unresolved state (no entry at all), prints its address like every
 other internal link, and is never a bibliography entry. It is also the more
 honest fixture: a broken internal link is the thing the ochre mark is for.
+
+## 2026-09-18 — the popover hides behind `visibility`, and fades one level down
+
+Two facts about the entrance, and they are both about which element carries
+which half of it.
+
+**The hiding switch is `visibility`, on the anchor.** It used to be `display`,
+and the fade declared alongside it never ran: the delays were staggered —
+`snap((opacity, display), 120ms, (0.3s, 0.4s))` — so the opacity transition
+spent its first 100ms on an element that was still `display: none` and the box
+appeared at around 0.83 opacity with 20ms left to run. `display` cannot be faded
+from on its own: the box is not rendered before the flip, so there is no
+before-change style to transition out of, and making it work needs
+`@starting-style`, `transition-behavior: allow-discrete`, and a second
+`transition-delay` in the hover rule matched to the property list *by index*.
+`visibility` needs none of that. The box stays rendered while hidden, the
+property interpolates to `visible` at the start of the transition and back at
+the end, and one delay covers entry and exit alike. It still takes the whole
+subtree — the standoff padding included — out of the accessible tree, out of
+find-in-page and out of hit testing, which is everything `display: none` was
+doing here.
+
+**The fade is on the pane, not on the anchor, and has to be.** An ancestor
+carrying a composited opacity is a *backdrop root*, and a backdrop root above
+the pane leaves its `backdrop-filter` with nothing behind it to blur — the
+declaration parses, computes, and does exactly nothing. It fails silently and it
+fails only sometimes, because Chromium promotes the layer when the transition
+runs and keeps it afterwards: a pane that blurred on first paint stopped
+blurring once it had been hovered. So `visibility` stays on the anchor, where it
+reaches the padding, and `opacity`/`translate` sit on the pane itself, which is
+allowed to be its own backdrop root. Anything that later wants to fade the
+popover by fading a wrapper will put the blur out without warning.
+
+The cost of `visibility` is that a hidden popover is now laid out, and a
+`loading="lazy"` image inside one would be fetched on page load rather than on
+hover. No content passes `showImage` today. If one ever does, the answer is
+`content-visibility: hidden` transitioned alongside — it skips the contents
+without unrendering the box, so the fade survives it.
+
+`@media print` still hides the anchor with `display: none`, and has to: the
+print tests read what a sheet would show through `checkVisibility()`, which by
+default ignores `visibility` entirely.

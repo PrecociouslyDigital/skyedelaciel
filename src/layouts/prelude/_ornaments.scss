@@ -3,6 +3,9 @@
 /// Mixins only, like _typography.scss: components include them into their own
 /// scoped stylesheets.
 
+@use "sass:list";
+@use "sass:map";
+
 /// One tapered horizontal — a 橫 — filled in a 400 x 20 box that stretches to
 /// whatever the call site is. Carried as a mask rather than an image so the
 /// stroke takes `currentColor` and needs no second copy for the dark scheme.
@@ -25,9 +28,10 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
 /// parts and so cannot draw a thick/thin pair; two stacked inset shadows can,
 /// because the outer one paints over the inner.
 ///
-/// `$ground` has to be the element's own background, or the channel shows the
-/// wrong paper. `$cast` is an outer shadow to hang off the same property, for
-/// a frame that floats above the page rather than being printed on it.
+/// `$ground` fills the channel, and so decides what the frame is drawn on: the
+/// element's own background for a rule printed on it, the page's for a figure
+/// set into the page. `$cast` is an outer shadow to hang off the same property,
+/// for a frame that floats above the page rather than being printed on it.
 @mixin frame($rule, $ground, $outer, $gap, $inner, $cast: null) {
     border: $outer solid $rule;
     box-shadow:
@@ -41,15 +45,87 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
     @include frame(var(--color-text), var(--color-background), 3px, 3px, 1px);
 }
 
-/// The same figure at the weight of a slip of paper laid on the page.
-@mixin frame-light($cast: null) {
-    @include frame(
-        var(--color-border),
-        var(--color-raised),
-        1px,
-        2px,
-        1px,
-        $cast
+/// A pane of the machine's own glass, for a readout held above the page.
+///
+/// Industrial glass, the kind a machine's overlay is drawn on: a hard-edged
+/// rectangle, flat and uncoloured, clear enough that the page shows through it
+/// as a blur. It has no border, no gradient and no hue. The only hard figure on
+/// it is the machine's bounding box, and the pane stops `$gap` short of that
+/// box on every side, so the ticks stand clear at the corners with a strip of
+/// open page between them and the glass.
+///
+/// That strip is not wasted. `backdrop-filter` only sees what is directly
+/// behind its element, so a blur that ends at its own edge thins out there.
+/// Here the element runs `$gap` past the visible glass, which gives the blur
+/// something to draw on right up to the cut.
+///
+/// The cut is a mask of two figures: the inset rectangle, and the tick arms
+/// themselves, so that the box survives the mask that trims the glass. Both are
+/// laid out by `tick-arms`, the same function the ticks are painted with, so
+/// the mask and the paint cannot drift apart.
+///
+/// The ticks are also the only `signal` here: the pane is the machine's, but
+/// it is not an annotation, and the colour belongs to the annotations. A masked
+/// element has no outer box-shadow — the mask clips to the border box — so the
+/// pane is lifted off the page by the blur alone.
+@mixin glass {
+    // A little ink worked into the raised surface, so the plane is definite in
+    // both schemes — a shade darker than paper, a shade lighter than ink — and
+    // then its chroma taken out. Every surface token leans faintly green in the
+    // ink scheme, which is right for paper and wrong for glass.
+    $plane: color-mix(in oklab, var(--color-raised) 92%, var(--color-text));
+    $gap: 6px;
+    $glass: calc(100% - #{2 * $gap});
+    $len: 0.75rem;
+    $weight: 2px;
+    $arms: tick-arms($len, $weight);
+    $solid: linear-gradient(#000, #000);
+
+    background-color: oklch(from #{$plane} l 0 h / 70%);
+    @include corner-ticks(var(--color-signal), $len, $weight);
+    // No `saturate()`: it would pull the page's own faint hue up through the
+    // pane, which is the tint the plane was stripped of.
+    backdrop-filter: blur(16px);
+
+    mask-image:
+        $solid, $solid, $solid, $solid, $solid, $solid, $solid, $solid, $solid;
+    mask-size: list.append(map.get($arms, "sizes"), $glass $glass, comma);
+    mask-position: list.append(map.get($arms, "places"), center, comma);
+    mask-repeat: no-repeat;
+}
+
+/// Where the eight arms of a bounding box go: two at each corner, `$len` long
+/// and `$weight` thick, held `$inset` off the edge. Returned as the `sizes` and
+/// `places` a layered background or mask takes, so that anything which has to
+/// line up with the ticks lays itself out from the same numbers.
+@function tick-arms($len, $weight, $inset: 0) {
+    $near: $inset;
+    $far: 100%;
+    @if $inset != 0 {
+        $far: calc(100% - #{$inset});
+    }
+
+    @return (
+        "sizes": (
+            $len $weight,
+            $weight $len,
+            $len $weight,
+            $weight $len,
+            $len $weight,
+            $weight $len,
+            $len $weight,
+            $weight $len,
+        ),
+        "places": (
+            $near $near,
+            $near $near,
+            $far $near,
+            $far $near,
+            $near $far,
+            $near $far,
+            $far $far,
+            $far $far,
+        )
     );
 }
 
@@ -67,30 +143,10 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
 /// background, so ticks on the edge of a framed box would be invisible.
 @mixin corner-ticks($rule, $len, $weight, $inset: 0) {
     $arm: linear-gradient($rule, $rule);
-    $near: $inset;
-    $far: 100%;
-    @if $inset != 0 {
-        $far: calc(100% - #{$inset});
-    }
+    $arms: tick-arms($len, $weight, $inset);
 
     background-image: $arm, $arm, $arm, $arm, $arm, $arm, $arm, $arm;
-    background-size:
-        $len $weight,
-        $weight $len,
-        $len $weight,
-        $weight $len,
-        $len $weight,
-        $weight $len,
-        $len $weight,
-        $weight $len;
-    background-position:
-        $near $near,
-        $near $near,
-        $far $near,
-        $far $near,
-        $near $far,
-        $near $far,
-        $far $far,
-        $far $far;
+    background-size: map.get($arms, "sizes");
+    background-position: map.get($arms, "places");
     background-repeat: no-repeat;
 }
