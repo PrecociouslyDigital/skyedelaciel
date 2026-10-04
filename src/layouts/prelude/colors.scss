@@ -1,6 +1,8 @@
+@use "sass:color";
 @use "sass:list";
 @use "sass:map";
 @use "contrast";
+@use "ornaments";
 
 /// The vocabulary every theme speaks, and the only one.
 ///
@@ -16,14 +18,16 @@ $tokens: (
     "accent",
     "signal",
     "attention",
-    "shadow"
+    "shadow",
+    "grain"
 );
 
 /// Paper, ink, and print.
 ///
 /// The light scheme is a bare sheet under warm black ink; the dark scheme is
-/// that inverted. `muted` is the lighter of the five tones of ink a brush
-/// carries, not a grey.
+/// chalk on a slate blackboard, its chromas the softer pigments of coloured
+/// chalk. `muted` is the lighter of the five tones of ink a brush carries, or
+/// chalk half wiped away, not a grey.
 ///
 /// Three chromas, three hands, and none of them ever sets running text:
 /// `accent` is the vermilion of a seal and marks what the author vouched for;
@@ -31,6 +35,11 @@ $tokens: (
 /// afterwards; `attention` is ochre and touches only what the reader is
 /// looking at this second. 朱 and 赭 beside each other is the traditional
 /// pairing, which is why the machine's hand does not read as an import.
+///
+/// `grain` is the colour of the texture worked into the article's ground, at
+/// the strength of its thickest patch: the chalk an eraser leaves on the board,
+/// or the fibre in a sheet. Print leaves the texture to the paper it is
+/// printed on, so its grain is transparent.
 $themes: (
     "light": (
         "background": #fff,
@@ -43,18 +52,20 @@ $themes: (
         "signal": #2a6a4a,
         "attention": #7e5a19,
         "shadow": rgb(0 0 0 / 12%),
+        "grain": rgb(96 72 40 / 6%),
     ),
     "dark": (
-        "background": #141715,
-        "raised": #1c201d,
-        "text": #e3e7e1,
-        "muted": #969d97,
-        "border": #353a37,
-        "border-faint": #212522,
-        "accent": #e86a4f,
-        "signal": #5fbf92,
-        "attention": #e0ae4a,
+        "background": #1b1e21,
+        "raised": #222529,
+        "text": #eceae4,
+        "muted": #a3a5a6,
+        "border": #3d4247,
+        "border-faint": #282c30,
+        "accent": #f3907a,
+        "signal": #70b998,
+        "attention": #cca660,
         "shadow": rgb(0 0 0 / 45%),
+        "grain": rgb(236 234 228 / 12%),
     ),
     "print": (
         "background": #fff,
@@ -69,7 +80,15 @@ $themes: (
         // Paper carries no shadow, but the token still has to exist so that
         // every rule reading it stays valid under `@media print`.
         "shadow": transparent,
+        "grain": transparent,
     ),
+);
+
+/// The shape each theme's grain takes; see `texture` in _ornaments.scss.
+$textures: (
+    "light": "paper",
+    "dark": "chalk",
+    "print": "paper",
 );
 
 /// Each theme's body-text contrast, filled in by the loop below so that the
@@ -88,6 +107,9 @@ $text-ratios: ();
             @error "the #{$name} theme defines #{$token}, which is not a token.";
         }
     }
+    @if not map.has-key($textures, $name) {
+        @error "the #{$name} theme has no texture.";
+    }
 
     $background: map.get($theme, "background");
     $text-ratio: contrast.contrast(map.get($theme, "text"), $background);
@@ -96,23 +118,32 @@ $text-ratios: ();
         @error "the #{$name} theme's muted text is no quieter than its body text.";
     }
 
+    // The floors hold where the grain lies thickest, not only where the ground
+    // is clean: text can land on any patch of the texture.
+    $grain: map.get($theme, "grain");
+    $ground: color.mix(
+        color.change($grain, $alpha: 1),
+        $background,
+        color.alpha($grain) * 100%
+    );
+
     @include contrast.assert-at-least(
         7,
         map.get($theme, "text"),
-        $background,
+        $ground,
         "#{$name} text"
     );
     @include contrast.assert-at-least(
         4.5,
         map.get($theme, "muted"),
-        $background,
+        $ground,
         "#{$name} muted text"
     );
     @each $chroma in ("accent", "signal", "attention") {
         @include contrast.assert-at-least(
             4.5,
             map.get($theme, $chroma),
-            $background,
+            $ground,
             "#{$name} #{$chroma}"
         );
     }
@@ -152,9 +183,14 @@ $print-ratio: map.get($text-ratios, "print");
 }
 
 @mixin apply-theme($theme-name) {
-    @each $token, $value in map.get($themes, $theme-name) {
+    $theme: map.get($themes, $theme-name);
+    @each $token, $value in $theme {
         --color-#{$token}: #{$value};
     }
+    --texture: #{ornaments.texture(
+            map.get($textures, $theme-name),
+            map.get($theme, "grain")
+        )};
 }
 
 // Matches either sign of an override: the checkbox (works without JS, but

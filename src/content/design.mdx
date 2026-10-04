@@ -47,7 +47,11 @@ A blockquote is set in from a rule of solid ink on its left. Bullets are marked 
 
 There should be three color schemes: paper (light), ink (dark) and print. Paper and ink should default to the system preference, based on the css media query `prefers-color-scheme`, but should also be toggleable by the user (see [Navbar](#navbar)). Once a user sets a theme preference, that preference should be persisted to local storage and reloaded as early as possible in page load. Print is a scheme of its own and follows no preference.
 
-Every scheme names the same roles, and only those: a `background`, a `raised` surface for what sits on top of it, `text` and a quieter `muted` for apparatus and marginal notes, a `border` rule with a fainter `border-faint` for tinted ground, three chromas — `accent`, `signal` and `attention` — and a `shadow`. A scheme that omits a role, or invents one, should fail the build, as should one whose text falls below 7:1 against its own background or whose muted text or any of whose chromas falls below 4.5:1. Print is the boldest of the three schemes, and that too is a build error rather than a matter of taste.
+Ink is chalk on a blackboard: a cool, nearly neutral slate under dusty off-white, with its chromas the softer pigments of coloured chalk.
+
+Every scheme names the same roles, and only those: a `background`, a `raised` surface for what sits on top of it, `text` and a quieter `muted` for apparatus and marginal notes, a `border` rule with a fainter `border-faint` for tinted ground, three chromas — `accent`, `signal` and `attention` — a `shadow`, and the `grain` of the article's texture. A scheme that omits a role, or invents one, should fail the build, as should one whose text falls below 7:1 against its own background where the grain lies thickest, or whose muted text or any of whose chromas falls below 4.5:1. Print is the boldest of the three schemes, and that too is a build error rather than a matter of taste.
+
+Where the article is framed, the ground inside the frame is textured, and only there. On the board it is what an eraser leaves: broad sideways sweeps where it went, and a fine speckle of the dust it missed. On paper it is a sheet's own grain, a faint warm mottle under an even tooth. Print carries no texture; the sheet it is printed on has its own.
 
 The three chromas are three hands, and none of them ever sets running text.
 

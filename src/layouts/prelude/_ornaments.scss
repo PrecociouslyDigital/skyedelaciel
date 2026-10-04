@@ -3,8 +3,10 @@
 /// Mixins only, like _typography.scss: components include them into their own
 /// scoped stylesheets.
 
+@use "sass:color";
 @use "sass:list";
 @use "sass:map";
+@use "sass:math";
 
 /// One tapered horizontal — a 橫 — filled in a 400 x 20 box that stretches to
 /// whatever the call site is. Carried as a mask rather than an image so the
@@ -45,6 +47,48 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
     @include frame(var(--color-text), var(--color-background), 3px, 3px, 1px);
 }
 
+/// A square tile of fractal noise in `$color`, as an image that repeats at its
+/// own size. Its opacity at each point is `$gain` times the noise there plus
+/// `$offset`, scaled by the colour's own alpha, so a negative offset keeps only
+/// the noise's peaks. `$frequency` may be a pair, x then y; a lower x stretches
+/// the noise sideways.
+///
+/// The colour is baked into the image because an image cannot read a custom
+/// property. Filters blend in linear light unless told otherwise, which would
+/// lighten the colour written here, hence `color-interpolation-filters`.
+@function noise($color, $frequency, $octaves, $gain, $offset, $tile) {
+    $alpha: color.alpha($color);
+    $rgb: "";
+    @each $channel in ("red", "green", "blue") {
+        $value: math.div(color.channel($color, $channel, $space: rgb), 255);
+        $rgb: "#{$rgb}0 0 0 0 #{math.div(math.round($value * 1000), 1000)} ";
+    }
+    $matrix: "#{$rgb}#{$gain * $alpha} 0 0 0 #{$offset * $alpha}";
+
+    @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='#{$tile}' height='#{$tile}'%3E%3Cfilter id='n' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='#{$frequency}' numOctaves='#{$octaves}' stitchTiles='stitch'/%3E%3CfeColorMatrix values='#{$matrix}'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/// The texture of a scheme's ground, painted in `$grain`, which is its colour
+/// at the strength of its thickest patch. A transparent grain is no texture.
+///
+/// `chalk` is what an eraser leaves on a blackboard: broad sideways sweeps
+/// where it went, over a fine speckle of what it missed. `paper` is a sheet's
+/// own: a faint mottle where its fibres lie thicker, under an even tooth.
+@function texture($kind, $grain) {
+    @if color.alpha($grain) == 0 {
+        @return none;
+    }
+    @if $kind == "chalk" {
+        @return noise($grain, 0.0025 0.009, 4, 1, -0.3, 1024px),
+            noise($grain, 0.8, 2, 4, -2.4, 256px);
+    }
+    @if $kind == "paper" {
+        @return noise($grain, 0.02, 3, 1, -0.45, 512px),
+            noise($grain, 0.7, 3, 2.5, -1.2, 256px);
+    }
+    @error "there is no #{$kind} texture.";
+}
+
 /// How far the glass stops short of its element's box. Anything set into the
 /// glass, rather than painted on the element, is inset by the same amount.
 $glass-gap: 6px;
@@ -75,8 +119,8 @@ $glass-gap: 6px;
 @mixin glass {
     // A little ink worked into the raised surface, so the plane is definite in
     // both schemes — a shade darker than paper, a shade lighter than ink — and
-    // then its chroma taken out. Every surface token leans faintly green in the
-    // ink scheme, which is right for paper and wrong for glass.
+    // then its chroma taken out. Every surface token leans faintly blue in the
+    // ink scheme, which is right for slate and wrong for glass.
     $plane: color-mix(in oklab, var(--color-raised) 92%, var(--color-text));
     $glass: calc(100% - #{2 * $glass-gap});
     $len: 0.75rem;

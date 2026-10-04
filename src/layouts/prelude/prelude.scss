@@ -426,6 +426,9 @@ figcaption {
         --frame-inset: calc(2ch + 3px);
         --tick-reach: 0.8rem;
         padding: 2.5rem var(--frame-inset) 2rem;
+        // Only inside the frame: unframed, a textured block has no edge to
+        // stop at and reads as a mistake.
+        background-image: var(--texture);
     }
 
     /* The second reader's box, drawn clear of the first one's. The woodblock

@@ -111,3 +111,51 @@ theme in the error.
 The light scheme's `text` therefore has a floor it cannot be written below:
 strictly lighter than pure black. That is the whole constraint, and it is
 otherwise invisible in the file.
+
+## 2026-10-04 — the dark scheme is chalk on a blackboard
+
+The old ink palette carried a green bias in every neutral (G was always the
+largest channel), which read as an oddly green screen rather than as ink. The
+neutrals are now a cool slate (B slightly highest, near-neutral) under a warm
+off-white chalk. The ground is a touch lighter than before (#1f2225 vs
+#141715): a blackboard is slate, not a void.
+
+The chromas were pushed toward pastel, coloured chalk, and rebalanced to
+6.9–7.0:1 on the ground, so that the dark scheme keeps the light scheme's
+rule that no hand shouts over another by contrast alone. Previously they
+spread from 5.7 to 8.9.
+
+## 2026-10-04 — a darker board, with dust on it
+
+The slate went down a step (#1f2225 → #1b1e21). The chromas were left alone:
+on the darker ground they sit at 7.2–7.3:1, still even with each other.
+
+The texture is a token, `dust`, rather than a dark-only rule. Paper and print
+set it to transparent, so the one `body::before` layer that paints it
+(`chalk-dust` in _ornaments.scss) draws nothing there, and the scheme switching
+stays entirely in this file. Two noise masks shape it: a 1024px tile of
+low-frequency fractal noise stretched sideways (eraser sweeps), and a 256px
+tile of high-frequency noise thresholded to its peaks (grain). The values were
+tuned by eye from screenshots; 12% chalk is the thickest any patch gets.
+
+The text, muted and chroma contrast floors are now checked against the ground
+at its dustiest, i.e. `dust` composited over `background` at full mask
+strength. For paper and print that is the background itself.
+
+## 2026-10-04 — the texture moved onto the framed article, and paper got one
+
+`dust` became `grain`, since paper has a texture too now. The page-wide
+`body::before` layer is gone; the texture is the framed article's own
+`background-image`. Unframed (narrow screens), an article has no edge for a
+texture to stop at, so it carries none.
+
+The shape is no longer a mask over a colour token. Each scheme's texture is
+generated at compile time, its `grain` colour baked into the SVG (an image
+cannot read a custom property), and `apply-theme` emits it as `--texture`
+beside the colour tokens. Switching schemes therefore stays entirely in
+colors.scss, and `$textures` names which shape each scheme takes. A
+transparent grain compiles to `none`, which is how print stays clean.
+
+Paper's grain is a warm brown fibre (rgb(96 72 40 / 6%)), not ink: tinted
+with ink, the first attempt read as a grey, dirty sheet. Like the chalk, its
+values were tuned by eye from screenshots.
