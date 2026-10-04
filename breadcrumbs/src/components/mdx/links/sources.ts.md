@@ -112,3 +112,29 @@ The one case worth stating is the exception in it. A bare `#fragment`
 addresses the page the reader is already on, so no lookup was ever attempted
 and nothing is missing; without that clause every in-page cross-reference in
 design.mdx would be marked as a dead end.
+
+## 2026-10-03 — `meta` takes the entry; arXiv is a DOI; two kinds of useless image
+
+**`Source.meta` takes the whole `ResolvedLink`, not its `csl`.** Wikipedia's
+meta line is the article's short description, which has no CSL field to live
+in. Putting it in `csl.note` or `csl.genre` would have leaked it into the MLA
+bibliography. `description` is a top-level field on the entry instead, and the
+other sources destructure `{ csl }` exactly as before.
+
+**arXiv links are claimed by `doi`.** arXiv registers a DataCite DOI for every
+paper, `10.48550/arXiv.<id>`, with no version suffix. That DOI is already
+reachable through the registrar ladder's doi.org rung. A separate arXiv source
+would have needed a new kind, a new glyph and an Atom parser to reach the same
+CSL. `extractDoi` maps abstract and PDF links, in both the new-style and
+old-style ID schemes, and drops `vN`.
+
+**Wikipedia's `originalimage` unless it's an SVG.** The build copies and scales
+images itself, and Astro's image service refuses to convert SVG to raster.
+Wikipedia's `thumbnail` is already rasterised, so an SVG lead image falls back
+to it.
+
+**Two kinds of OpenGraph image are dropped.** Generated cards
+(`CARD_GENERATORS`, starting with GitHub's) only set the page title in type.
+Site logos are what a site puts on every page that has no image of its own. A
+logo is recognised as the page's image being identical, once made absolute, to
+the homepage's. That costs one extra `ogs` call per origin per build, memoised.

@@ -1,0 +1,149 @@
+{
+    "https://diff.wikimedia.org/2026/10/02/capturing-essences-with-bolivian-wikimedians/": {
+        "kind": "external",
+        "csl": {
+            "type": "webpage",
+            "id": "https://diff.wikimedia.org/2026/10/02/capturing-essences-with-bolivian-wikimedians/",
+            "URL": "https://diff.wikimedia.org/2026/10/02/capturing-essences-with-bolivian-wikimedians/",
+            "title": "Capturing essences with Bolivian Wikimedians",
+            "container-title": "Diff",
+            "issued": {
+                "date-parts": [[2026, 10, 2]]
+            },
+            "accessed": {
+                "date-parts": [[2026, 10, 3]]
+            }
+        },
+        "summary": {
+            "type": "text",
+            "content": "I was admiring the creative and magnificent origami art pieces hanging inside the Japanese Society museum in La Paz, Bolivia; naturally, I captured the moment in a photograph. That very night, befo…"
+        },
+        "imageUrl": "/src/assets/link-images/origami-la-paz.jpg"
+    },
+    "https://doi.org/10.1038/s40494-025-02005-1": {
+        "kind": "doi",
+        "csl": {
+            "type": "article-journal",
+            "id": "10.1038/s40494-025-02005-1",
+            "language": "en",
+            "author": [
+                {
+                    "family": "Liu",
+                    "given": "Zhen"
+                },
+                {
+                    "family": "Liu",
+                    "given": "Kun"
+                }
+            ],
+            "issued": {
+                "date-parts": [[2025, 8, 25]]
+            },
+            "abstract": "Artists often assess that Chinese brushes’ performances rely on macroscopic writing experience, while they seldom consider the underlying reasons for differences from experimental science. However, the correlation between materials and writing performance can be utilized to advance brush materials and develop traditional Chinese calligraphy. In this study, we examined the provenance of the diverse range of natural or man-made fibers and hairs. The hairs of herbivores, such as sheep and rabbits, exhibit a superior layered structure and a reduced level of grease, which provides an explanation for the microscopic level at which rabbit hair has become a popular brush material. The subsequent incorporation of polydopamine markedly enhanced the ink absorption capacity of the rabbit hair Chinese brush, exhibiting a remarkable degree of responsiveness and ink adsorption stability during creation. Our results indicate a significant correlation between brush writing performance and material selection, which provides guidance for the modern creation of calligraphy art.",
+            "container-title": "npj Heritage Science",
+            "container-title-short": "npj Herit. Sci.",
+            "DOI": "10.1038/s40494-025-02005-1",
+            "ISSN": "3059-3220",
+            "issue": "1",
+            "publisher": "Springer Science and Business Media LLC",
+            "source": "Crossref",
+            "title": "Analyzing the intrinsic connection between Chinese calligraphy creation and brush properties from a micro perspective",
+            "URL": "https://doi.org/10.1038/s40494-025-02005-1",
+            "volume": "13"
+        },
+        "summary": {
+            "type": "text",
+            "content": "Artists often assess that Chinese brushes’ performances rely on macroscopic writing experience, while they seldom consider the underlying reasons for differences from experimental science. However, the correlation between materials and writing performance can be utilized to advance brush materials and develop traditional Chinese calligraphy. In this study, we examined the provenance of the diverse range of natural or man-made fibers and hairs. The hairs of herbivores, such as sheep and rabbits, exhibit a superior layered structure and a reduced level of grease, which provides an explanation for the microscopic level at which rabbit hair has become a popular brush material. The subsequent incorporation of polydopamine markedly enhanced the ink absorption capacity of the rabbit hair Chinese brush, exhibiting a remarkable degree of responsiveness and ink adsorption stability during creation. Our results indicate a significant correlation between brush writing performance and material selection, which provides guidance for the modern creation of calligraphy art."
+        }
+    },
+    "https://en.wikipedia.org/wiki/Wang_Xizhi": {
+        "kind": "wikipedia",
+        "csl": {
+            "type": "webpage",
+            "id": "https://en.wikipedia.org/wiki/Wang_Xizhi",
+            "URL": "https://en.wikipedia.org/wiki/Wang_Xizhi",
+            "title": "Wang Xizhi",
+            "container-title": "Wikipedia",
+            "issued": {
+                "date-parts": [[2026, 9, 23]]
+            }
+        },
+        "summary": {
+            "type": "html",
+            "content": "<p><b>Wang Xizhi</b> was a Chinese politician, general, and calligrapher from the Jin dynasty (266–420) known for his mastery of Chinese calligraphy. He is often regarded as the greatest calligrapher in Chinese history. His most famous work, composed in 353, is the <span><i lang=\"zh-Latn\">Lantingji xu</i></span>.</p>"
+        },
+        "description": "Chinese calligrapher (c. 303 – c. 361)",
+        "fields": [
+            {
+                "label": "Born",
+                "value": "<abbr title=\"circa\">c.</abbr><span style=\"white-space:nowrap;\"><span typeof=\"mw:Entity\"> </span>303</span>, <div style=\"display:inline\" class=\"birthplace\"><a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Linyi_County,_Linyi\" title=\"Linyi County, Linyi\" class=\"mw-redirect\">Linyi County</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Langya_Commandery\" title=\"Langya Commandery\">Langya Commandery</a>, Western Jin (today's <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Lanshan_District,_Linyi\" title=\"Lanshan District, Linyi\" class=\"mw-redirect\">Lanshan District</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Linyi\" title=\"Linyi\">Linyi</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Shandong_Province\" title=\"Shandong Province\" class=\"mw-redirect\">Shandong Province</a>)</div>"
+            },
+            {
+                "label": "Died",
+                "value": "<span title=\"circa\">c.</span><span style=\"white-space:nowrap;\"><span typeof=\"mw:Entity\"> </span>361</span> (aged 58), <div style=\"display:inline\" class=\"deathplace\">Xiaojia Village, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Shengzhou\" title=\"Shengzhou\">Shan County</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Kuaiji_Commandery\" title=\"Kuaiji Commandery\">Kuaiji Commandery</a>, Eastern Jin (today's <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Shengzhou\" title=\"Shengzhou\">Shengzhou</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Zhejiang_Province\" title=\"Zhejiang Province\" class=\"mw-redirect\">Zhejiang Province</a>)</div>"
+            },
+            {
+                "label": "Known for",
+                "value": "<a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Chinese_calligraphy\" title=\"Chinese calligraphy\">Chinese calligraphy</a>"
+            },
+            {
+                "label": "Notable work",
+                "value": "<span title=\"Chinese-language romanization\"><i lang=\"zh-Latn\"><a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Lantingji_xu\" title=\"Lantingji xu\" class=\"mw-redirect\">Lantingji xu</a></i></span>"
+            },
+            {
+                "label": "Family",
+                "value": "<a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Wang_clan_of_Langya\" title=\"Wang clan of Langya\">Wang clan of Langya</a>"
+            },
+            {
+                "label": "Chinese",
+                "value": "<span title=\"Chinese-language text\"><span lang=\"zh-Hani\" style=\"font-size: 1rem;\"><a rel=\"mw:WikiLink/Interwiki\" href=\"https://en.wiktionary.org/wiki/%E7%8E%8B\" title=\"wikt:王\" class=\"extiw\">王</a><a rel=\"mw:WikiLink/Interwiki\" href=\"https://en.wiktionary.org/wiki/%E7%BE%B2\" title=\"wikt:羲\" class=\"extiw\">羲</a><a rel=\"mw:WikiLink/Interwiki\" href=\"https://en.wiktionary.org/wiki/%E4%B9%8B\" title=\"wikt:之\" class=\"extiw\">之</a></span></span>"
+            }
+        ],
+        "imageUrl": "/src/assets/link-images/wang-xizhi.jpg"
+    },
+    "https://en.wikipedia.org/wiki/Mount_Fuji": {
+        "kind": "wikipedia",
+        "csl": {
+            "type": "webpage",
+            "id": "https://en.wikipedia.org/wiki/Mount_Fuji",
+            "URL": "https://en.wikipedia.org/wiki/Mount_Fuji",
+            "title": "Mount Fuji",
+            "container-title": "Wikipedia",
+            "issued": {
+                "date-parts": [[2026, 9, 20]]
+            }
+        },
+        "summary": {
+            "type": "html",
+            "content": "<p><b>Mount Fuji</b><span style=\"font-weight:normal\"> </span> is an active stratovolcano located on the Japanese island of Honshu, with a summit elevation of 3,776.24 m. It is the highest mountain in Japan, the second-highest volcano on any Asian island, and the seventh-highest peak of an island on Earth. Mount Fuji last erupted from 1707 to 1708.</p>"
+        },
+        "description": "Volcano in Japan",
+        "fields": [
+            {
+                "label": "Prominence",
+                "value": "3,776<span typeof=\"mw:Entity\"> </span>m (12,388<span typeof=\"mw:Entity\"> </span>ft), <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/List_of_peaks_by_prominence\" title=\"List of peaks by prominence\" class=\"mw-redirect\">Ranked 35th</a>"
+            },
+            {
+                "label": "Listing",
+                "value": "<span class=\"mw-empty-elt\"></span><div class=\"plainlist\">\n<a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/List_of_countries_by_highest_point\" title=\"List of countries by highest point\" class=\"mw-redirect\">Highest peak in Japan</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Ultra-prominent_peak\" title=\"Ultra-prominent peak\">Ultra-prominent peaks</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/List_of_mountains_and_hills_of_Japan_by_height\" title=\"List of mountains and hills of Japan by height\">List of mountains in Japan</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/100_Famous_Japanese_Mountains\" title=\"100 Famous Japanese Mountains\">100 Famous Japanese Mountains</a>, <a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/List_of_volcanoes_by_elevation\" title=\"List of volcanoes by elevation\">List of volcanoes by elevation</a>\n</div>"
+            },
+            {
+                "label": "Coordinates",
+                "value": "<span class=\"geo-inline\"><span class=\"plainlinks nourlexpansion\"><a rel=\"mw:ExtLink\" href=\"https://geohack.toolforge.org/geohack.php?pagename=Mount_Fuji&#x26;params=35_21_39_N_138_43_39_E_type:mountain_scale:100000\" class=\"external text\"><span class=\"geo-default\"><span class=\"geo-dms\" title=\"Maps, aerial photos, and other data for this location\"><span class=\"latitude\">35°21′39″N</span> <span class=\"longitude\">138°43′39″E</span></span></span></a></span></span><meta typeof=\"mw:Extension/indicator\" about=\"#mwt16\" id=\"mwFA\" data-mw=\"{&#x22;name&#x22;:&#x22;indicator&#x22;,&#x22;attrs&#x22;:{&#x22;name&#x22;:&#x22;coordinates&#x22;},&#x22;body&#x22;:{&#x22;extsrc&#x22;:&#x22;<span id=\\&#x22;coordinates\\&#x22;>[[Geographic coordinate system|Coordinates]]: {{#parsoid\\u0000fragment:19}}<span class=\\&#x22;plainlinks nourlexpansion\\&#x22;>[https://geohack.toolforge.org/geohack.php?pagename=Mount_Fuji&#x26;params=35_21_39_N_138_43_39_E_type:mountain_scale:100000 <span class=\\&#x22;geo-default\\&#x22;><span class=\\&#x22;geo-dms\\&#x22; title=\\&#x22;Maps, aerial photos, and other data for this location\\&#x22;><span class=\\&#x22;latitude\\&#x22;>35°21′39″N</span> <span class=\\&#x22;longitude\\&#x22;>138°43′39″E</span></span></span><span class=\\&#x22;geo-multi-punct\\&#x22;>&#x26;#xfeff; / &#x26;#xfeff;</span><span class=\\&#x22;geo-nondefault\\&#x22;><span class=\\&#x22;geo-dec\\&#x22; title=\\&#x22;Maps, aerial photos, and other data for this location\\&#x22;>35.36083°N 138.72750°E</span><span style=\\&#x22;display:none\\&#x22;>&#x26;#xfeff; / <span class=\\&#x22;geo\\&#x22;>35.36083; 138.72750</span></span></span>]</span>[[Category:Pages using gadget WikiMiniAtlas]]</span>&#x22;}}\">"
+            },
+            {
+                "label": "Native name",
+                "value": "<span title=\"Japanese-language text\"><span lang=\"ja\">富士山</span></span><span typeof=\"mw:Entity\"> </span><span class=\"languageicon\" style=\"font-size:100%; font-weight:normal\">(<a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Japanese_language\" title=\"Japanese language\">Japanese</a>)</span>"
+            },
+            {
+                "label": "Pronunciation",
+                "value": "<span class=\"IPA nowrap\" lang=\"ja-Latn-fonipa\"><a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Help:IPA/Japanese\" title=\"Help:IPA/Japanese\"><span typeof=\"mw:Entity\">[</span>ɸɯꜜ(d)ʑisaɴ<span typeof=\"mw:Entity\">]</span></a></span>"
+            },
+            {
+                "label": "Location",
+                "value": "<a rel=\"mw:WikiLink\" href=\"https://en.wikipedia.org/wiki/Fuji-Hakone-Izu_National_Park\" title=\"Fuji-Hakone-Izu National Park\">Fuji-Hakone-Izu National Park</a>"
+            }
+        ],
+        "imageUrl": "/src/assets/link-images/mount-fuji.jpg"
+    }
+}

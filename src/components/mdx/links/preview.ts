@@ -1,13 +1,15 @@
 import { match } from "ts-pattern";
 import { inlineSummary } from "./html";
 import { sourceOf } from "./sources";
-import type { LinkEntry, Summary } from "./types";
+import type { Field, LinkEntry, Summary } from "./types";
 
 /** The contents of a link's hover popover, in render order. */
 export interface Preview {
     title: string;
     meta: string[];
     body?: Summary;
+    /** The ledger below the body. Values are sanitised inline HTML. */
+    fields: Field[];
     image?: string;
 }
 
@@ -40,8 +42,12 @@ export function buildPreview(entry: LinkEntry): Preview | undefined {
     const source = sourceOf(entry.kind);
     return {
         title,
-        meta: source.meta(entry.csl).filter((field) => field !== undefined),
+        meta: source.meta(entry).filter((field) => field !== undefined),
         body: entry.summary && inline(entry.summary),
+        fields: (entry.fields ?? []).map(({ label, value }) => ({
+            label,
+            value: inlineSummary(value),
+        })),
         ...(source.image && entry.imageUrl && { image: entry.imageUrl }),
     };
 }

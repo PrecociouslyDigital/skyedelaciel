@@ -1,19 +1,31 @@
 ---
 import { formatInlineCitation } from "./cite";
+import { geometryStyle } from "./geometry";
+import { placeImage } from "./image";
 import { isCitable, isResolved, sourceFor } from "./sources";
 import { getLinkMeta, hasBibliography } from "./store";
 import { buildPreview } from "./preview";
 
 export interface Props {
     href: string;
-    showImage?: boolean;
     [key: string]: any;
 }
 
-const { href, showImage = false, ...rest } = Astro.props;
+const { href, ...rest } = Astro.props;
 
 const entry = getLinkMeta(href);
 const preview = entry && buildPreview(entry);
+const image =
+    preview?.image === undefined ? undefined : await placeImage(preview.image);
+
+/** The pane's measurements, and a column image's, which the pane is built around. */
+const paneStyle = {
+    ...geometryStyle,
+    ...(image?.placement === "column" && {
+        "--image-width": `${image.drawn.width}px`,
+        "--image-height": `${image.drawn.height}px`,
+    }),
+};
 
 /**
  * Printed pages can't be clicked, so this is what appears in the link's
@@ -45,33 +57,58 @@ const resolved = isResolved(href, entry);
     {
         preview && (
             <span class="link-popover-anchor">
-                <span class="link-popover" role="tooltip">
-                    {showImage && preview.image && (
+                <span
+                    class="link-popover"
+                    role="tooltip"
+                    data-image={image?.placement}
+                    style={paneStyle}
+                >
+                    <span class="link-popover-text">
+                        <span class="link-popover-title">{preview.title}</span>
+                        {preview.meta.length > 0 && (
+                            <span class="link-popover-meta">
+                                {preview.meta.join(" · ")}
+                            </span>
+                        )}
+                        {preview.body &&
+                            (preview.body.type === "html" ? (
+                                <span
+                                    class="link-popover-description"
+                                    set:html={preview.body.content}
+                                />
+                            ) : (
+                                <span
+                                    class="link-popover-description"
+                                    set:text={preview.body.content}
+                                />
+                            ))}
+                        {preview.fields.length > 0 && (
+                            <span class="link-popover-ledger" role="table">
+                                {preview.fields.map(({ label, value }) => (
+                                    <span class="link-popover-row" role="row">
+                                        <span
+                                            class="link-popover-key"
+                                            role="rowheader"
+                                        >
+                                            {label}
+                                        </span>
+                                        <span role="cell" set:html={value} />
+                                    </span>
+                                ))}
+                            </span>
+                        )}
+                    </span>
+                    {image && (
                         <img
                             class="link-popover-image"
-                            src={preview.image}
+                            src={image.src}
+                            width={image.width}
+                            height={image.height}
                             alt=""
                             loading="lazy"
+                            decoding="async"
                         />
                     )}
-                    <span class="link-popover-title">{preview.title}</span>
-                    {preview.meta.length > 0 && (
-                        <span class="link-popover-meta">
-                            {preview.meta.join(" · ")}
-                        </span>
-                    )}
-                    {preview.body &&
-                        (preview.body.type === "html" ? (
-                            <span
-                                class="link-popover-description"
-                                set:html={preview.body.content}
-                            />
-                        ) : (
-                            <span
-                                class="link-popover-description"
-                                set:text={preview.body.content}
-                            />
-                        ))}
                 </span>
             </span>
         )
@@ -81,6 +118,7 @@ const resolved = isResolved(href, entry);
 <style lang="scss">
     @use "../../../layouts/prelude/motion";
     @use "../../../layouts/prelude/ornaments";
+    @use "../../../layouts/prelude/typography";
 
     .link-wrapper {
         position: relative;
@@ -152,39 +190,140 @@ const resolved = isResolved(href, entry);
     .link-wrapper:focus-within .link-popover {
         opacity: 1;
         translate: 0 0;
+        content-visibility: visible;
     }
 
     /* A pane of the machine's glass held over the page, since what is on it is
        the machine's reading of the address rather than anything the author
-       wrote. It scrolls its own contents, which is why `glass` paints the
-       bounding box on the pane: a box drawn around it would be clipped. */
+       wrote. It is laid out as a page preview: the text, and beside or above
+       it an image, which `placeImage` has already put in whichever box suits
+       its shape. Only the text scrolls. A column image holds still beside it,
+       and a banner gives way above it, on the text's scroll timeline. */
     .link-popover {
+        timeline-scope: --link-popover-text;
+
         @include ornaments.glass;
 
         /* The pane rises the last few pixels into place as it takes colour,
            and sinks back as it loses it, on the same standoff the anchor
-           above waits out. */
-        @include motion.snap((opacity, translate), 120ms, 0.3s);
+           above waits out.
+
+           Its contents are skipped while it is down. `visibility` alone
+           still lays them out, and a lazy image that is laid out is fetched
+           with the page rather than on hover. `content-visibility` flips
+           with the same timing as `visibility`, so the fade survives it. */
+        @include motion.snap(
+            (opacity, translate, content-visibility),
+            120ms,
+            0.3s
+        );
+        transition-behavior: allow-discrete;
         opacity: 0;
         translate: 0 0.35rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-        width: 22rem;
-        max-height: 16rem;
-        overflow-y: auto;
-        // Clear of the glass's edge, which stands 6px in from the ticks.
-        padding: 1.1rem 1.2rem;
+        content-visibility: hidden;
+
+        /* A flexible row under a capped height shrinks to fit the cap, and
+           the text in it scrolls. Longhands, because each placement below
+           changes only the ones it needs to. */
+        display: grid;
+        /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
+        grid-template-areas: "text";
+        grid-template-rows: minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
+        width: var(--pane-width);
+        max-height: var(--max-height);
         color: var(--color-text);
         font-size: var(--text-small);
         line-height: 1.45;
         font-weight: normal;
+
+        /* Built around the image: the column is as wide as it is drawn, and
+           the pane as tall, each with the glass's inset, so the image runs
+           whole from the top of the glass to the bottom. */
+        &[data-image="column"] {
+            grid-template-areas: "text image";
+            grid-template-columns:
+                minmax(0, 1fr)
+                calc(var(--image-width) + #{ornaments.$glass-gap});
+            height: calc(var(--image-height) + #{2 * ornaments.$glass-gap});
+        }
+
+        &[data-image="banner"] {
+            grid-template-areas: "image" "text";
+            grid-template-rows: auto minmax(0, 1fr);
+            max-height: var(--bannered-max-height);
+        }
     }
 
+    .link-popover-text {
+        grid-area: text;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        overflow-y: auto;
+        scroll-timeline: --link-popover-text block;
+        scrollbar-width: thin;
+        // Clear of the glass's edge, which stands $glass-gap in from the ticks.
+        padding: 1.1rem 1.2rem;
+
+        [data-image="column"] > & {
+            padding-right: 1rem;
+        }
+
+        [data-image="banner"] > & {
+            padding-top: 0.8rem;
+        }
+    }
+
+    /* Inset by the glass's own gap, so the image runs to the edge of the
+       glass and stops where it does, clear of the ticks. */
     .link-popover-image {
-        max-width: 100%;
-        max-height: 6rem;
-        object-fit: cover;
+        grid-area: image;
+        min-width: 0;
+        min-height: 0;
+
+        /* Shown whole, at the size `placeImage` drew it at, which has the
+           image's own proportions. Being given rather than measured, it sizes
+           the pane before the image has loaded. */
+        [data-image="column"] > & {
+            place-self: start end;
+            width: var(--image-width);
+            height: var(--image-height);
+            margin: ornaments.$glass-gap ornaments.$glass-gap
+                ornaments.$glass-gap 0;
+        }
+
+        /* Cropped to fill the pane's width. */
+        [data-image="banner"] > & {
+            place-self: stretch;
+            width: auto;
+            height: var(--banner-height);
+            margin: ornaments.$glass-gap ornaments.$glass-gap 0;
+            object-fit: cover;
+
+            /* As the text scrolls up, the banner gives way to it, partly: it
+               moves exactly as far as the reader scrolls, and only for the
+               first stretch of it. Under reduced motion it stays put,
+               because this is motion set off by scrolling.
+
+               A browser without scroll timelines would play this as an
+               ordinary animation of no length, and hold its end: a banner
+               already shrunk before anything was scrolled. */
+            @media (prefers-reduced-motion: no-preference) {
+                @supports (animation-timeline: scroll()) {
+                    animation: link-popover-banner-gives-way linear both;
+                    animation-timeline: --link-popover-text;
+                    animation-range: 0
+                        calc(var(--banner-height) - var(--banner-min-height));
+                }
+            }
+        }
+    }
+
+    @keyframes link-popover-banner-gives-way {
+        to {
+            height: var(--banner-min-height);
+        }
     }
 
     .link-popover-title {
@@ -206,6 +345,33 @@ const resolved = isResolved(href, entry);
     .link-popover-description {
         text-align: justify;
         hyphens: auto;
+    }
+
+    /* The facts below the summary, ruled as the site's tables are: ink over
+       the first row, a hairline under each. It is spans with table roles
+       rather than a <table>, because a <table> would close the paragraph
+       the link sits in. */
+    .link-popover-ledger {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        column-gap: 0.8rem;
+        margin-top: 0.5rem;
+        border-top: 1.5px solid var(--color-text);
+        line-height: 1.35;
+        font-variant-numeric: lining-nums tabular-nums;
+    }
+
+    .link-popover-row {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
+        padding-block: 0.25rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .link-popover-key {
+        @include typography.apparatus(var(--text-small));
+        font-weight: 600;
     }
 
     @media print {

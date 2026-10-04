@@ -60,6 +60,8 @@ const entries: LinkEntry[] = [
         kind: "wikipedia",
         csl: csl.wikipedia,
         summary: { type: "html", content: "<p>Marked up.</p>" },
+        description: "A subject",
+        fields: [{ label: "Born", value: "<p>c. 303</p>" }],
         imageUrl: "/logo.svg",
     },
     ...Object.entries(csl).map(([kind, data]) => ({
@@ -127,7 +129,16 @@ describe("buildPreview", () => {
             csl.internal["container-title"],
         ]);
 
-        // Wikipedia contributes a summary and an image, and no author line.
+        // Wikipedia has no author line, but says what the subject is when
+        // the article has a short description, and nothing when it doesn't.
+        expect(
+            buildPreview({
+                resolution: "resolved",
+                kind: "wikipedia",
+                csl: csl.wikipedia,
+                description: "Chinese calligrapher (c. 303 – c. 361)",
+            })?.meta,
+        ).toEqual(["Chinese calligrapher (c. 303 – c. 361)"]);
         expect(preview("wikipedia")?.meta).toEqual([]);
 
         // DOIs and external pages carry the full apparatus.
@@ -155,6 +166,10 @@ describe("buildPreview", () => {
             content: "<span>Marked up.</span>",
         });
         expect(preview.image).toBe("/logo.svg");
+        // A ledger's values are third-party markup too, and get the same.
+        expect(preview.fields).toEqual([
+            { label: "Born", value: "<span>c. 303</span>" },
+        ]);
 
         const summary = {
             type: "text",

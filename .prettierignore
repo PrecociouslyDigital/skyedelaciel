@@ -2,3 +2,6 @@
 # and public/favicon.svg are generated, and tests/unit/logo.test.ts asserts they
 # match tools/logo.mjs byte for byte.
 *.svg
+
+# Recorded responses, kept byte for byte as the source served them.
+tests/unit/fixtures/*.html

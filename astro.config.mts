@@ -65,6 +65,12 @@ function revision(): string {
 // https://astro.build/config
 export default defineConfig({
     integrations: [mdx(), svelte()],
+    image: {
+        // A link popover's image is copied onto this site at build time. Its
+        // URL comes from resolving the link, never from a visitor, so any
+        // https host is allowed.
+        remotePatterns: [{ protocol: "https" }],
+    },
     vite: {
         // A build fact, not a runtime one: baked in here so that a page can
         // carry it without every layout reaching for a shell.

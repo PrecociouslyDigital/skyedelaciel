@@ -45,19 +45,23 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
     @include frame(var(--color-text), var(--color-background), 3px, 3px, 1px);
 }
 
+/// How far the glass stops short of its element's box. Anything set into the
+/// glass, rather than painted on the element, is inset by the same amount.
+$glass-gap: 6px;
+
 /// A pane of the machine's own glass, for a readout held above the page.
 ///
 /// Industrial glass, the kind a machine's overlay is drawn on: a hard-edged
 /// rectangle, flat and uncoloured, clear enough that the page shows through it
-/// as a blur. It has no border, no gradient and no hue. The only hard figure on
-/// it is the machine's bounding box, and the pane stops `$gap` short of that
-/// box on every side, so the ticks stand clear at the corners with a strip of
-/// open page between them and the glass.
+/// as a blur. It has no border, no gradient and no hue. The only hard figure of
+/// its own is the machine's bounding box, and the pane stops `$glass-gap` short
+/// of that box on every side, so the ticks stand clear at the corners with a
+/// strip of open page between them and the glass.
 ///
 /// That strip is not wasted. `backdrop-filter` only sees what is directly
 /// behind its element, so a blur that ends at its own edge thins out there.
-/// Here the element runs `$gap` past the visible glass, which gives the blur
-/// something to draw on right up to the cut.
+/// Here the element runs `$glass-gap` past the visible glass, which gives the
+/// blur something to draw on right up to the cut.
 ///
 /// The cut is a mask of two figures: the inset rectangle, and the tick arms
 /// themselves, so that the box survives the mask that trims the glass. Both are
@@ -74,8 +78,7 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
     // then its chroma taken out. Every surface token leans faintly green in the
     // ink scheme, which is right for paper and wrong for glass.
     $plane: color-mix(in oklab, var(--color-raised) 92%, var(--color-text));
-    $gap: 6px;
-    $glass: calc(100% - #{2 * $gap});
+    $glass: calc(100% - #{2 * $glass-gap});
     $len: 0.75rem;
     $weight: 2px;
     $arms: tick-arms($len, $weight);

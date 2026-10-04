@@ -4,8 +4,22 @@ import type { LinkEntry, ResolvedLink } from "./types";
 import { linkEntry, resolvedLink } from "./types";
 
 const MANUAL_CACHE = "manual-links.json";
+
+/**
+ * Real lookups for the fixture pages' links, recorded once so the design suite
+ * needs no network and doesn't change when those pages do. Only a fixture
+ * build reads them: an article linking the same URL gets it fresh.
+ */
+const FIXTURE_CACHE = "src/content/fixtures/links.json";
 const CACHE_PATH = ".link-cache.json";
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/**
+ * Raise this whenever a resolver learns to fetch something new. Once the new
+ * fields are optional, old entries still parse, so the schema can't tell a
+ * stale entry from a link with nothing more to say. Only the version can.
+ */
+const CACHE_VERSION = 2;
 
 /** Hand-authored overrides are resolved by definition, so they needn't say so. */
 const manualFile = z.record(
@@ -16,38 +30,55 @@ const manualFile = z.record(
 );
 
 const cacheEntry = z.object({ meta: linkEntry, ts: z.number() });
-const cacheFile = z.record(z.string(), cacheEntry);
+type CacheEntries = Record<string, z.infer<typeof cacheEntry>>;
+
+const cacheFile = z.object({
+    version: z.literal(CACHE_VERSION),
+    entries: z.record(z.string(), z.unknown()),
+});
 
 let manual: z.infer<typeof manualFile> = {};
-let cache: z.infer<typeof cacheFile> = {};
+let cache: CacheEntries = {};
+
+/**
+ * Git-tracked overrides: a typo in one would silently blank popovers across the
+ * site, so let zod fail the build instead.
+ */
+const loadManual = (path: string): z.infer<typeof manualFile> =>
+    existsSync(path)
+        ? manualFile.parse(JSON.parse(readFileSync(path, "utf-8")))
+        : {};
 
 /** Load cache from disk. Safe to call multiple times (idempotent after first). */
 export function loadCache(): void {
-    // Hand-authored and git-tracked: a typo here would silently blank popovers
-    // across the site, so let zod fail the build instead.
-    manual = existsSync(MANUAL_CACHE)
-        ? manualFile.parse(JSON.parse(readFileSync(MANUAL_CACHE, "utf-8")))
-        : {};
+    manual = {
+        ...loadManual(MANUAL_CACHE),
+        ...(process.env.INCLUDE_FIXTURES ? loadManual(FIXTURE_CACHE) : {}),
+    };
     cache = loadDisposable();
 }
 
 /**
  * The fetched cache is regenerable and gitignored, so anything that no longer
  * matches the schema is dropped and re-resolved rather than failing the build.
+ * A file written by another version is dropped whole.
  */
-function loadDisposable(): z.infer<typeof cacheFile> {
+function loadDisposable(): CacheEntries {
     let raw: unknown;
     try {
         raw = JSON.parse(readFileSync(CACHE_PATH, "utf-8"));
     } catch {
         return {};
     }
-    if (typeof raw !== "object" || raw === null) return {};
+    const file = cacheFile.safeParse(raw);
+    if (!file.success) return {};
 
-    const entries = Object.entries(raw).flatMap(([url, value]) => {
-        const parsed = cacheEntry.safeParse(value);
-        return parsed.success ? [[url, parsed.data] as const] : [];
-    });
+    const entries = Object.entries(file.data.entries).flatMap(
+        ([url, value]) => {
+            const parsed = cacheEntry.safeParse(value);
+            return parsed.success ? [[url, parsed.data] as const] : [];
+        },
+    );
     return Object.fromEntries(entries);
 }
 
@@ -71,5 +102,9 @@ export function setCached(url: string, meta: ResolvedLink): void {
 
 /** Persist cache to disk. */
 export function saveCache(): void {
-    writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2));
+    const file: z.infer<typeof cacheFile> = {
+        version: CACHE_VERSION,
+        entries: cache,
+    };
+    writeFileSync(CACHE_PATH, JSON.stringify(file, null, 2));
 }

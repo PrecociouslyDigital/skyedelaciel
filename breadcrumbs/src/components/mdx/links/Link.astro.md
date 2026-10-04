@@ -108,3 +108,96 @@ without unrendering the box, so the fade survives it.
 `@media print` still hides the anchor with `display: none`, and has to: the
 print tests read what a sheet would show through `checkVisibility()`, which by
 default ignores `visibility` entirely.
+
+## 2026-10-03 — the page-preview popover: phrasing only, one image, geometry inline
+
+**Everything in the popover is phrasing content.** A `<Link>` sits inside a
+`<p>`, and the HTML parser closes a paragraph at the first `<div>`, `<table>`,
+`<dl>` or `<ul>`. Whatever followed would then spill out after the sentence.
+So the ledger is spans with `role="table"`, `row`, `rowheader` and `cell`, laid
+out with a grid and `subgrid` rather than with table display. Rows stay boxes
+(not `display: contents`), because Chromium has a history of dropping roles
+from `display: contents` elements. `tests/unit/components.test.ts` checks every
+element in a rendered popover against a phrasing allowlist, including popovers
+built from hostile summaries and field values.
+
+**One `<img>`, placed by grid areas.** The plan put the image first for a
+banner and last for a column. Astro can't hold markup in a frontmatter
+variable, so that would have meant writing the `<img>` twice. It is decorative
+(`alt=""`), so its DOM order means nothing to a reader. `data-image` on the
+pane picks the `grid-template-areas`, and the one element lands in either
+place.
+
+**The geometry reaches CSS as an inline style on the pane, not
+`define:vars`.** `define:vars` stamps the custom properties onto *every
+element* of the component, not just the root: the wrapper, the anchor, the
+mark, the cite and every span in the popover, once per link on the page.
+`geometryStyle` in `geometry.ts` holds the same numbers `placeImage` decides
+with, applied as one `style` on the pane.
+
+**`content-visibility: hidden` answers the lazy-image note above.** It is
+transitioned with `opacity` and `translate` through `motion.snap`, plus
+`transition-behavior: allow-discrete`. Like `visibility`, it stays visible for
+the whole of any transition with a visible end, so the contents appear as the
+fade begins and vanish as it ends. `tests/design/links.spec.ts` checks that no
+popover image is requested at page load and that one is on hover. Removing the
+declaration was confirmed to fail that test.
+
+Its side effect is size containment. A hidden pane lays out as if empty, so it
+has no height until it opens. The anchor grows upward from `bottom: 100%`, so
+nothing measures the closed pane.
+
+**The pane no longer scrolls; its text does.** The pane is a grid with a
+`max-height`, and the text sits in a `minmax(0, 1fr)` row. Per the grid spec, a
+flexible track under a definite max size is resolved against that max, so the
+row shrinks to the cap and the text inside scrolls. A column image contributes
+its natural height at column width, so a short summary beside a tall portrait
+still shows the portrait at its own proportions.
+
+## 2026-10-03 — whole column images, and a banner that gives way on scroll
+
+Two review notes: column images shouldn't be cropped, and banners crowded the
+text. A middle version had the banner scroll away inside the text. That was
+dropped for this: only the text scrolls, the banner pane is taller
+(`BANNERED_MAX_HEIGHT`), and the banner shrinks to a strip as the text scrolls.
+
+**The column image is sized by its attributes, not by stretching.** It is
+`width: calc(100% - gap)` with `height: auto`, so its height comes from the
+`aspect-ratio` the `width`/`height` attributes map to. The pane is the right
+size before the lazy image arrives. Leaving `width: auto` would have given an
+unloaded image no size at all, and the pane would jump when it loaded. A
+portrait too tall for the cap is held by `max-height` and drawn whole inside
+its box by `object-fit: contain`, pinned to the right edge.
+
+**The banner runs on a named scroll timeline.** The text declares
+`scroll-timeline: --link-popover-text`, and the pane declares `timeline-scope`
+for it, because a named timeline is otherwise visible only to the scroller's
+descendants, and the banner is the scroller's sibling. The keyframes animate
+`height`, not `scale`: the point is to give the text the room, and a transform
+would leave the text's box where it was.
+
+Animating a scroller's sibling's height changes the scroller's own size, which
+looks like a feedback loop. It isn't, because `animation-range` is in lengths
+(`0` to `banner − min`), not percentages of the scroll range. Each pixel
+scrolled shrinks the banner by a pixel, the text box grows by that pixel, and
+the content stays put on screen while the banner closes over it: a collapsing
+header. If the overflow is less than twice the range, scrolling stops partway,
+with the banner partly closed and all the text in view.
+
+It is not a transition, so `motion.snap` doesn't apply and `motion.spec.ts`
+doesn't see it; the Motion section of the spec now says so. It sits behind
+`prefers-reduced-motion: no-preference`, because motion set off by scrolling is
+what that preference asks to be spared. Browsers without scroll-driven
+animations show a banner that holds still, which is the reduced-motion
+behaviour anyway.
+
+**That last sentence was false until the `@supports` was added.** A browser
+that doesn't know `animation-timeline` still knows the `animation` shorthand:
+it plays the keyframes as an ordinary animation, `duration` defaults to 0, and
+`fill-mode: both` holds the end state. Firefox showed every banner already
+collapsed to its strip before anything scrolled. The declarations now sit in
+`@supports (animation-timeline: scroll())`. The design suite runs Chromium only,
+so it couldn't see this. It was found by screenshotting in Playwright's
+Firefox. Headless Firefox also draws no `backdrop-filter` at all, even on a
+bare test page, so a pane with no blur in a Firefox screenshot is the test
+browser, not the site.

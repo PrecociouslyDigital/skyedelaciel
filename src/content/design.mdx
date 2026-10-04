@@ -67,7 +67,7 @@ It draws a **bounding box** as four corner ticks, a right angle at each corner w
 
 It draws a **rail slug** down the right margin of a framed article, set in a vertical column in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. The column runs downward but the characters stand upright in it, as they do on a seal, rather than being turned on their side. It dates the page: published, edited if it has been, and the revision the build was made from. An unedited page carries no edited date, and outside a git checkout the revision is simply absent.
 
-It draws a **provenance mark** after every link in the prose: a single glyph naming what kind of address it is — `§` for a page of this site, `↗` for anywhere else, `¶` for a DOI, `W` for Wikipedia. The mark is a property of the kind, so a kind without one should fail to compile. Whether the link resolved is a separate question and is answered by colour rather than by a second glyph: a link nothing answered for keeps its own mark, drawn in `attention`. A same-document fragment is not unresolved — there was nothing to look up.
+It draws a **provenance mark** after every link in the prose: a single glyph naming what kind of address it is — `§` for a page of this site, `↗` for anywhere else, `¶` for a DOI (an arXiv paper included, since it has one), `W` for Wikipedia. The mark is a property of the kind, so a kind without one should fail to compile. Whether the link resolved is a separate question and is answered by colour rather than by a second glyph: a link nothing answered for keeps its own mark, drawn in `attention`. A same-document fragment is not unresolved — there was nothing to look up.
 
 The boxes and the marks are not printed: paper carries no live annotation, and a tick drawn on a sheet is a mark no reader can follow up. The rail slug is the exception and prints with the page, standing in the clear strip the text block leaves beside it. It is a dateline rather than an affordance, and a sheet separated from its address has nothing else to say when it was written or which revision it is.
 
@@ -81,9 +81,9 @@ The scale runs from the article title, which is the largest thing on the page, d
 
 ## Motion
 
-A readout snaps to where it belongs rather than easing into it. Every transition on the site is linear, runs no longer than 120ms, and moves only geometry or colour; a longer one should fail the build rather than be caught by eye. Delays are exempt from that limit and are a separate tool — the link popover waits before it appears, so that a pointer crossing a link on its way somewhere else never summons one.
+A readout snaps to where it belongs rather than easing into it. Every transition on the site is linear, runs no longer than 120ms, and moves only geometry or colour; a longer one should fail the build rather than be caught by eye. Delays are exempt from that limit and are a separate tool — the link popover waits before it appears, so that a pointer crossing a link on its way somewhere else never summons one. A change tied to scrolling, like a popover's banner giving way to its text, is not a transition: it has no duration, and moves exactly as far as the reader scrolls.
 
-A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it.
+A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it. A change tied to scrolling is held still too.
 
 # Components
 
@@ -137,11 +137,13 @@ Links in content should be semi-bold, but not a different color or underlined. E
 
 ### Popover
 
-Hovering over a link should show a popover, fixed to above the link, with a short preview. The popover can include any html content, but in general the first line should be the title, the second metadata in italics, and then the content. The popover should have a fixed maximum size, and can be scrolled if its contents are long. It reads as a pane of glass rather than as a slip of paper, in the idiom of a machine's overlay rather than a book's: a hard-edged rectangle, flat and uncoloured, clear enough that the page shows through it as a blur, with no border, no gradient and no hue of its own — the surfaces of the ink scheme lean faintly green, and glass does not. The pane stops a few pixels short of its [bounding box](#annotation) on every side, so the ticks stand clear at the corners with open page between them and the glass, and they are the only hard figure on it. Its title is in the display face. It rises the last few pixels into place as it fades in, and sinks as it fades out.
+Hovering over a link should show a popover, fixed to above the link, with a preview of the page it leads to: the title first, then a line of metadata in italics, then the summary. Where the source knows more, the facts follow the summary as a ledger. It comes after the preview rather than beside it, so a reader who wants the facts scrolls on to them. Only Wikipedia articles have one. The popover has a fixed width and a fixed maximum height, and its text scrolls if it is longer than that. It reads as a pane of glass rather than as a slip of paper, in the idiom of a machine's overlay rather than a book's: a hard-edged rectangle, flat and uncoloured, clear enough that the page shows through it as a blur, with no border, no gradient and no hue of its own — the surfaces of the ink scheme lean faintly green, and glass does not. The pane stops a few pixels short of its [bounding box](#annotation) on every side, so the ticks stand clear at the corners with open page between them and the glass. The ticks are the glass's only hard figure; the ledger's rules are the only other one, drawn on it as the site's tables are, ink over the first row and a hairline under each, with its labels set as apparatus. Its title is in the display face. It rises the last few pixels into place as it fades in, and sinks as it fades out.
+
+A link's image is set into the glass, inset as far as the glass is from its ticks: down the right edge in a column if the image is tall, across the top as a banner if it is wide. Only the text scrolls. A column shows its image whole, never cropped or squeezed, and runs it from the top of the glass to the bottom: the pane takes the height of the image, and the image holds still beside the text as it scrolls. A banner crops its image to fill the pane's width; a pane with one is allowed to stand taller, and as the text scrolls up the banner gives way to it, giving up less than a third of its height. An image goes in whichever box suits its shape: a column that would be left mostly empty, or a banner that would crop most of the image away, is the wrong box. The two losses are the same ratio of the image's shape to the box's, so the shape at which both boxes suit an image equally, about 1.44 wide to 1 tall, follows from the boxes rather than being chosen. An image too small to fill its box without being enlarged is left out: it is an icon or a logo rather than a picture, and blown up it is only a blur. Images are copied when the site is built and served from this site, as its fonts are, so that opening a popover announces the reader to nobody else; and an image is fetched only when its popover opens.
 
 #### Default Style
 
-By default, links should pull title, author, site/publication name, date and summary from [OpenGraph](https://ogp.me/) tags. Resolution should attempt to fall back to `<title>` and `<meta name="author">` tags if OpenGraph tags are not present.
+By default, links should pull title, author, site/publication name, date and summary from [OpenGraph](https://ogp.me/) tags. Resolution should attempt to fall back to `<title>` and `<meta name="author">` tags if OpenGraph tags are not present. An OpenGraph image that would tell the reader nothing is dropped: a card generated by a host such as GitHub, which only sets the page's title in type, and a site's logo, recognised as the same image the site's homepage gives.
 
 #### Internal Pages
 
@@ -151,9 +153,11 @@ Internal pages should show the title, abstract, and site name, but not any other
 
 Links to https://doi.org that represent a valid Digital Object Identifier should pull title, author, date published, abstract and other metadata from the registrar that issued them: the [CrossRef DOI Api](https://api.crossref.org/swagger-ui/index.html) where it knows the identifier, and [content negotiation](https://citation.doi.org/docs.html) against doi.org otherwise, which is what reaches DOIs registered elsewhere. A registrar describes a work in its own vocabulary, so what it answers is translated into CSL-JSON before the site uses it; a DOI whose metadata cannot be translated is treated as unresolved rather than shown in part.
 
+A link to an [arXiv](https://arxiv.org) abstract or PDF is a DOI link too. arXiv registers every paper with DataCite under `10.48550/arXiv.` and its identifier, so the link resolves through that DOI, whichever version of the paper it names.
+
 #### Wikipedia
 
-Links to [Wikipedia](https://en.wikipedia.org/wiki/Wikipedia) should include the title, summary and infobox, as well as an image if one exists.
+Links to [Wikipedia](https://en.wikipedia.org/wiki/Wikipedia) should include the title, the article's short description as the metadata line, the summary and the article's image if it has one. Its infobox follows as the ledger, capped at six rows; an article whose infobox cannot be read is shown without one.
 
 ### Print
 

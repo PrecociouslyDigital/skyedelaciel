@@ -1,8 +1,10 @@
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
+import { select, selectAll } from "hast-util-select";
 import { beforeAll, describe, expect, test } from "vitest";
 import TableOfContents from "~/components/TableOfContents.astro";
 import Bibliography from "~/components/mdx/links/Bibliography.astro";
 import Link from "~/components/mdx/links/Link.astro";
+import { parse, text } from "~/components/mdx/links/html";
 import { setLinkContext } from "~/components/mdx/links/store";
 import type {
     CslData,
@@ -190,28 +192,127 @@ describe("Link", () => {
         expect(html).not.toContain("link-popover");
     });
 
-    test("the popover image is opt-in", async () => {
-        setLinkContext({
-            meta: {
-                "https://example.com/a": { ...entry, imageUrl: "/logo.svg" },
-            },
-            bibliography: false,
-        });
-        const without = clean(
-            await container.renderToString(Link, {
-                props: { href: "https://example.com/a" },
-            }),
-        );
-        const withImage = clean(
-            await container.renderToString(Link, {
-                props: { href: "https://example.com/a", showImage: true },
-            }),
-        );
+    /** The repository's own test images, which need no network to place. */
+    const PORTRAIT = "/src/assets/link-images/fixture-portrait.svg";
+    const LANDSCAPE = "/src/assets/link-images/fixture-landscape.svg";
 
-        expect(without).not.toContain("link-popover-image");
-        expect(withImage).toContain("link-popover-image");
+    const popoverOf = async (link: ResolvedLink) => {
+        const tree = parse(
+            await withMeta(
+                { "https://example.com/a": link },
+                "https://example.com/a",
+            ),
+        );
+        return select(".link-popover", tree)!;
+    };
+
+    test.each([
+        ["a portrait", PORTRAIT, "column"],
+        ["a landscape", LANDSCAPE, "banner"],
+    ])("%s image is placed in a %s", async (_, imageUrl, placement) => {
+        const popover = await popoverOf({ ...entry, imageUrl });
+        expect(popover.properties.dataImage).toBe(placement);
+
+        const image = select("img.link-popover-image", popover);
+        expect(image?.properties.loading).toBe("lazy");
+        expect(image?.properties.alt).toBe("");
+    });
+
+    test("no image, or one that can't be placed, leaves a single column", async () => {
+        for (const link of [
+            entry,
+            { ...entry, imageUrl: "/src/assets/link-images/missing.png" },
+            // An icon, which would have to be blown up to fill its box.
+            { ...entry, imageUrl: "/src/assets/link-images/fixture-icon.svg" },
+        ]) {
+            const popover = await popoverOf(link);
+            expect(popover.properties.dataImage).toBeUndefined();
+            expect(select("img", popover)).toBeUndefined();
+        }
+    });
+
+    test("fields become a ledger below the summary, one row each", async () => {
+        const fields = [
+            { label: "Born", value: "c. 303" },
+            { label: "Known for", value: "<i>Calligraphy</i>" },
+        ];
+        const popover = await popoverOf({ ...entry, fields });
+
+        const ledger = select("[role=table]", popover)!;
+        const rows = selectAll("[role=row]", ledger).map((row) => [
+            text(select("[role=rowheader]", row)!),
+            text(select("[role=cell]", row)!),
+        ]);
+        expect(rows).toEqual([
+            ["Born", "c. 303"],
+            ["Known for", "Calligraphy"],
+        ]);
+
+        const column = select(".link-popover-text", popover)!;
+        expect(selectAll(":scope > *", column).at(-1)).toBe(ledger);
+    });
+
+    test("no fields, no ledger", async () => {
+        expect(select("[role=table]", await popoverOf(entry))).toBeUndefined();
+    });
+
+    /**
+     * A link sits inside a paragraph, and a paragraph can only hold phrasing
+     * content: the parser closes it at the first <div>, <table> or <ul>, and
+     * the rest of the popover spills out after the sentence. So whatever a
+     * source sends, everything in the popover must be phrasing content.
+     */
+    test("everything in a popover is phrasing content", async () => {
+        const hostile =
+            "<div><p>Block</p><ul><li>one</li></ul><table><tr><td>x</td></tr></table></div>";
+        for (const link of [
+            entry,
+            { ...entry, imageUrl: PORTRAIT },
+            { ...entry, imageUrl: LANDSCAPE },
+            { ...entry, summary: { type: "html", content: hostile } },
+            { ...entry, fields: [{ label: "Block", value: hostile }] },
+        ] satisfies ResolvedLink[]) {
+            const tags = selectAll("*", await popoverOf(link)).map(
+                (element) => element.tagName,
+            );
+            expect(tags.filter((tag) => !PHRASING.has(tag))).toEqual([]);
+        }
     });
 });
+
+/**
+ * The HTML standard's phrasing content, less what can only be interactive or
+ * embedded in ways a popover never is.
+ */
+const PHRASING = new Set([
+    "a",
+    "abbr",
+    "b",
+    "bdi",
+    "bdo",
+    "br",
+    "cite",
+    "code",
+    "data",
+    "dfn",
+    "em",
+    "i",
+    "img",
+    "kbd",
+    "mark",
+    "q",
+    "s",
+    "samp",
+    "small",
+    "span",
+    "strong",
+    "sub",
+    "sup",
+    "time",
+    "u",
+    "var",
+    "wbr",
+]);
 
 describe("Bibliography", () => {
     const book: CslData = {

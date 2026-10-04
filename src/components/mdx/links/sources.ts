@@ -1,9 +1,12 @@
 import ogs from "open-graph-scraper";
+import type { OgObject } from "open-graph-scraper/types";
 import * as z from "zod";
 import { authorLine, formatCslDate, parseCslDate, todayParts } from "./cite";
 import { toCsl } from "./crossref";
 import { documentTitle } from "./html";
-import type { CslData, LinkEntry, LinkKind, ResolvedLink } from "./types";
+import { infoboxFields } from "./infobox";
+import { memoise } from "./memo";
+import type { LinkEntry, LinkKind, ResolvedLink } from "./types";
 
 export const SITE_HOST = "skyedelaciel.com";
 export const SITE_NAME = "Skye De La Ciel";
@@ -34,7 +37,7 @@ export interface Source {
     readonly resolve?: (url: string) => Promise<ResolvedLink>;
 
     /** The popover's metadata line, in order. Undefined entries are dropped. */
-    readonly meta: (csl: CslData) => (string | undefined)[];
+    readonly meta: (entry: ResolvedLink) => (string | undefined)[];
 
     /** Whether a link of this kind is a work to cite. */
     readonly citable: boolean;
@@ -44,7 +47,7 @@ export interface Source {
 }
 
 /** The full apparatus of a published work: who, where, when. */
-const workMeta = (csl: CslData) => [
+const workMeta = ({ csl }: ResolvedLink) => [
     authorLine(csl),
     csl["container-title"],
     formatCslDate(csl.issued),
@@ -56,7 +59,7 @@ const internal: Source = {
     // The section mark: another part of the same work.
     mark: "§",
     // design.mdx, Internal Pages: title, abstract and site name, nothing else.
-    meta: (csl) => [csl["container-title"]],
+    meta: ({ csl }) => [csl["container-title"]],
     citable: false,
     image: false,
 };
@@ -75,17 +78,35 @@ const doiEndpoints = (doi: string): string[] => [
 ];
 
 /**
- * Extract a DOI from a doi.org URL. A query string or fragment on the link is
- * the reader's business, not part of the identifier.
+ * The identifier in an arXiv abstract or PDF link, in either of the schemes
+ * arXiv has used: `1706.03762` since 2007, `hep-th/9901001` before. A version
+ * suffix is left out, since a DOI names the paper rather than a revision.
  */
-const extractDoi = (url: string): string =>
-    url.match(/doi\.org\/(.+)/)?.[1]?.replace(/[?#].*$/, "") ?? url;
+const ARXIV_PATH =
+    /^\/(?:abs|pdf)\/(\d{4}\.\d{4,5}|[a-z-]+(?:\.[A-Z]{2})?\/\d{7})(?:v\d+)?(?:\.pdf)?\/?$/;
+
+const arxivId = (url: URL): string | undefined =>
+    /(^|\.)arxiv\.org$/.test(url.hostname)
+        ? ARXIV_PATH.exec(url.pathname)?.[1]
+        : undefined;
+
+/**
+ * The DOI a link names. A query string or fragment on a doi.org link is the
+ * reader's business, not part of the identifier. An arXiv link names the DOI
+ * arXiv registers for every paper with DataCite.
+ */
+function extractDoi(url: string): string {
+    const id = arxivId(new URL(url));
+    if (id !== undefined) return `10.48550/arXiv.${id}`;
+    return url.match(/doi\.org\/(.+)/)?.[1]?.replace(/[?#].*$/, "") ?? url;
+}
 
 const doi: Source = {
     kind: "doi",
     // DOIs always begin with the "10." prefix.
     claims: (url) =>
-        url.hostname.includes("doi.org") && /^\/10\./.test(url.pathname),
+        (url.hostname.includes("doi.org") && /^\/10\./.test(url.pathname)) ||
+        arxivId(url) !== undefined,
     // The pilcrow: a published passage, with an identifier of its own.
     mark: "¶",
     resolve: async (url) => {
@@ -119,12 +140,16 @@ const doi: Source = {
     image: true,
 };
 
+const wikipediaImage = z.object({ source: z.string() });
+
 /** The fields we use from Wikipedia's REST summary endpoint. */
 const wikipediaSummary = z.object({
     title: z.string(),
     timestamp: z.string().optional(),
+    description: z.string().optional(),
     extract_html: z.string().optional(),
-    thumbnail: z.object({ source: z.string() }).optional(),
+    thumbnail: wikipediaImage.optional(),
+    originalimage: wikipediaImage.optional(),
 });
 
 /** Extract a Wikipedia article title from a URL. */
@@ -133,6 +158,22 @@ function extractWikiTitle(url: string): string {
     return encoded ? decodeURIComponent(encoded).replace(/_/g, " ") : url;
 }
 
+const isSvg = (src: string): boolean =>
+    new URL(src).pathname.toLowerCase().endsWith(".svg");
+
+/**
+ * The article's image at full size, which the build scales itself. An SVG
+ * original is the exception: the build can't rasterise one, so it takes the
+ * thumbnail, which Wikipedia has already rasterised.
+ */
+const leadImage = ({
+    originalimage,
+    thumbnail,
+}: z.infer<typeof wikipediaSummary>): string | undefined =>
+    originalimage && !isSvg(originalimage.source)
+        ? originalimage.source
+        : thumbnail?.source;
+
 const wikipedia: Source = {
     kind: "wikipedia",
     claims: (url) => url.hostname.endsWith(".wikipedia.org"),
@@ -140,10 +181,23 @@ const wikipedia: Source = {
     resolve: async (url) => {
         const lang = url.match(/(\w+)\.wikipedia/)?.[1] ?? "en";
         const title = encodeURIComponent(extractWikiTitle(url));
-        const res = await fetch(
-            `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${title}`,
-        );
-        const data = wikipediaSummary.parse(await res.json());
+        const api = `https://${lang}.wikipedia.org/api/rest_v1/page`;
+
+        // The summary endpoint has already cleaned the lead of references,
+        // pronunciations and coordinates. The page itself is fetched only for
+        // its infobox, which the summary doesn't carry, and a page that won't
+        // load costs the ledger and nothing else.
+        const [data, fields] = await Promise.all([
+            fetch(`${api}/summary/${title}`)
+                .then((res) => res.json())
+                .then((json) => wikipediaSummary.parse(json)),
+            fetch(`${api}/html/${title}`)
+                .then((res) => (res.ok ? res.text() : ""))
+                .then((html) => infoboxFields(html, url))
+                .catch(() => []),
+        ]);
+        const image = leadImage(data);
+
         return {
             resolution: "resolved",
             kind: "wikipedia",
@@ -158,14 +212,65 @@ const wikipedia: Source = {
             ...(data.extract_html && {
                 summary: { type: "html", content: data.extract_html },
             }),
-            ...(data.thumbnail && { imageUrl: data.thumbnail.source }),
+            ...(data.description && { description: data.description }),
+            ...(fields.length > 0 && { fields }),
+            ...(image && { imageUrl: image }),
         };
     },
-    // An encyclopedia article has no author line to show.
-    meta: () => [],
+    // An encyclopedia article has no author line to show, but it does say
+    // what its subject is.
+    meta: ({ description }) => [description],
     citable: true,
     image: true,
 };
+
+/**
+ * Hosts whose OpenGraph images are generated cards: the page's title set in
+ * type on a template, which says nothing the popover's own title doesn't.
+ */
+const CARD_GENERATORS: ReadonlySet<string> = new Set([
+    "opengraph.githubassets.com",
+]);
+
+/** A page's OpenGraph image, as an absolute URL. */
+const ogImage = (result: OgObject, page: string): string | undefined => {
+    const image = result.ogImage?.[0]?.url;
+    if (image === undefined) return undefined;
+    try {
+        const absolute = new URL(image, page);
+        absolute.hash = "";
+        return absolute.href;
+    } catch {
+        return undefined;
+    }
+};
+
+/**
+ * Each origin's homepage image, looked up once per build however many of its
+ * pages are linked.
+ */
+const homepageImage = memoise(
+    (origin): Promise<string | undefined> =>
+        ogs({ url: origin })
+            .then(({ result }) => ogImage(result, origin))
+            .catch(() => undefined),
+);
+
+/**
+ * A page's image, unless it is one that would tell the reader nothing: a
+ * generated title card, or the site's logo, which a site puts on every page
+ * that has no image of its own, its homepage included.
+ */
+async function pageImage(
+    result: OgObject,
+    page: string,
+): Promise<string | undefined> {
+    const image = ogImage(result, page);
+    if (image === undefined) return undefined;
+    if (CARD_GENERATORS.has(new URL(image).hostname)) return undefined;
+    if (image === (await homepageImage(new URL(page).origin))) return undefined;
+    return image;
+}
 
 const external: Source = {
     kind: "external",
@@ -186,7 +291,7 @@ const external: Source = {
             result.author ?? result.articleAuthor ?? result.ogArticleAuthor;
         const date = result.ogDate ?? result.dcDate;
         const description = result.ogDescription ?? result.dcDescription;
-        const image = result.ogImage?.[0];
+        const image = await pageImage(result, url);
 
         return {
             resolution: "resolved",
@@ -204,7 +309,7 @@ const external: Source = {
             ...(description && {
                 summary: { type: "text", content: description },
             }),
-            ...(image && { imageUrl: image.url }),
+            ...(image && { imageUrl: image }),
         };
     },
     meta: workMeta,

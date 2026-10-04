@@ -295,6 +295,14 @@ export const summary = z.object({
     content: z.string(),
 });
 
+/**
+ * One row of a ledger: a label, and its value as inline HTML. The value is
+ * third-party markup, like an html `Summary`, and is sanitised at the same
+ * place.
+ */
+export type Field = z.infer<typeof field>;
+export const field = z.object({ label: z.string(), value: z.string() });
+
 /** A link we managed to look up. */
 export type ResolvedLink = z.infer<typeof resolvedLink>;
 export const resolvedLink = z.object({
@@ -302,6 +310,10 @@ export const resolvedLink = z.object({
     kind: linkKind,
     csl: cslData,
     summary: summary.optional(),
+    /** What the work is, in a phrase: Wikipedia's short description. */
+    description: z.string().optional(),
+    /** Facts about the work, in the order its source gave them. */
+    fields: z.array(field).optional(),
     imageUrl: z.string().optional(),
 });
 
