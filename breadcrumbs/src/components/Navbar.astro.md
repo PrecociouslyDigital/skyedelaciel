@@ -19,3 +19,29 @@ The surrounding box — 2.75rem square, a 2px accent border, a small radius — 
 the 朱文 seal: the mark in vermilion line inside a vermilion border, the way a
 name seal is cut. It is the one place on the site where the accent appears as a
 shape rather than as a mark on something else.
+
+## 2026-10-03 — the logo is inlined, so it can be rewritten
+
+The mark is now `src/assets/logo-reduced-brush.svg`, imported as an Astro SVG
+component and set into the page, replacing the CSS mask over `/logo.svg`. It is
+a verbatim copy of `~/data/logo-reduced-brush.svg`, written by
+`~/data/logo-brush.py`, which lives outside the repo; to change it, rerun that
+and copy the output over rather than editing the asset by hand.
+
+A mask can only recolour an image. Inlining lets CSS reach the strokes: each is
+revealed by a `<mask>` whose centreline path carries `class="logo-ink"`,
+`pathLength="1"` and a `--i` giving its place in the stroke order, so a dash
+animation on those paths lifts and lays the strokes. Only the outer
+`<g fill>` is recoloured; the masks' own black and white must not be.
+
+The rewrite plays once per pointer entry and is allowed to finish after the
+pointer leaves, which needs the small script; with CSS `:hover` alone it
+snapped back mid-stroke. Its offsets run 0 → -4 in one direction on a `1 3`
+dash, which lifts and relays without the jump a reset to +1 would need.
+
+The seal is now `--color-text` rather than `--color-accent`, by request, which
+also matches the scheme toggle beside it.
+
+A small speck stays visible near the bottom of the seal while the strokes are
+lifted; not yet traced. `public/logo.svg` is no longer referenced by anything,
+though `tools/logo.mjs` still writes it and the drift test still checks it.

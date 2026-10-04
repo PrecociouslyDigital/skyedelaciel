@@ -53,7 +53,7 @@ The three chromas are three hands, and none of them ever sets running text.
 
 | Role        | Whose hand it is                                    | Where it appears                                                                                            |
 | ----------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `accent`    | the author — stamped, rare, permanent               | the logo, the rule closing the front matter, sidenote numbers, bullets, the focus ring                      |
+| `accent`    | the author — stamped, rare, permanent               | the rule closing the front matter, sidenote numbers, bullets, the focus ring                                |
 | `signal`    | the machine that read the page — ambient, constant  | corner ticks, the rail slug, link provenance marks                                                          |
 | `attention` | right now — hot, transient, gone when you look away | the current entry in the table of contents, the underline under a hovered link, a link that did not resolve |
 
@@ -83,7 +83,9 @@ The scale runs from the article title, which is the largest thing on the page, d
 
 A readout snaps to where it belongs rather than easing into it. Every transition on the site is linear, runs no longer than 120ms, and moves only geometry or colour; a longer one should fail the build rather than be caught by eye. Delays are exempt from that limit and are a separate tool — the link popover waits before it appears, so that a pointer crossing a link on its way somewhere else never summons one. A change tied to scrolling, like a popover's banner giving way to its text, is not a transition: it has no duration, and moves exactly as far as the reader scrolls.
 
-A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it. A change tied to scrolling is held still too.
+The logo is the one exception. It is not a readout but a hand, and when it is [rewritten](#content-1) it moves at a brush's pace and with a brush's easing.
+
+A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it. A change tied to scrolling is held still too, and the logo is never rewritten.
 
 # Components
 
@@ -109,7 +111,7 @@ The navbar contains, in order
 - Links to various internal and external landing pages
 - A button that toggles the [Color Scheme](#colors)
 
-The logo is drawn as a seal: the mark in accent-coloured line, inside a square border of the same colour. It is painted rather than served as an image, so that it reads in both schemes without a second copy of the artwork. The scheme toggle is a small square, matching the seal and the frame rather than the circle it used to be.
+The logo is drawn as a seal: the mark, a woven six-petal flower painted in brush strokes, inside a square border of the same ink, in the scheme's `text` colour. It is set into the page rather than served as an image, so that it reads in both schemes without a second copy of the artwork, and so that it can be rewritten: when the pointer comes onto it, its strokes lift off one after another in the direction they were painted and are laid down again. Once begun, the rewrite plays to its end even if the pointer leaves. The scheme toggle is a small square, matching the seal and the frame rather than the circle it used to be.
 
 ## Table of contents
 

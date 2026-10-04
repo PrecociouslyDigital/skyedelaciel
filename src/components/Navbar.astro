@@ -1,13 +1,10 @@
 ---
 import ThemeToggle from "./ThemeToggle.svelte";
+import Mark from "~/assets/logo-reduced-brush.svg";
 ---
 
 <nav class="navbar" aria-label="Main navigation">
-    {
-        /* The mark is painted by CSS rather than served as an image — see the
-        stylesheet below — so the anchor only has to provide a box for it. */
-    }
-    <a href="/" class="logo" aria-label="Home"><span></span></a>
+    <a href="/" class="logo" aria-label="Home"><Mark /></a>
 
     <div class="nav-links">
         <a href="/about">About</a>
@@ -18,7 +15,24 @@ import ThemeToggle from "./ThemeToggle.svelte";
     <ThemeToggle transition:persist client:load />
 </nav>
 
+<script>
+    // The pointer starts the rewrite but does not stop it: a rewrite that
+    // snapped back when the pointer left would look like a glitch, not a hand.
+    const logo = document.querySelector<HTMLAnchorElement>(".navbar .logo")!;
+
+    logo.addEventListener("pointerenter", async () => {
+        logo.classList.add("rewriting");
+        await Promise.all(
+            logo
+                .getAnimations({ subtree: true })
+                .map(({ finished }) => finished),
+        );
+        logo.classList.remove("rewriting");
+    });
+</script>
+
 <style lang="scss">
+    @use "sass:math";
     @use "../layouts/prelude/breakpoints";
     @use "../layouts/prelude/typography";
 
@@ -31,24 +45,75 @@ import ThemeToggle from "./ThemeToggle.svelte";
         margin: 0 auto;
     }
 
-    /* 朱文: the mark in vermilion line, inside a vermilion border — a seal
-       stamped on the page. Drawn as a mask over the accent colour, so it is
-       legible in both schemes without a second copy of the artwork. */
+    /* 朱文: the mark in line, inside a border of the same ink — a seal stamped
+       on the page. The mark is inlined rather than linked, so its ink can take
+       the scheme's colour and its strokes can be animated. */
     .logo {
         box-sizing: border-box;
         display: block;
-        width: 2.75rem;
-        height: 2.75rem;
-        padding: 0.35rem;
-        border: 2px solid var(--color-accent);
+        width: 4rem;
+        height: 4rem;
+        padding: 0.5rem;
+        color: var(--color-text);
+        border: 2px solid;
         border-radius: 0.2rem;
 
-        span {
+        :global(svg) {
             display: block;
             width: 100%;
             height: 100%;
-            background: var(--color-accent);
-            mask: url("/logo.svg") center / contain no-repeat;
+        }
+
+        // Only the ink: the masks inside the artwork must stay black and white.
+        :global(svg > g) {
+            fill: currentcolor;
+        }
+    }
+
+    /* The rewrite: each stroke lifts off in the direction it was painted,
+       waits, and is laid down again the same way. Each stroke starts a third of
+       a stroke after the one before, in the order --i gives, so about three
+       move at once. The wait lets the last stroke lift before the first
+       returns. */
+    $stroke: 0.4s;
+    $strokes: 6;
+    $stagger: math.div($stroke, 3);
+    $empty: math.div($stroke, 3);
+    $wait: $stagger * ($strokes - 1) + $empty;
+    $each: 2 * $stroke + $wait;
+    $brush: cubic-bezier(0.3, 0.1, 0.3, 1);
+
+    .logo.rewriting :global(.logo-ink) {
+        stroke-dasharray: 1 3;
+        animation: logo-rewrite $each;
+        animation-delay: calc(var(--i) * #{$stagger});
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
+
+    /* Each stroke has pathLength="1", so its dash is exactly one stroke long
+       and the pattern repeats every four. Sliding the pattern back four
+       lengths carries the dash off the far end and brings the next one on at
+       the near end, so lifting and laying both travel in the painted
+       direction. The ±0.01 keeps the dash wholly off the path while it
+       waits. */
+    @keyframes logo-rewrite {
+        0% {
+            stroke-dashoffset: 0;
+            animation-timing-function: $brush;
+        }
+        #{math.percentage(math.div($stroke, $each))} {
+            stroke-dashoffset: -1.01;
+            animation-timing-function: linear;
+        }
+        #{math.percentage(math.div($stroke + $wait, $each))} {
+            stroke-dashoffset: -2.99;
+            animation-timing-function: $brush;
+        }
+        100% {
+            stroke-dashoffset: -4;
         }
     }
 
