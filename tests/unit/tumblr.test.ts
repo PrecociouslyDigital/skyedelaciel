@@ -114,7 +114,7 @@ describe("navbar links", () => {
 
     test("on each host, exactly one entry is where the reader is", () => {
         const places: Record<Host, string> = {
-            site: "/writing/some-essay/",
+            site: "/fiction/some-story/",
             tumblr: "/",
         };
         for (const host of hosts)

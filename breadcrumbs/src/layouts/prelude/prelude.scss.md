@@ -114,3 +114,19 @@ Nothing about the rule itself had to change. `left: calc(100% + var(--tick-reach
 works on paper because `--tick-reach` is `0px` there: the offset collapses to
 half a rem from the text block, which is the clear strip the centred column
 leaves. One offset, two media, no print-only override.
+
+## 2026-10-05 — symmetric columns, a scrolling contents
+
+At `wide-sidebar` (now 80rem: the user chose raising it over squeezing both
+columns to ~10rem at 72rem) the grid is `1fr content 1fr`, and the sidebar is
+exactly `--sidenote-width` wide, `min(14rem, gutter/2 − 2.2rem)`. The sidebar
+is capped at the window's height, and the contents scroll inside it, with
+`$toc-room` padding drawn back out by negative margins so that the vines,
+rings and tracker hanging past the list aren't clipped. The ends fade by a
+scroll-driven animation (`toc-ends`) behind `@supports`: without
+`animation-timeline` it would be a 0s animation filled to its last frame,
+fading the top for good.
+
+Known, and not from this change: between 60rem and 80rem the sidebar, and so
+the navbar, is hidden entirely (since "Sidenotes 1"). Raising the breakpoint
+widened that gap from 960–1152px to 960–1280px.

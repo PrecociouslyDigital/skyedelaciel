@@ -236,13 +236,12 @@ $print-ratio: map.get($text-ratios, "print");
             map.get($textures, $theme-name),
             map.get($theme, "grain")
         )};
-    // Vines grow in the two pigments, leaf green and wisteria violet.
+    // Vines grow in the two pigments, leaf green and wisteria violet. A table
+    // of contents prints bare, so paper needs only the rules.
     @each $vine, $_ in ornaments.$vines {
-        --vine-#{$vine}: #{ornaments.vine-image(
-                $vine,
-                map.get($theme, "signal"),
-                map.get($theme, "accent")
-            )};
+        @if $theme-name != "print" or ornaments.is-rule($vine) {
+            --vine-#{$vine}: #{ornaments.vine-image($vine, $theme)};
+        }
     }
 }
 

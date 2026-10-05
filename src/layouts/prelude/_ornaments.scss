@@ -18,26 +18,32 @@
 /// shape rather than at the call site. `centred` is for a rule centred in its
 /// column, which tapers to both ends; otherwise it is set flush left and grows
 /// one way, pressed down at the start and rolling up at the tip.
+///
+/// The table of contents' drawings are added below, from its measures.
 $vines: (
     "title": (
+        "kind": "rule",
         "ratio": 5.5,
         "width": 10.5rem,
         "seed": 1,
         "centred": false,
     ),
     "heading": (
+        "kind": "rule",
         "ratio": 4,
         "width": 5.5rem,
         "seed": 2,
         "centred": false,
     ),
     "break": (
+        "kind": "rule",
         "ratio": 8,
         "width": 13rem,
         "seed": 3,
         "centred": true,
     ),
     "closing": (
+        "kind": "rule",
         "ratio": 10,
         "width": 18rem,
         "seed": 4,
@@ -45,22 +51,137 @@ $vines: (
     ),
 );
 
-/// A vine drawn in a scheme's `$leaf` and `$flower`, as a `url()`. Each scheme
-/// bakes its own colours into its own copy, since an image cannot read a
-/// custom property; colors.scss sets the copies as `--vine-<name>`.
-@function vine-image($name, $leaf, $flower) {
-    @if not meta.function-exists("vine") {
-        @error "vine() is not defined: the vines integration draws the vines, and is not loaded.";
-    }
+/// The measures of the table of contents, which its drawings are drawn to.
+///
+/// Every entry is one row high, unless its words wrap. Beside the words is a
+/// column, where a section's disclosure hangs and down which its vine grows.
+/// A third-level entry is set in from the second, and a shoot reaches out to
+/// it from the vine, stopping a little short of its words.
+$toc-pitch: 1.6rem;
+$toc-vine-width: 1.3rem;
+$toc-column: 1.05rem;
+$toc-gap: 0.25rem;
+$toc-reach: 1.5rem;
+$toc-elbow: 0.55rem;
+$toc-shoot-clear: 0.5rem;
 
-    $vine: vine-of($name);
-    @return vine(
-        map.get($vine, "ratio"),
-        map.get($vine, "seed"),
-        map.get($vine, "centred"),
-        $leaf,
-        $flower
+/// A section of up to this many entries grows a vine drawn to its length,
+/// ending in its curl beside its last entry. A longer one, or one whose
+/// length is not known when the site is built, grows a long vine cut off
+/// where its entries end.
+$toc-counted: 20;
+
+/// How many shoots, and how many blossoms, the entries take turns with.
+$toc-variants: 3;
+
+@function -toc-seed($entries) {
+    @return 11 + math.min($entries, 12);
+}
+
+@function -toc-section($name, $entries, $seed) {
+    @return (
+        "toc-#{$name}": (
+            "kind": "toc",
+            "ratio": math.div(($entries - 0.3) * $toc-pitch, $toc-vine-width),
+            "seed": $seed,
+        ),
+        "hang-#{$name}": (
+            "kind": "hanging",
+            "seed": $seed,
+        )
     );
+}
+
+@for $entries from 1 through $toc-counted {
+    $vines: map.merge(
+        $vines,
+        -toc-section($entries, $entries, -toc-seed($entries))
+    );
+}
+
+$vines: map.merge($vines, -toc-section("long", 25, -toc-seed(0)));
+
+/// How far a shoot may reach from the vine toward its words.
+$-shoot-reach: $toc-reach + $toc-column * 0.5 + $toc-gap - $toc-shoot-clear;
+
+@for $k from 1 through $toc-variants {
+    $vines: map.merge(
+        $vines,
+        (
+            "shoot-#{$k}": (
+                    "kind": "shoot",
+                    "reach": math.div($-shoot-reach, $toc-vine-width),
+                    "radius": math.div($toc-elbow, $toc-vine-width),
+                    "seed": 76 + $k,
+                ),
+            "blossom-#{$k}": (
+                    "kind": "blossom",
+                    "seed": 142 + $k,
+                ),
+        )
+    );
+}
+
+/// A drawing in a scheme's colours, as a `url()`: its vines and leaves in
+/// `signal`, its roses in `accent`, iron in `text` on a plate of `muted`, and
+/// the `background` under each rose. Each scheme bakes its own colours into
+/// its own copy, since an image cannot read a custom property; colors.scss
+/// sets the copies as `--vine-<name>`.
+@function vine-image($name, $theme) {
+    $vine: vine-of($name);
+    @return -drawn-by(
+        "vine",
+        map.get($vine, "kind"),
+        map.merge(
+            $vine,
+            (
+                "leaf": map.get($theme, "signal"),
+                "flower": map.get($theme, "accent"),
+                "iron": map.get($theme, "text"),
+                "pot": map.get($theme, "muted"),
+                "ground": map.get($theme, "background"),
+            )
+        )
+    );
+}
+
+/// Where a drawing lies about the point it is placed by, in lengths, and
+/// how many frames it holds side by side: a map of `x`, `y`, `width`,
+/// `height` and `frames`. The same in every scheme.
+@function drawing-box($name) {
+    $vine: vine-of($name);
+    $box: -drawn-by("vine-box", map.get($vine, "kind"), $vine);
+    @return (
+        "x": list.nth($box, 1) * $toc-vine-width,
+        "y": list.nth($box, 2) * $toc-vine-width,
+        "width": list.nth($box, 3) * $toc-vine-width,
+        "height": list.nth($box, 4) * $toc-vine-width,
+        "frames": list.nth($box, 5)
+    );
+}
+
+/// Whether a drawing is one of the rules, rather than a piece of the table
+/// of contents.
+@function is-rule($name) {
+    @return map.get(vine-of($name), "kind") == "rule";
+}
+
+/// The squares an entry of the contents resolves through, `$cols` across and
+/// `$rows` down a strip, as an inline mask `url()`. They have no colour of
+/// their own: the entry paints them in its ink.
+@function blocks-of($cols, $rows, $seed) {
+    @return -drawn-by("blocks", $cols, $rows, $seed);
+}
+
+/// Calls `$function`, which the vines integration defines, or fails the build
+/// if it is not loaded. Sass would otherwise write the call out as a CSS
+/// function it does not know, and the page would show nothing where the
+/// drawing should be.
+@function -drawn-by($function, $args...) {
+    @if not meta.function-exists($function) {
+        @error "#{$function}() is not defined: the vines integration draws the vines, and is not loaded.";
+    }
+    @return meta.call(meta.get-function($function), $args...);
 }
 
 /// A vine rule. Its height follows from its width, so the drawing is never

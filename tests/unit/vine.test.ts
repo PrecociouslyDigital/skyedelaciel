@@ -1,8 +1,15 @@
 import { describe, expect, test } from "vitest";
+import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as sass from "sass";
-import { vine } from "../../src/layouts/prelude/vine.mjs";
+import {
+    blossom,
+    hanging,
+    shoot,
+    tocVine,
+    vine,
+} from "../../src/layouts/prelude/vine.mjs";
 
 const prelude = resolve(
     dirname(fileURLToPath(import.meta.url)),
@@ -61,6 +68,134 @@ describe("a vine is a whole drawing", () => {
                 expect(svg).toContain(`fill='${INKS.flower}'`);
             });
         }
+    }
+});
+
+/**
+ * The site's own rules, in both screen schemes' inks, are fixed drawings:
+ * sharing the paint with the table of contents' pieces must not move a mark.
+ */
+describe("the rules are the drawings they always were", () => {
+    test("the four rules, in paper and ink, are unchanged", () => {
+        const hash = createHash("sha256");
+        for (const [ratio, seed, centred] of [
+            [5.5, 1, false],
+            [4, 2, false],
+            [8, 3, true],
+            [10, 4, true],
+        ] as const) {
+            for (const inks of [INKS, { leaf: "#8dce8e", flower: "#bdb7fc" }])
+                hash.update(vine({ ratio, seed, centred, ...inks }));
+        }
+        expect(hash.digest("hex")).toBe(
+            "15fa2c5f51b0c6572e87195e3389fbe975b19768ccbbfa260aee9e2795b6c16c",
+        );
+    });
+});
+
+const TOC_INKS = {
+    ...INKS,
+    iron: "#0e100f",
+    pot: "#565c58",
+    ground: "#ffffff",
+};
+
+/** Each piece of the contents, drawn from a seed. */
+const PIECES = {
+    "a section's vine": (seed: number) =>
+        tocVine({ ratio: 6, seed, ...TOC_INKS }),
+    "a shoot": (seed: number) =>
+        shoot({ reach: 1.4, radius: 0.4, seed, ...TOC_INKS }).svg,
+    "a blossom": (seed: number) => blossom({ seed, ...TOC_INKS }).svg,
+    "a hanging shoot": (seed: number) => hanging({ seed, ...TOC_INKS }).svg,
+};
+
+describe("a piece of the contents is its arguments", () => {
+    for (const [name, draw] of Object.entries(PIECES)) {
+        test(`${name}, drawn twice, is drawn the same`, () => {
+            for (const seed of SEEDS) expect(draw(seed)).toBe(draw(seed));
+        });
+
+        test(`${name} has no undrawable coordinate`, () => {
+            for (const seed of SEEDS)
+                expect(draw(seed)).not.toMatch(/NaN|undefined|Infinity/);
+        });
+    }
+});
+
+describe("a section's vine grows down its column, bare", () => {
+    for (const seed of SEEDS) {
+        test(`seed ${seed} is as long as asked, and as wide as a rule is tall`, () => {
+            const ratio = 7.5;
+            const [, width, height] =
+                /viewBox='0 0 ([\d.]+) ([\d.]+)'/.exec(
+                    tocVine({ ratio, seed, ...TOC_INKS }),
+                ) ?? [];
+            expect(Number(height) / Number(width)).toBeCloseTo(ratio);
+        });
+
+        test(`seed ${seed} turned upright is the rule turned, not another vine`, () => {
+            const across = vine({ ratio: 5, seed, centred: false, ...INKS });
+            const down = vine({
+                ratio: 5,
+                seed,
+                centred: false,
+                upright: true,
+                ...INKS,
+            });
+            const marks = (svg: string) => (svg.match(/[MZ]/g) ?? []).length;
+            expect(marks(down)).toBe(marks(across));
+        });
+
+        test(`seed ${seed} without blooms has no rose`, () => {
+            expect(
+                vine({
+                    ratio: 8,
+                    seed,
+                    centred: false,
+                    blooms: false,
+                    ...INKS,
+                }),
+            ).not.toContain(`fill='${INKS.flower}'`);
+        });
+    }
+});
+
+/**
+ * A piece is set out by the box it reports, so the box has to hold the
+ * drawing, and the point it is placed by has to lie within reach of it.
+ */
+describe("a piece's box is where its drawing is", () => {
+    const placed = {
+        "a shoot": (seed: number) =>
+            shoot({ reach: 1.4, radius: 0.4, seed, ...TOC_INKS }),
+        "a blossom": (seed: number) => blossom({ seed, ...TOC_INKS }),
+        "a hanging shoot": (seed: number) => hanging({ seed, ...TOC_INKS }),
+    };
+    for (const [name, draw] of Object.entries(placed)) {
+        test(`${name}'s box is its drawing's viewBox, a frame at a time`, () => {
+            for (const seed of SEEDS) {
+                const drawn = draw(seed);
+                const { svg, box } = drawn;
+                const frames = "frames" in drawn ? Number(drawn.frames) : 1;
+                const [, w, h] =
+                    /viewBox='[-\d.]+ [-\d.]+ ([\d.]+) ([\d.]+)'/.exec(svg) ??
+                    [];
+                expect(Number(w) / Number(h)).toBeCloseTo(
+                    (box.w * frames) / box.h,
+                );
+            }
+        });
+
+        test(`${name} is drawn about a point at its edge or inside it`, () => {
+            for (const seed of SEEDS) {
+                const { box } = draw(seed);
+                expect(box.x).toBeLessThanOrEqual(0);
+                expect(box.y).toBeLessThanOrEqual(0);
+                expect(box.x + box.w).toBeGreaterThanOrEqual(0);
+                expect(box.y + box.h).toBeGreaterThanOrEqual(0);
+            }
+        });
     }
 });
 

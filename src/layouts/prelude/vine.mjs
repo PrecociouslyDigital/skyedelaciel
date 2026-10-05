@@ -15,7 +15,7 @@ const H = 40;
 /* — Chance — */
 
 /* A seeded PRNG (cyrb53-style hash into mulberry32), so a seed is a drawing. */
-function chance(seed) {
+export function chance(seed) {
     let h = 0x9e3779b9;
     for (const c of String(seed))
         h = Math.imul(h ^ c.charCodeAt(0), 0x5bd1e995) ^ (h >>> 15);
@@ -466,7 +466,7 @@ function mainStem(width, r, { centred }) {
    in a leaf. Ivy leaves on short stalks follow the stems at varied angles,
    and hairline tendrils off the main stem fill what gaps are left. Curls grow
    only from the main stem, never from one another. */
-function grow(width, r, { weight, vigour, centred }) {
+function grow(width, r, { weight, vigour, centred, blooms }) {
     const space = room(width);
     const marks = [];
     const stems = [];
@@ -539,7 +539,7 @@ function grow(width, r, { weight, vigour, centred }) {
     const roseBudget = Math.max(1, Math.round(width / 70));
     let roses = 0;
     const bloom = (c, radius) => {
-        if (roses >= roseBudget) return null;
+        if (!blooms || roses >= roseBudget) return null;
         return {
             discs: [{ p: c, r: radius + 0.3 }],
             mark: mark("flower", "dab", ...rose(c, radius, r.between(0, TAU))),
@@ -621,7 +621,7 @@ function grow(width, r, { weight, vigour, centred }) {
     }
 
     /* If no rose found a curl to sit in, one grows on a stalk of its own. */
-    for (let tries = 0; roses === 0 && tries < 40; tries++) {
+    for (let tries = 0; blooms && roses === 0 && tries < 40; tries++) {
         const { p, θ } = main.at(lerp(...span, r.between(0.25, 0.75)));
         const s = r.sign();
         const stalk = trace(
@@ -675,6 +675,51 @@ const rim = (reach, thinning) => `
     <feComponentTransfer result='core'><feFuncA type='linear' slope='${thinning}'/></feComponentTransfer>
     <feComposite in='shape' in2='core' operator='out'/>`;
 
+/* Marks painted as an SVG over `box`, [x, y, width, height] in units. Each
+   ink and hand is one path, so its filter runs once: the plate under
+   everything, then iron, then lines, leaves, and flowers on top, each flower
+   over a ground of the page's own colour so that nothing beneath it shows
+   through its pale middle. Growth never lets two marks of a layer overlap,
+   so painting them as one shape changes nothing. */
+function picture(marks, box, inks, id, r) {
+    const noise = () => r.integer(1000);
+    const filter = (name, body) =>
+        `<filter id='${id}-${name}' x='-20%' y='-20%' width='140%' height='140%' color-interpolation-filters='sRGB'>${body}</filter>`;
+    const defs = [
+        filter("line", tremor("0.4", 0.3, noise())),
+        filter("dab", tremor("0.4", 0.35, noise()) + rim(0.6, 0.45)),
+    ]
+        .join("")
+        .replace(/\s+/g, " ")
+        .replace(/> </g, "><");
+    const layers = [
+        ["pot", "dab"],
+        ["iron", "line"],
+        ["leaf", "line"],
+        ["leaf", "dab"],
+        ["ground", "line"],
+        ["flower", "dab"],
+    ];
+    const paint = ([which, hand]) => {
+        const outlines = marks
+            .filter((m) => m.ink === which && m.hand === hand)
+            .flatMap((m) => m.outlines);
+        return outlines.length
+            ? `<path d='${outlines.map(closedPath).join("")}' fill='${inks[which]}' filter='url(#${id}-${hand})'/>`
+            : "";
+    };
+    const viewBox = box.map((v) => +v.toFixed(3)).join(" ");
+    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${viewBox}'><defs>${defs}</defs>${layers.map(paint).join("")}</svg>`;
+}
+
+/* Marks moved by [dx, dy], or turned a quarter clockwise, so that a vine
+   grown left to right grows down the page instead. */
+const moved = (marks, [dx, dy]) =>
+    reshaped(marks, ([x, y]) => [x + dx, y + dy]);
+const turned = (marks) => reshaped(marks, ([x, y]) => [H - y, x]);
+const reshaped = (marks, f) =>
+    marks.map((m) => ({ ...m, outlines: m.outlines.map((o) => o.map(f)) }));
+
 /**
  * A vine `ratio` times as wide as it is tall, as the markup of an SVG. The
  * same arguments always draw the same vine.
@@ -686,41 +731,391 @@ const rim = (reach, thinning) => `
  *     tapers to both ends, or set flush left and grows one way.
  * @param {string} vine.leaf The colour of stem, leaf and tendril.
  * @param {string} vine.flower The colour of the roses.
+ * @param {boolean} [vine.upright] Whether it grows down the page rather than
+ *     across it, its ratio then being its height over its width.
+ * @param {boolean} [vine.blooms] Whether it bears roses.
  * @returns {string}
  */
-export function vine({ ratio, seed, centred, leaf, flower }) {
+export function vine({
+    ratio,
+    seed,
+    centred,
+    leaf,
+    flower,
+    upright = false,
+    blooms = true,
+}) {
     const width = ratio * H;
     const r = chance(seed);
-    const marks = grow(width, r, form(width, centred));
-    const id = `vine-${hash([ratio, seed, leaf, flower, centred].join())}`;
-    const noise = () => r.integer(1000);
-    const filter = (name, body) =>
-        `<filter id='${id}-${name}' x='-20%' y='-20%' width='140%' height='140%' color-interpolation-filters='sRGB'>${body}</filter>`;
-    const defs = [
-        filter("line", tremor("0.4", 0.3, noise())),
-        filter("dab", tremor("0.4", 0.35, noise()) + rim(0.6, 0.45)),
-    ]
-        .join("")
-        .replace(/\s+/g, " ")
-        .replace(/> </g, "><");
-    /* Each ink and hand is one path, so its filter runs once: lines first,
-       then leaves, then flowers on top. Growth never lets two marks of a
-       layer overlap, so painting them as one shape changes nothing. */
-    const ink = { leaf, flower };
-    const layers = [
-        ["leaf", "line"],
-        ["leaf", "dab"],
-        ["flower", "dab"],
+    const marks = grow(width, r, { ...form(width, centred), blooms });
+    return picture(
+        upright ? turned(marks) : marks,
+        upright ? [0, 0, H, width] : [0, 0, width, H],
+        { leaf, flower },
+        `vine-${hash([ratio, seed, leaf, flower, centred].join())}`,
+        r,
+    );
+}
+
+/* — The table of contents —
+
+   A section of the contents grows a vine of its own down beside its entries,
+   from a shoot hung over an iron ring beside its heading. Each second-level
+   entry is marked on that vine by a leaf with a rose on it, and each
+   third-level entry is reached by a shoot of its own. Everything is drawn for
+   a vine on the left of its words; a column on their right shows it mirrored.
+
+   The pieces are measured in widths of the section's vine, so that the
+   stylesheet can set them out at any size. A piece that has to be placed is
+   drawn about a point on the vine, and its `box` says where the drawing lies
+   around that point. */
+
+/* Where an upright vine's stem starts across its column, in units: the first
+   thing its stem draws by chance is how far off the middle it starts. */
+const vineStart = (seed) => H / 2 - chance(seed).between(-2, 2);
+
+/* A leaf at the end of a short stalk. */
+function stalkedLeaf(p, θ, stalk, size, side = 1) {
+    const path = trace(walk(p, θ, stalk, () => side * 0.08, 0.5));
+    const end = path.at(path.length);
+    return [
+        mark("leaf", "line", ribbon(path, WEIGHT.stalk)),
+        mark("leaf", "dab", ivy(end.p, end.θ, size)),
     ];
-    const paint = ([which, hand]) => {
-        const outlines = marks
-            .filter((m) => m.ink === which && m.hand === hand)
-            .flatMap((m) => m.outlines);
-        return outlines.length
-            ? `<path d='${outlines.map(closedPath).join("")}' fill='${ink[which]}' filter='url(#${id}-${hand})'/>`
-            : "";
+}
+
+/* The box round some marks, `pad` units clear of them. */
+function boxOf(marks, pad) {
+    const all = marks.flatMap((m) => m.outlines.flat());
+    const xs = all.map((p) => p[0]);
+    const ys = all.map((p) => p[1]);
+    const [x, y] = [Math.min(...xs) - pad, Math.min(...ys) - pad];
+    return [x, y, Math.max(...xs) + pad - x, Math.max(...ys) + pad - y];
+}
+
+/* A drawing, with the box it fills measured in vine widths. */
+const placed = (svg, box) => ({
+    svg,
+    box: Object.fromEntries(
+        ["x", "y", "w", "h"].map((key, i) => [key, box[i] / H]),
+    ),
+});
+
+/**
+ * A section's vine, grown down beside its entries, with no roses of its own
+ * so that every rose on it marks an entry.
+ *
+ * @param {object} vine
+ * @param {number} vine.ratio Its length over its width.
+ * @param {number} vine.seed Which vine of that length. The hanging shoot it
+ *     grows from is drawn with the same seed, so that the two meet.
+ * @param {string} vine.leaf The colour of stem, leaf and tendril.
+ * @returns {string}
+ */
+export function tocVine({ ratio, seed, leaf }) {
+    return vine({
+        ratio,
+        seed,
+        leaf,
+        flower: leaf,
+        centred: false,
+        upright: true,
+        blooms: false,
+    });
+}
+
+/**
+ * A shoot off a section's vine, out to a third-level entry: it leaves the
+ * stem heading down along it, rounds an elbow, and runs toward the words,
+ * ending in a curl. Drawn about the point on the stem where the elbow begins,
+ * so the run is level with a point `radius` below it.
+ *
+ * @param {object} shoot
+ * @param {number} shoot.reach How far toward the words it may reach, curl
+ *     and all, in vine widths.
+ * @param {number} shoot.radius The elbow's radius, in vine widths.
+ * @param {number} shoot.seed Which shoot of that shape.
+ * @param {string} shoot.leaf The colour of stem and leaf.
+ * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number } }}
+ */
+export function shoot({ reach, radius, seed, leaf }) {
+    const r = chance(seed);
+    const bend = radius * H;
+    /* How far past the end of its run the closing curl reaches. */
+    const curlReach = 7;
+    const run = reach * H - bend - curlReach;
+    const lead = 3;
+    const elbow = (Math.PI / 2) * bend;
+    const wave = r.between(0.03, 0.05) * r.sign();
+    const steer = (d) =>
+        d < lead
+            ? 0
+            : d < lead + elbow
+              ? -1 / bend
+              : wave * Math.cos((d - lead - elbow) / 5);
+    const stem = walk([0, -lead], Math.PI / 2, lead + elbow + run, steer, 0.25);
+    const end = trace(stem).at(trace(stem).length);
+    const { path: coil } = scroll(end.p, end.θ, -1, {
+        length: r.between(15, 20),
+        turns: r.between(1.2, 1.5),
+        κ0: 0.04,
+        growth: 1.4,
+    });
+    const path = resample(trace([...stem, ...coil.points.slice(1)]), () => 0.8);
+    const marks = [
+        mark(
+            "leaf",
+            "line",
+            ribbon(path, (f) => lerp(1.7, 0.55, f)),
+        ),
+    ];
+
+    /* A leaf or two along the run, on short stalks, either side. */
+    let side = r.sign();
+    const count = Math.floor(run / 10);
+    for (let k = 0; k < count; k++) {
+        const d =
+            lead +
+            elbow +
+            run * ((k + 0.6) / (count + 0.4)) +
+            r.between(-1.5, 1.5);
+        const { p, θ } = path.at(d);
+        const stalk = trace(
+            walk(
+                p,
+                θ + side * r.between(0.7, 1.1),
+                r.between(1.6, 2.4),
+                () => side * 0.08,
+                0.6,
+            ),
+        );
+        const tip = stalk.at(stalk.length);
+        marks.push(
+            mark("leaf", "line", ribbon(stalk, WEIGHT.stalk)),
+            mark(
+                "leaf",
+                "dab",
+                ivy(tip.p, tip.θ + r.between(-0.3, 0.3), r.between(5.5, 7)),
+            ),
+        );
+        side = -side;
+    }
+
+    const box = boxOf(marks, 1.5);
+    const id = `shoot-${hash([reach, radius, seed, leaf].join())}`;
+    return placed(picture(marks, box, { leaf }, id, r), box);
+}
+
+/**
+ * The mark on a section's vine beside a second-level entry: a large ivy leaf
+ * on a short stalk, reaching from the stem toward the words, with a rose set
+ * in the middle of its blade. Twice the size of the vine's own leaves, so it
+ * reads as a mark rather than foliage. Drawn about the point on the stem it
+ * grows from.
+ *
+ * @param {object} blossom
+ * @param {number} blossom.seed Which blossom.
+ * @param {string} blossom.leaf The colour of stalk and leaf.
+ * @param {string} blossom.flower The colour of the rose.
+ * @param {string} blossom.ground The page's own colour, under the rose.
+ * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number } }}
+ */
+export function blossom({ seed, leaf, flower, ground }) {
+    const r = chance(seed);
+    const size = 15;
+    const stalk = trace(walk([-1.5, 0], 0.55, 4, () => 0.05, 0.4));
+    const end = stalk.at(stalk.length);
+    const blade = end.θ + r.between(-0.1, 0.1);
+    const petals = rose(
+        toward(end.p, blade, 0.42 * size),
+        4.6,
+        r.between(0, TAU),
+    );
+    const marks = [
+        mark(
+            "leaf",
+            "line",
+            ribbon(stalk, (f) => lerp(1.6, 1.1, f)),
+        ),
+        mark("leaf", "dab", ivy(end.p, blade, size)),
+        mark("ground", "line", ...petals),
+        mark("flower", "dab", ...petals),
+    ];
+    const box = boxOf(marks, 1.5);
+    const id = `blossom-${hash([seed, leaf, flower, ground].join())}`;
+    return placed(picture(marks, box, { leaf, flower, ground }, id, r), box);
+}
+
+/* One frame of a hanging shoot, `w` by `h` units, with the column its
+   section's vine grows down starting `x` units in from the frame's left. */
+const COIL = { w: 64, h: 58, x: 12, frames: 12 };
+/* Where the hanging stem's shoots leave it, in units below the ring; a
+   positive side is away from the words. */
+const HANGING_SHOOTS = [
+    { from: 13, kind: "tendril", side: 1 },
+    { from: 22, kind: "leaf", side: -1 },
+];
+
+/**
+ * What a section's vine grows from, beside its heading, as a strip of frames
+ * from folded to open: an iron ring on a bolt from a square plate, with a
+ * shoot draped over it, hanging down the vine's column. Folded, its end is
+ * curled tight. As the section opens the curl unrolls downward, swaying a
+ * little and putting out two shoots, and runs on into where the section's
+ * vine begins, so everything moves the way the reader does, down the page.
+ *
+ * Drawn about the top of the section vine's column, at its middle. The box
+ * is one frame's.
+ *
+ * @param {object} hanging
+ * @param {number} hanging.seed The seed of the section vine it hangs into.
+ * @param {string} hanging.leaf The colour of stem and leaf.
+ * @param {string} hanging.iron The colour of the ring and bolt.
+ * @param {string} hanging.pot The colour of the plate.
+ * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number }, frames: number }}
+ */
+export function hanging({ seed, leaf, iron, pot }) {
+    const base = [vineStart(seed) + COIL.x, COIL.h + 0.5];
+    /* How far round the ring the shoot passes as it comes over it. */
+    const R = 6.4;
+    /* Level with the top of the heading, with the vine's column on its far
+       side, so the shoot drops from it straight down that column. */
+    const centre = [base[0] - R, 24];
+
+    /* The ring, the same in every frame. */
+    const radius = 4.8;
+    const top = toward(centre, -Math.PI / 2, radius);
+    const plate = [centre[0], top[1] - 6];
+    const half = 3.4;
+    const ring = trace(
+        Array.from({ length: 41 }, (_, i) =>
+            toward(centre, -Math.PI / 2 + (i / 40) * TAU, radius),
+        ),
+    );
+    const held = [
+        mark("pot", "dab", [
+            [plate[0] - half, plate[1] - half],
+            [plate[0], plate[1] - half - 0.1],
+            [plate[0] + half, plate[1] - half],
+            [plate[0] + half + 0.1, plate[1]],
+            [plate[0] + half, plate[1] + half],
+            [plate[0], plate[1] + half + 0.1],
+            [plate[0] - half, plate[1] + half],
+            [plate[0] - half - 0.1, plate[1]],
+        ]),
+        mark(
+            "iron",
+            "line",
+            ribbon(trace([plate, [top[0], top[1] + 0.4]]), () => 1.3),
+        ),
+        mark(
+            "iron",
+            "line",
+            ribbon(ring, () => 1.5),
+        ),
+    ];
+
+    /* Up the near side of the ring, over it, and down: a tucked end, then
+       half a turn round it. */
+    const tuck = 3;
+    const lead = tuck + Math.PI * R;
+    const start = [centre[0] - R, centre[1] + tuck];
+    const hang = { curled: 6, open: base[1] - centre[1] };
+    const curl = { curled: 52, open: 5, turns: 1.15, growth: 0.5 };
+    /* The hanging stem sways, as the vine's own stem does: one S-bend over
+       its full drop, so that it leaves the ring and reaches the vine both
+       heading straight down the column. */
+    const sway = chance(seed + 2).between(0.22, 0.32) * chance(seed + 3).sign();
+    const wave = (t) =>
+        t < hang.open
+            ? sway * (TAU / hang.open) * Math.cos((TAU * t) / hang.open)
+            : 0;
+
+    const marks = [];
+    for (let k = 0; k < COIL.frames; k++) {
+        const f = smoothstep(0, 1, k / (COIL.frames - 1));
+        const r = chance(seed);
+        const down = lerp(hang.curled, hang.open, f);
+        const tip = lerp(curl.curled, curl.open, f);
+        const turns = curl.turns * (1 - f);
+        const length = lead + down + tip;
+        const steer = (s) => {
+            if (s < tuck) return 0;
+            if (s < lead) return 1 / R;
+            if (s < lead + down) return wave(s - lead);
+            const u = (s - lead - down) / tip;
+            return (
+                wave(s - lead) +
+                ((turns * TAU * (curl.growth + 1)) / tip) * u ** curl.growth
+            );
+        };
+        const path = resample(
+            trace(walk(start, -Math.PI / 2, length, steer, 0.25)),
+            () => 0.8,
+        );
+        /* Fine at the tucked end, full where it hangs, and at the bottom thin
+           while it is a curled tip, or as heavy as the vine's own start once
+           it runs on into it. */
+        const hung = lead / length;
+        const end = lerp(0.7, 2.0, f);
+        const weight = (s) =>
+            s < hung
+                ? lerp(0.9, 1.7, s / hung)
+                : lerp(1.7, end, (s - hung) / (1 - hung));
+        const at = path.at(lead + 3);
+        const frame = [
+            mark("leaf", "line", ribbon(path, weight)),
+            ...stalkedLeaf(at.p, at.θ + 0.95, 2, r.between(6, 6.8)),
+        ];
+
+        /* Two shoots further down, each sprouting once the unrolling stem has
+           carried past it, and growing to its full size over the next
+           stretch: a tendril curling outward, then a leaf on the near side. */
+        for (const { from, kind, side } of HANGING_SHOOTS) {
+            const grown = Math.min(1, (down - from) / 8);
+            if (grown <= 0) continue;
+            const { p, θ } = path.at(lead + from);
+            if (kind === "leaf") {
+                frame.push(
+                    ...stalkedLeaf(
+                        p,
+                        θ + side * 0.95,
+                        lerp(0.8, 2.2, grown),
+                        lerp(3, 6.4, grown),
+                        side,
+                    ),
+                );
+            } else {
+                const { path: tendril } = scroll(p, θ + side * 0.45, side, {
+                    length: lerp(4, 12, grown),
+                    turns: lerp(0.5, 1.4, grown),
+                    κ0: 0.06,
+                    growth: 2.2,
+                });
+                frame.push(
+                    mark(
+                        "leaf",
+                        "line",
+                        ribbon(tendril, (s) => lerp(1, 0.4, s)),
+                    ),
+                );
+            }
+        }
+        marks.push(...moved([...held, ...frame], [k * COIL.w, 0]));
+    }
+    const id = `hanging-${hash([seed, leaf, iron, pot].join())}`;
+    const svg = picture(
+        marks,
+        [0, 0, COIL.w * COIL.frames, COIL.h],
+        { leaf, iron, pot },
+        id,
+        chance(seed),
+    );
+    const column = COIL.x + H / 2;
+    return {
+        ...placed(svg, [-column, -COIL.h, COIL.w, COIL.h]),
+        frames: COIL.frames,
     };
-    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${+width.toFixed(3)} ${H}'><defs>${defs}</defs>${layers.map(paint).join("")}</svg>`;
 }
 
 function hash(text) {

@@ -1,7 +1,7 @@
 /**
  * Progressive enhancement for the sidebar's table of contents: follow the
  * reader. The entry for whatever they are reading is current — coloured,
- * unfolded, and boxed by the tracker — and every other entry folds away.
+ * unfolded, and boxed by the tracker — and every other section folds away.
  * Without JS, sections remain collapsed but manually expandable.
  *
  * What the reader is in is decided by position, not by what last crossed the
@@ -18,6 +18,14 @@
 /** Where reading happens, as a fraction of the viewport: near the top. */
 const READING_LINE = 0.05;
 
+/**
+ * Where the current entry is brought to when the contents scroll on their
+ * own, as a fraction of their height: high, so that what it unfolded shows
+ * below it. It is only moved once it is outside `KEPT_BETWEEN`.
+ */
+const KEPT_AT = 0.25;
+const KEPT_BETWEEN = [0.1, 0.75] as const;
+
 function readingLine() {
     const left = document.documentElement.scrollHeight - innerHeight - scrollY;
     const ending = Math.max(0, 1 - left / innerHeight);
@@ -25,6 +33,7 @@ function readingLine() {
 }
 
 const toc = document.querySelector<HTMLElement>(".toc-sidebar");
+const root = toc?.querySelector<HTMLElement>(".toc-root");
 
 /** Each in-page entry, with what it points at, in document order. */
 const entries = [
@@ -36,45 +45,125 @@ const entries = [
     return target ? [{ link, target }] : [];
 });
 
+/** One of the lengths toc.scss registers on the list, in pixels. */
+const registered = (list: HTMLElement, name: string) =>
+    parseFloat(getComputedStyle(list).getPropertyValue(name));
+
+/**
+ * A length in pixels, for a custom property. Not a template literal: this
+ * script is inlined into the Tumblr theme, where a minified `${a-b}` would
+ * read as one of Tumblr's own `{Variables}`.
+ */
+const px = (n: number) => n + "px";
+
+/** Where a link's words are, without the space around them. */
+function words(link: HTMLAnchorElement) {
+    const range = document.createRange();
+    range.selectNodeContents(link);
+    return range.getBoundingClientRect();
+}
+
 /**
  * Put the tracker box around the current entry and whatever it unfolded.
  *
  * The box is `.toc-root`'s own ::before — see toc.scss — so all that crosses
- * between here and the stylesheet is where it goes and how tall it is.
- * Measured after the unfolding, since opening a section moves everything
- * under it.
+ * between here and the stylesheet is where it goes and how big it is. Down
+ * the list it spans the entry, and on the words' side it hugs them. On the
+ * vine's side, which in the sidebar is the right, only a whole section — an
+ * entry with what it unfolded — is boxed out past the vine it grows on. A
+ * single entry, at any level, stops short of the vine and of its marks.
  */
-function trackCurrent(entry: HTMLElement) {
-    const list = entry.closest<HTMLElement>(".toc-root");
-    if (!list) return;
+function track() {
+    const link = current;
+    if (!link || !root) return;
 
-    list.style.setProperty("--toc-tracker-top", `${entry.offsetTop}px`);
-    list.style.setProperty("--toc-tracker-height", `${entry.offsetHeight}px`);
+    const entry = link.parentElement!;
+    const shown = [...entry.querySelectorAll("a")].filter((a) =>
+        a.checkVisibility(),
+    );
+    // Its section has only just been told to open, and shows nothing yet:
+    // it is measured again as soon as it starts to grow.
+    if (shown.length === 0) return;
+
+    const texts = shown.map(words);
+    const hug = registered(root, "--toc-hug");
+    const list = root.getBoundingClientRect();
+    const box = entry.getBoundingClientRect();
+
+    const left = Math.min(...texts.map((text) => text.left)) - hug;
+    const right =
+        shown.length > 1
+            ? list.right + registered(root, "--toc-outset")
+            : Math.min(
+                  texts[0]!.right + hug,
+                  list.right - registered(root, "--toc-clear"),
+              );
+
+    root.style.setProperty("--toc-tracker-left", px(left - list.left));
+    root.style.setProperty("--toc-tracker-width", px(right - left));
+    root.style.setProperty("--toc-tracker-top", px(box.top - list.top));
+    root.style.setProperty("--toc-tracker-height", px(box.height));
+}
+
+/**
+ * When the contents are taller than the sidebar leaves them and scroll on
+ * their own, bring the current entry into view — the contents' view, not
+ * the page's.
+ */
+function keepInView() {
+    if (!toc || !current || toc.scrollHeight <= toc.clientHeight) return;
+
+    const height = toc.clientHeight;
+    const top =
+        current.getBoundingClientRect().top - toc.getBoundingClientRect().top;
+    if (top >= height * KEPT_BETWEEN[0] && top <= height * KEPT_BETWEEN[1])
+        return;
+
+    toc.scrollBy({
+        top: top - height * KEPT_AT,
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "instant"
+            : "smooth",
+    });
+}
+
+/**
+ * Once everything the last change set growing or folding has come to rest,
+ * measure again and bring the current entry into view. Only what runs on the
+ * clock is waited for: the contents' fading ends run on their own scroll, and
+ * never finish.
+ */
+let settling = 0;
+async function settle() {
+    const turn = ++settling;
+    await new Promise(requestAnimationFrame);
+    const moving = toc!
+        .getAnimations({ subtree: true })
+        .filter((animation) => animation.timeline === document.timeline);
+    await Promise.allSettled(moving.map(({ finished }) => finished));
+    if (turn !== settling) return;
+
+    track();
+    keepInView();
 }
 
 function makeCurrent(link: HTMLAnchorElement | undefined) {
     if (!toc) return;
 
     toc.querySelector("a[data-current]")?.removeAttribute("data-current");
-    toc.querySelectorAll("details[open]").forEach((d) =>
-        d.removeAttribute("open"),
-    );
-    if (!link) return;
+    link?.setAttribute("data-current", "");
 
-    link.setAttribute("data-current", "");
-
-    // Unfold the entry's own section, and every section it sits in.
-    const entry = link.parentElement!;
-    entry.querySelector(":scope > details")?.setAttribute("open", "");
-    for (
-        let section = entry.closest("details");
-        section && toc.contains(section);
-        section = section.parentElement!.closest("details")
-    ) {
-        section.setAttribute("open", "");
+    // Only the top level folds: unfold the section the entry is in, or that
+    // it heads, and fold every other.
+    const section = link
+        ?.closest('li[data-depth="1"]')
+        ?.querySelector(":scope > details");
+    for (const details of toc.querySelectorAll("details")) {
+        details.open = details === section;
     }
 
-    trackCurrent(entry);
+    track();
+    void settle();
 }
 
 let current: HTMLAnchorElement | undefined;
@@ -97,8 +186,17 @@ function schedule() {
     requestAnimationFrame(follow);
 }
 
-if (entries.length > 0) {
+if (toc && root && entries.length > 0) {
     addEventListener("scroll", schedule, { passive: true });
     addEventListener("resize", schedule, { passive: true });
+
+    // The box follows its entry while sections grow and fold, the reader's
+    // own unfolding included. A section's last step, out of sight once it has
+    // folded, changes no size, so the end of the fold is caught as well.
+    const resized = new ResizeObserver(track);
+    resized.observe(root);
+    for (const section of root.children) resized.observe(section);
+    toc.addEventListener("transitionend", track);
+
     follow();
 }

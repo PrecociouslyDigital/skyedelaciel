@@ -6,13 +6,14 @@
 ///
 /// The sidebar tier exists because the grid biases content leftward at
 /// narrower widths to make room for sidenotes, leaving too little space
-/// for the sidebar. At 72rem+ the left gutter reaches ~8rem.
+/// for the sidebar. Once the sidebar shows, it is as wide as the sidenote
+/// column on the other side, and from 80rem both have a comfortable 14rem.
 ///
 /// Below them are the queries built out of `$wide` for the page's frame and
 /// its rail stamp, which every layout that sets an article has to agree on.
 
 $wide: 60rem;
-$wide-sidebar: 72rem;
+$wide-sidebar: 80rem;
 
 @mixin wide {
     @media (min-width: $wide) {

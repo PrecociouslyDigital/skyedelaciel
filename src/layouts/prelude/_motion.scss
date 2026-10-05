@@ -4,11 +4,19 @@
 /// so a transition here is a short linear step on geometry or colour and
 /// nothing else. Two facts follow from that, and both are about the whole site
 /// rather than any one component — which is why every transition in the repo
-/// is written through `snap` and none is written by hand.
+/// is written through `snap` or `grow` and none is written by hand.
 
 /// The longest a transition may run. Checked by the compiler, because a
 /// duration that creeps up is easy to miss by eye.
 $limit: 120ms;
+
+/// The longest a growing thing may take, which is the other tier: a plant's,
+/// not the machine's. The table of contents grows its vines at a brush's pace,
+/// and the logo is rewritten at one.
+$grow-limit: 600ms;
+
+/// The brush's easing: a quick start that slows into the end of the stroke.
+$brush: cubic-bezier(0.3, 0.1, 0.3, 1);
 
 /// One transition, snapped and guarded.
 ///
@@ -22,6 +30,46 @@ $limit: 120ms;
         @error "a transition of #{$duration} is longer than the #{$limit} this design moves in.";
     }
 
+    @include -transition($properties, $duration, linear, $delay);
+}
+
+/// One growth, at a brush's pace, guarded as `snap` is.
+///
+/// Any of its arguments may be a comma list, one entry per property. Discrete
+/// properties are allowed to take part, so that what a growth reveals stays
+/// shown until it has folded away again.
+@mixin grow($properties, $duration, $easing: $brush, $delay: 0s) {
+    @each $each in $duration {
+        @if $each > $grow-limit {
+            @error "a growth of #{$each} is longer than the #{$grow-limit} anything here grows in.";
+        }
+    }
+
+    @include -transition($properties, $duration, $easing, $delay);
+    transition-behavior: allow-discrete;
+}
+
+/// One keyframed growth, held to the same limit. It waits out its delay in
+/// its first frame. Arriving, it leaves nothing behind once it is done;
+/// `$leaving`, it plays backwards and stays in its last frame, gone. Under
+/// reduced motion it does not run at all, and leaves what it animates at rest.
+@mixin grown($name, $duration, $delay: 0s, $easing: $brush, $leaving: false) {
+    @if $duration > $grow-limit {
+        @error "a growth of #{$duration} is longer than the #{$grow-limit} anything here grows in.";
+    }
+
+    @if $leaving {
+        animation: $name $duration $easing $delay both reverse;
+    } @else {
+        animation: $name $duration $easing $delay backwards;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+}
+
+@mixin -transition($properties, $duration, $easing, $delay) {
     // Longhands rather than the shorthand, because the block below overrides
     // the duration on its own — which a shorthand could only do by restating
     // the properties and delays alongside it, in a second place to keep in step.
@@ -29,7 +77,7 @@ $limit: 120ms;
     transition-property: $properties;
     transition-duration: $duration;
     transition-delay: $delay;
-    transition-timing-function: linear;
+    transition-timing-function: $easing;
 
     @media (prefers-reduced-motion: reduce) {
         transition-duration: 0s;

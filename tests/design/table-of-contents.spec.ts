@@ -1,10 +1,8 @@
+import type { Page } from "@playwright/test";
 import { expect, FIXTURE_PAGE, onlyIn, section, test } from "./_harness";
 
 /** Where a section's collapse control sits relative to the link it controls. */
-async function indicatorSide(
-    page: import("@playwright/test").Page,
-    toc: string,
-) {
+async function indicatorSide(page: Page, toc: string) {
     return page.evaluate((selector) => {
         const item = [...document.querySelectorAll(`${selector} li`)].find(
             (li) => li.querySelector(":scope > details > summary"),
@@ -17,6 +15,60 @@ async function indicatorSide(
         return summary.left < link.left ? "left" : "right";
     }, toc);
 }
+
+/**
+ * Unfold a top-level section of the sidebar by its own disclosure, as a
+ * reader would, and wait for it to finish growing.
+ */
+async function openSection(page: Page, href: string) {
+    const details = page.locator(`.toc-sidebar a[href="${href}"] ~ details`);
+    if (!(await details.evaluate((d: HTMLDetailsElement) => d.open)))
+        await details.locator("summary").click();
+    // Polled from here rather than with `waitForFunction`, which needs the
+    // page's own scripting, and the nojs profile has none.
+    await expect
+        .poll(() =>
+            details.evaluate((d) =>
+                d
+                    .getAnimations({ subtree: true })
+                    .every((a) => a.playState !== "running"),
+            ),
+        )
+        .toBe(true);
+}
+
+/**
+ * Where the ::before of what `selector` names is across the screen, and what
+ * it paints, from its computed offsets: a pseudo-element has no box of its own
+ * to ask for.
+ */
+const drawing = (page: Page, selector: string) =>
+    page.evaluate((selector) => {
+        const element = document.querySelector(selector)!;
+        const style = getComputedStyle(element, "::before");
+        const left =
+            element.getBoundingClientRect().left + parseFloat(style.left);
+        return {
+            image: style.backgroundImage,
+            left,
+            right: left + parseFloat(style.width),
+            height: parseFloat(style.height),
+        };
+    }, selector);
+
+/** The right edge of the furthest words among the links `selector` names. */
+const wordsEnd = (page: Page, selector: string) =>
+    page.evaluate(
+        (selector) =>
+            Math.max(
+                ...[...document.querySelectorAll(selector)].map((link) => {
+                    const range = document.createRange();
+                    range.selectNodeContents(link);
+                    return range.getBoundingClientRect().right;
+                }),
+            ),
+        selector,
+    );
 
 section("Table of contents", () => {
     test.beforeEach(async ({ page }) => {
@@ -55,15 +107,62 @@ section("Table of contents", () => {
             expect(before.y - after.y).toBeLessThan(scroll);
         });
 
-        test("siblings are grouped by a line on their left", async ({
+        /**
+         * Grouping is drawn, not ruled: a section's entries share the vine it
+         * grows when it unfolds, in the column on the disclosure's side.
+         */
+        test("a section's entries are grouped by a vine on the disclosure side", async ({
             page,
         }) => {
-            const nested = page.locator(".toc-sidebar .toc-list .toc-list");
-            await expect(nested).not.toHaveCount(0);
-            const border = await nested
-                .first()
-                .evaluate((el) => getComputedStyle(el).borderLeftWidth);
-            expect(parseFloat(border)).toBeGreaterThan(0);
+            await openSection(page, "#links");
+            const section = '.toc-sidebar a[href="#links"] ~ details ol';
+            const vine = await drawing(page, section);
+
+            expect(vine.image).toMatch(/^url\(/);
+            expect(vine.height).toBeGreaterThan(0);
+            expect((vine.left + vine.right) / 2).toBeGreaterThan(
+                await wordsEnd(page, `${section} a`),
+            );
+        });
+
+        test("only the top level folds", async ({ page }) => {
+            const folds = await page.evaluate(() =>
+                [...document.querySelectorAll(".toc-sidebar details")].map(
+                    (details) =>
+                        details.parentElement!.matches('li[data-depth="1"]'),
+                ),
+            );
+            expect(folds).not.toHaveLength(0);
+            expect(folds).not.toContain(false);
+
+            // Below it, an entry's section is shown as soon as it is.
+            await openSection(page, "#nesting");
+            await expect(
+                page.locator('.toc-sidebar a[href="#third-level"]'),
+            ).toBeVisible();
+        });
+
+        /**
+         * A third-level entry is reached by a shoot off its section's vine,
+         * which spans the gap from the vine's column toward the entry's words
+         * without reaching them.
+         */
+        test("a third-level entry has a shoot from the vine to its words", async ({
+            page,
+        }) => {
+            await openSection(page, "#nesting");
+            const link = 'a[href="#third-level"]';
+            const shoot = await drawing(page, `.toc-sidebar li:has(> ${link})`);
+            const list = (await page
+                .locator(".toc-sidebar .toc-root")
+                .boundingBox())!;
+
+            expect(shoot.image).toMatch(/^url\(/);
+            expect(shoot.left).toBeGreaterThan(
+                await wordsEnd(page, `.toc-sidebar ${link}`),
+            );
+            // It leaves from the vine, in the column at the list's edge.
+            expect(shoot.right).toBeGreaterThan(list.x + list.width - 16);
         });
 
         test("the collapse indicator is to the right of its section", async ({
@@ -75,7 +174,7 @@ section("Table of contents", () => {
         test.describe("as the reader scrolls", () => {
             onlyIn("wide");
 
-            const current = (page: import("@playwright/test").Page) =>
+            const current = (page: Page) =>
                 page
                     .locator(".toc-sidebar a[data-current]")
                     .getAttribute("href");
@@ -84,11 +183,7 @@ section("Table of contents", () => {
              * Put the reading line `offset` pixels below where the heading
              * behind the `index`th entry begins.
              */
-            const readAt = (
-                page: import("@playwright/test").Page,
-                index: number,
-                offset: number,
-            ) =>
+            const readAt = (page: Page, index: number, offset: number) =>
                 page.evaluate(
                     ([index, offset]) => {
                         const href = document
@@ -105,6 +200,29 @@ section("Table of contents", () => {
                     },
                     [index, offset] as const,
                 );
+
+            /** Where the box's sides are, against the list's own edge. */
+            const tracker = (page: Page) =>
+                page.evaluate(() => {
+                    const list = document.querySelector<HTMLElement>(
+                        ".toc-sidebar .toc-root",
+                    )!;
+                    const range = document.createRange();
+                    range.selectNodeContents(
+                        list.querySelector("a[data-current]")!,
+                    );
+                    const read = (name: string) =>
+                        parseFloat(list.style.getPropertyValue(name));
+                    const edge = list.getBoundingClientRect();
+                    const left = edge.left + read("--toc-tracker-left");
+                    const words = range.getBoundingClientRect();
+                    return {
+                        left,
+                        right: left + read("--toc-tracker-width"),
+                        edge: edge.right,
+                        words: { left: words.left, right: words.right },
+                    };
+                });
 
             /**
              * Scrolling back up past where a section begins returns the reader
@@ -145,6 +263,69 @@ section("Table of contents", () => {
                         }),
                     )
                     .toBe(true);
+            });
+
+            /**
+             * A whole section is boxed out past the vine it grows on, so that
+             * the ticks never land on it; a single entry hugs its words and
+             * stops short of the vine and its marks.
+             */
+            test("a section's box reaches past its vine, a single entry's does not", async ({
+                page,
+            }) => {
+                await readAt(page, 0, 10);
+                await expect
+                    .poll(async () => {
+                        const { right, edge } = await tracker(page);
+                        return right > edge;
+                    })
+                    .toBe(true);
+
+                await readAt(page, 2, 10);
+                await expect
+                    .poll(async () => {
+                        const { left, right, edge, words } =
+                            await tracker(page);
+                        return (
+                            left < words.left &&
+                            right > words.right &&
+                            right < edge
+                        );
+                    })
+                    .toBe(true);
+            });
+
+            /**
+             * In a window too short for them, the contents scroll on their
+             * own, the navbar staying where it is, and bring the entry being
+             * read into view.
+             */
+            test("the contents scroll on their own in a short window", async ({
+                page,
+            }) => {
+                await page.setViewportSize({ width: 1600, height: 450 });
+                const navbar = (await page.locator(".navbar").boundingBox())!;
+                await readAt(page, 13, 10);
+
+                await expect
+                    .poll(() =>
+                        page.evaluate(() => {
+                            const toc = document.querySelector(".toc-sidebar")!;
+                            const view = toc.getBoundingClientRect();
+                            const current = toc
+                                .querySelector("a[data-current]")
+                                ?.getBoundingClientRect();
+                            return (
+                                toc.scrollTop > 0 &&
+                                current !== undefined &&
+                                current.top >= view.top &&
+                                current.bottom <= view.bottom
+                            );
+                        }),
+                    )
+                    .toBe(true);
+                const after = (await page.locator(".navbar").boundingBox())!;
+                expect(after.y).toBeCloseTo(navbar.y, 0);
             });
         });
     });
@@ -209,6 +390,23 @@ section("Table of contents", () => {
                     .map((a) => a.textContent);
             });
             expect(hidden).toEqual([]);
+        });
+
+        test("it carries no ornament", async ({ page }) => {
+            const drawn = await page.evaluate(() =>
+                [...document.querySelectorAll(".toc-portrait *")].flatMap(
+                    (element) =>
+                        ["::before", "::after"]
+                            .map((pseudo) => getComputedStyle(element, pseudo))
+                            .filter(
+                                (style) =>
+                                    style.display !== "none" &&
+                                    style.backgroundImage.startsWith("url("),
+                            )
+                            .map(() => element.tagName),
+                ),
+            );
+            expect(drawn).toEqual([]);
         });
     });
 });

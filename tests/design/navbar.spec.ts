@@ -58,6 +58,16 @@ section("Navbar", () => {
             );
             await expect(navbar.locator(".nav-links a")).not.toHaveCount(0);
         });
+
+        test("its links are Fiction, Nonfiction and Tumblr", async ({
+            page,
+        }) => {
+            await expect(page.locator(".navbar .nav-links a")).toHaveText([
+                /fiction/i,
+                /nonfiction/i,
+                /tumblr/i,
+            ]);
+        });
     });
 
     section("Wide viewports", () => {
@@ -112,6 +122,69 @@ section("Navbar", () => {
                 "side-by-side",
             );
             expect(navbar.width).toBeCloseTo(article.width, 0);
+        });
+
+        /** The phone widths the band is drawn for, narrowest last. */
+        for (const width of [420, 375, 340]) {
+            test(`every link is a fingertip tall, on one band (${width}px)`, async ({
+                page,
+            }) => {
+                await page.setViewportSize({ width, height: 800 });
+                const links = page.locator(".navbar .nav-links a");
+                for (const link of await links.all())
+                    expect(
+                        (await link.boundingBox())!.height,
+                    ).toBeGreaterThanOrEqual(44);
+
+                // One band: the seal, the links and the toggle side by side.
+                expect(await page.evaluate(arrangement, PARTS)).toBe(
+                    "side-by-side",
+                );
+            });
+
+            /**
+             * Measured with everything but the band taken off the page, so
+             * that what is asserted is the band's own reach and nothing
+             * else's.
+             */
+            test(`the band never lets the page scroll sideways (${width}px)`, async ({
+                page,
+            }) => {
+                await page.setViewportSize({ width, height: 800 });
+                const overflow = await page.evaluate(() => {
+                    for (const other of document.querySelectorAll(
+                        "body > :not(.sidebar)",
+                    ))
+                        other.remove();
+                    return document.documentElement.scrollWidth - innerWidth;
+                });
+                expect(overflow).toBeLessThanOrEqual(0);
+            });
+        }
+
+        test("the scheme toggle answers a fingertip all round it", async ({
+            page,
+        }) => {
+            const icon = (await page
+                .locator(".theme-toggle .toggle-icon")
+                .boundingBox())!;
+            const [x, y] = [icon.x + icon.width / 2, icon.y + icon.height / 2];
+            const reach = 20;
+            const hits = await page.evaluate(
+                (points) =>
+                    points.map(
+                        ([px, py]) =>
+                            !!document
+                                .elementFromPoint(px!, py!)
+                                ?.closest(".theme-toggle"),
+                    ),
+                [
+                    [x - reach, y],
+                    [x, y - reach],
+                    [x, y + reach],
+                ],
+            );
+            expect(hits).toEqual([true, true, true]);
         });
     });
 

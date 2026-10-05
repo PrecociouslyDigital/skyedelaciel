@@ -17,10 +17,9 @@ export type NavLink =
     | { label: string; url: string; host?: Host };
 
 export const navLinks: NavLink[] = [
-    { label: "About", path: "/about" },
-    { label: "Writing", path: "/writing" },
+    { label: "Fiction", path: "/fiction" },
+    { label: "Nonfiction", path: "/nonfiction" },
     { label: "Tumblr", url: TUMBLR, host: "tumblr" },
-    { label: "GitHub", url: "https://github.com/skyedelaciel" },
 ];
 
 /** Where an entry points, from a page on `host`. */

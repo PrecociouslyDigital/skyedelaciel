@@ -53,3 +53,17 @@ entry is a site path or a full address; on Tumblr (`host="tumblr"`) site paths
 are resolved against `site` in astro.config.mts. The current entry is set in
 `--color-text`, not a chroma: accent, signal and attention each already mean a
 hand, and "you are here" is none of them.
+
+## 2026-10-05 — three links, one band on narrow screens
+
+Fiction, Nonfiction, Tumblr; About, Writing and GitHub went. Links are 1.1rem.
+On narrow screens the seal, links and toggle share one unboxed band (a tab
+strip and a 2×2 grid were tried in the prototype and rejected as boxy). Links
+are at least 44px tall and wrap two over one when three don't fit; a rule for
+five (three over two, keyed on `data-count`) is in place for later. Below
+~430px the seal, type and spacing shrink with `cqi` of the sidebar
+(prelude.scss makes it the container) rather than wrapping again. The site's
+self-hosted Source Serif sets ~3% wider than the prototype's Google copy, so
+the spacing was tightened until three links fit on one line at 375px. The
+toggle's 44px hit area is clipped by `overflow-x: clip` on the band, so it
+can't widen the page at the screen's edge.

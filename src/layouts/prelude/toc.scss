@@ -1,3 +1,5 @@
+@use "sass:map";
+@use "sass:math";
 @use "motion";
 @use "ornaments";
 
@@ -5,6 +7,70 @@
 /// scoped to either, because each is slotted into whichever component builds
 /// the tree — TableOfContents.astro for a page's headings, the Tumblr theme for
 /// a page of posts.
+///
+/// A trellis: only the top level folds, and each of its sections, unfolded,
+/// grows a vine of its own down the column beside its entries, out of a shoot
+/// hung over an iron ring beside its heading. Its second-level entries are
+/// marked on the vine by a leaf with a rose on it, and its third-level entries
+/// are set in, each reached by a shoot off the vine. The drawings are made in
+/// _ornaments.scss, from the measures kept there.
+
+$pitch: ornaments.$toc-pitch;
+$column: ornaments.$toc-column;
+$type: 0.95rem;
+$line: 1.35;
+
+/// How long a section takes to grow open, and to fold away.
+$unfold: 520ms;
+$fold: 300ms;
+
+/// How soft the growing tip is: the last stretch of a section fades out while
+/// it grows, so that the vine and its entries come in rather than being cut.
+$feather: math.min(2.2rem, $pitch * 1.3);
+
+/// How far down its section an entry sits, from 0 at the top to 1 at the
+/// bottom, which is when the growing tip reaches it.
+$along: "min(var(--i) / var(--n), 1)";
+$arrival-delay: calc(#{$along} * #{$unfold * 0.75});
+$departure-delay: calc((1 - #{$along}) * #{$fold * 0.5});
+
+/// The hanging shoot's frames, stepped through at `$duration`.
+@mixin unrolling($duration) {
+    $frames: map.get(ornaments.drawing-box("hang-long"), "frames");
+    @include motion.grow(
+        background-position,
+        $duration,
+        steps($frames, jump-none)
+    );
+}
+
+/// A drawing set out about a point `$x` across and `$y` down its element.
+/// Mirrored, it turns about that point, so it stays where it was put.
+@mixin placed($name, $x, $y) {
+    $box: ornaments.drawing-box($name);
+    content: "";
+    position: absolute;
+    left: calc(#{$x} + #{map.get($box, "x")});
+    top: calc(#{$y} + #{map.get($box, "y")});
+    width: map.get($box, "width");
+    height: map.get($box, "height");
+    transform-origin: (-1 * map.get($box, "x")) (-1 * map.get($box, "y"));
+    pointer-events: none;
+}
+
+/// How far `$length` lies in from the side of an element the vine is on.
+@function in-from-vine($side, $length) {
+    @if $side == left {
+        @return $length;
+    }
+    @return calc(100% - #{$length});
+}
+
+@property --feather {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0;
+}
 
 /* The tracker: a box the machine holds around whatever it has decided you
    are reading, sliding from one entry to the next as you scroll.
@@ -13,35 +79,89 @@
    nothing in the markup to hide when there is nothing to track — and
    nothing to hide when scripting is off, since `data-current` is set by
    toc-scroll.ts and the box only exists while one is set. That module
-   supplies the two lengths below; they are the contract between it and
-   this file. */
+   supplies the four lengths below, and reads the three registered here: how
+   far a box stands off the words, and how far it may come toward the vine.
+   A section's reaches past the vine, and a single entry's stops short of it
+   and its marks. They are the contract between it and this file. */
+@property --toc-hug {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0;
+}
+
+@property --toc-outset {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0;
+}
+
+@property --toc-clear {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0;
+}
+
+/// How far past the vine's side of the list a section's box reaches: clear
+/// of the vine, where it is wider than the column it grows down.
+$outset: math.max(0, ornaments.$toc-vine-width - $column) * 0.5 + 0.5rem;
+
+/// How far the widest of the blossoms reaches from the vine toward the words.
+$blossom-reach: 0;
+@for $k from 1 through ornaments.$toc-variants {
+    $box: ornaments.drawing-box("blossom-#{$k}");
+    $blossom-reach: math.max(
+        $blossom-reach,
+        map.get($box, "x") + map.get($box, "width")
+    );
+}
+
 .toc-root {
+    --i: 0;
+    --toc-hug: 0.4rem;
+    --toc-outset: #{$outset};
+    --toc-clear: #{$column * 0.5 + $blossom-reach + 0.05rem};
+
     position: relative;
 
     &:has(a[data-current])::before {
         @include ornaments.corner-ticks(var(--color-signal), 0.45rem, 1px);
-        @include motion.snap((transform, height), 110ms);
+        @include motion.snap((transform, width, height), 110ms);
         content: "";
         position: absolute;
-        inset-inline: 0;
         top: 0;
+        left: 0;
+        width: var(--toc-tracker-width, 100%);
         height: var(--toc-tracker-height, 0);
-        transform: translateY(var(--toc-tracker-top, 0));
+        transform: translate(
+            var(--toc-tracker-left, 0),
+            var(--toc-tracker-top, 0)
+        );
         pointer-events: none;
     }
 }
 
 .toc-list {
     font-family: var(--font-prose);
-    font-size: var(--text-small);
+    font-size: $type;
+    line-height: $line;
     list-style: none;
-    padding-left: 0;
+    padding: 0;
     margin: 0;
 
-    .toc-list {
-        padding-left: 1ch;
-        border-left: 1px solid var(--color-border);
-        margin-left: 0.5ch;
+    li {
+        position: relative;
+        display: grid;
+        column-gap: ornaments.$toc-gap;
+
+        > a {
+            grid-area: words;
+            padding-block: calc((#{$pitch} - #{$line}em) / 2);
+        }
+
+        > .toc-list,
+        > details::details-content {
+            grid-area: section;
+        }
     }
 
     a {
@@ -52,90 +172,390 @@
             color: var(--color-text);
         }
 
-        // Coloured rather than bolded: the sidebar is shrink-wrapped, so
-        // a heavier entry would widen it and drag the grouping line
-        // sideways as the reader scrolls. In `attention`, because the current
+        // Coloured rather than bolded: a heavier entry would rewrap its
+        // words as the reader scrolls. In `attention`, because the current
         // entry is the one transient thing here.
         &[data-current] {
             color: var(--color-attention);
         }
     }
 
-    li {
-        display: grid;
-        grid-template-columns: 1fr 1em;
-        grid-template-rows: auto auto;
+    // The third level recedes, as an h3 does in the article.
+    li[data-depth="3"] > a {
+        font-style: italic;
+        font-size: 0.92em;
+    }
+}
 
-        // Link in first column
+/* — A section — */
+
+/* A section whose length was not known when the site was built grows a long
+   vine, faded out where its entries end. */
+.toc-list li[data-depth="1"] {
+    --section-vine: var(--vine-toc-long);
+    --section-hang: var(--vine-hang-long);
+    --section-fade: 1.75rem;
+    --n: #{ornaments.$toc-counted};
+}
+
+@for $n from 1 through ornaments.$toc-counted {
+    .toc-list li[data-entries="#{$n}"] {
+        --section-vine: var(--vine-toc-#{$n});
+        --section-hang: var(--vine-hang-#{$n});
+        --section-fade: 0px;
+        --n: #{$n};
+    }
+}
+
+.toc-list details {
+    display: contents;
+    interpolate-size: allow-keywords;
+
+    > summary {
+        grid-area: column;
+        position: relative;
+        cursor: pointer;
+        list-style: none;
+
+        &::marker,
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        // The hanging shoot, one frame of its strip at a time: curled while
+        // the section is folded, and unrolling into the vine as it opens.
+        &::before {
+            @include placed("hang-long", 50%, 100%);
+            @include unrolling($fold * 0.6);
+            background: var(--section-hang) 0 0 /
+                #{map.get(ornaments.drawing-box("hang-long"), "frames") * 100%}
+                100% no-repeat;
+        }
+    }
+
+    &[open] > summary::before {
+        @include unrolling($unfold * 0.6);
+        background-position: 100% 0;
+    }
+
+    // The section grows to its full height and folds back to nothing, its
+    // growing edge soft. What it holds stays shown until it has folded away.
+    &::details-content {
+        @include motion.grow(
+            (block-size, content-visibility, --feather),
+            ($fold, $fold, $fold * 0.25),
+            (motion.$brush, motion.$brush, linear)
+        );
+        --feather: #{$feather};
+        block-size: 0;
+        overflow-y: clip;
+        mask-image: linear-gradient(
+            #000 calc(100% - var(--feather)),
+            transparent
+        );
+        mask-repeat: repeat-x;
+        // The vine hangs a little past the section's side, and a mask
+        // clipped to the box would cut it off there.
+        mask-clip: no-clip;
+    }
+
+    &[open]::details-content {
+        @include motion.grow(
+            (block-size, content-visibility, --feather),
+            ($unfold, $unfold, $unfold * 0.3),
+            (motion.$brush, motion.$brush, linear),
+            (0s, 0s, $unfold * 0.7)
+        );
+        --feather: 0px;
+        block-size: auto;
+    }
+
+    // A section that turned out to be empty — a post with no tags, which
+    // only Tumblr knows when it fills the page in — has nothing to disclose.
+    &:not(:has(li)) {
+        display: none;
+    }
+}
+
+.toc-list ol[data-depth="2"] {
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset-block: 0;
+        width: ornaments.$toc-vine-width;
+        background: var(--section-vine) 0 0 / 100% auto no-repeat;
+        mask-image: linear-gradient(
+            #000 calc(100% - var(--section-fade)),
+            transparent
+        );
+        pointer-events: none;
+    }
+}
+
+/* — Its entries —
+
+   The marks on the vine, and the shoots to the third level, take turns among
+   a few drawings, so that neighbours differ. Each comes in as the growing
+   tip reaches its entry: a mark opens out from the vine, and a shoot grows
+   out along itself. */
+@for $k from 1 through ornaments.$toc-variants {
+    $turn: "#{ornaments.$toc-variants}n + #{$k}";
+
+    .toc-list li[data-depth="2"]:nth-child(#{$turn})::before {
+        background: var(--vine-blossom-#{$k}) 0 0 / 100% 100% no-repeat;
+    }
+
+    .toc-list li[data-depth="3"]:nth-child(#{$turn})::before {
+        background: var(--vine-shoot-#{$k}) 0 0 / 100% 100% no-repeat;
+    }
+}
+
+.toc-list details[open] {
+    li[data-depth="2"]::before {
+        @include motion.grown(toc-blossom, $unfold * 0.5, $arrival-delay);
+    }
+
+    li[data-depth="3"]::before {
+        @include motion.grown(toc-shoot, $unfold * 0.7, $arrival-delay);
+    }
+}
+
+@keyframes toc-blossom {
+    from {
+        opacity: 0;
+        scale: 0.3;
+    }
+}
+
+@keyframes toc-shoot {
+    from {
+        clip-path: inset(0 100% 100% 0);
+    }
+}
+
+/* Resolve: each entry comes in as a picture loads at rising resolutions —
+   coarse blocks, finer blocks, finest blocks, then its words through a
+   moment's blur — and folding plays it backwards. The blocks are a mask on
+   a patch of the entry's own ink, swapped three times; nothing filters the
+   words but the blur, which is cheap for the compositor. */
+.toc-list details li > a {
+    // The squares it resolves through, about a letter wide, then half that,
+    // then a quarter: each a strip 8em wide and a line of type tall.
+    --toc-blocks-coarse: #{ornaments.blocks-of(16, 2, 101)};
+    --toc-blocks-medium: #{ornaments.blocks-of(32, 4, 102)};
+    --toc-blocks-fine: #{ornaments.blocks-of(64, 8, 103)};
+
+    position: relative;
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: calc((#{$pitch} - #{$line}em) / 2 + 0.22em) 0
+            calc((#{$pitch} - #{$line}em) / 2 + 0.18em);
+        background: currentcolor;
+        mask-size: 8em 100%;
+        mask-repeat: repeat-x;
+        mask-position: calc(var(--i) * -2.7em) 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+.toc-list details[open] li > a {
+    @include motion.grown(toc-resolve, $unfold * 0.56, $arrival-delay, linear);
+
+    &::after {
+        @include motion.grown(
+            toc-resolve-blocks,
+            $unfold * 0.56,
+            $arrival-delay,
+            linear
+        );
+    }
+}
+
+.toc-list details:not([open]) li > a {
+    @include motion.grown(
+        toc-unresolve,
+        $fold * 0.49,
+        $departure-delay,
+        linear,
+        $leaving: true
+    );
+
+    &::after {
+        @include motion.grown(
+            toc-unresolve-blocks,
+            $fold * 0.49,
+            $departure-delay,
+            linear,
+            $leaving: true
+        );
+    }
+}
+
+/* Arriving and leaving are one sequence played either way, under two names,
+   because only a change of name starts it over. */
+@mixin resolving-words {
+    0%,
+    66% {
+        -webkit-text-fill-color: transparent;
+        filter: none;
+    }
+
+    66.1% {
+        -webkit-text-fill-color: transparent;
+        filter: blur(1.6px);
+    }
+
+    100% {
+        -webkit-text-fill-color: currentcolor;
+        filter: none;
+    }
+}
+
+@mixin resolving-blocks {
+    0% {
+        mask-image: var(--toc-blocks-coarse);
+        opacity: 0;
+    }
+
+    4%,
+    30% {
+        mask-image: var(--toc-blocks-coarse);
+        opacity: 0.8;
+    }
+
+    30.1%,
+    50% {
+        mask-image: var(--toc-blocks-medium);
+        opacity: 0.8;
+    }
+
+    50.1%,
+    66% {
+        mask-image: var(--toc-blocks-fine);
+        opacity: 0.8;
+    }
+
+    66.1%,
+    100% {
+        mask-image: var(--toc-blocks-fine);
+        opacity: 0;
+    }
+}
+
+@keyframes toc-resolve {
+    @include resolving-words;
+}
+
+@keyframes toc-unresolve {
+    @include resolving-words;
+}
+
+@keyframes toc-resolve-blocks {
+    @include resolving-blocks;
+}
+
+@keyframes toc-unresolve-blocks {
+    @include resolving-blocks;
+}
+
+/* — Which side the vine grows on —
+
+   That depends on which container renders the list, not on viewport width:
+   on the right of the words in the sidebar, which sits to the left of the
+   article, and on their left inline. See design.mdx, Table of contents. */
+@mixin vine-side($side) {
+    $mirror: none;
+    @if $side == right {
+        $mirror: scaleX(-1);
+    }
+
+    .toc-list li {
+        @if $side == right {
+            grid-template:
+                "words column" "section section" / minmax(0, 1fr)
+                $column;
+        } @else {
+            grid-template: "column words" "section section" / $column minmax(
+                    0,
+                    1fr
+                );
+        }
+
         > a {
-            grid-column: 1;
-            grid-row: 1;
+            justify-self: $side;
+            text-align: $side;
+        }
+    }
+
+    .toc-list ol[data-depth="3"] {
+        padding-#{$side}: ornaments.$toc-reach;
+    }
+
+    .toc-list details > summary::before {
+        transform: $mirror;
+    }
+
+    .toc-list ol[data-depth="2"]::before {
+        $half: ornaments.$toc-vine-width * 0.5;
+
+        left: calc(#{in-from-vine($side, $column * 0.5)} - #{$half});
+        transform: $mirror;
+    }
+
+    @for $k from 1 through ornaments.$toc-variants {
+        $turn: "#{ornaments.$toc-variants}n + #{$k}";
+
+        .toc-list li[data-depth="2"]:nth-child(#{$turn})::before {
+            @include placed(
+                "blossom-#{$k}",
+                in-from-vine($side, $column * 0.5),
+                $pitch * 0.5
+            );
+            transform: $mirror;
         }
 
-        > details {
-            display: contents;
-
-            // Chevron to the right of link
-            > summary {
-                grid-column: 2;
-                grid-row: 1;
-                cursor: pointer;
-                list-style: none;
-                padding-left: 0.5ch;
-                color: var(--color-muted);
-
-                &::marker,
-                &::-webkit-details-marker {
-                    display: none;
-                }
-
-                &::before {
-                    @include motion.snap(transform);
-                    content: "▸";
-                    display: inline-block;
-                }
-            }
-
-            &[open] > summary::before {
-                transform: rotate(90deg);
-            }
-
-            > .toc-list {
-                grid-column: 1 / -1;
-                grid-row: 2;
-                margin-top: 0.25em;
-            }
-
-            // A section that turned out to be empty — a post with no tags,
-            // which only Tumblr knows when it fills the page in — has nothing
-            // to disclose, so it shows no chevron.
-            &:not(:has(li)) {
-                display: none;
-            }
+        .toc-list li[data-depth="3"]:nth-child(#{$turn})::before {
+            @include placed(
+                "shoot-#{$k}",
+                in-from-vine($side, $column * 0.5 - ornaments.$toc-reach),
+                $pitch * 0.5 - ornaments.$toc-elbow
+            );
+            transform: $mirror;
         }
     }
 }
 
-/* Which side the collapse indicator sits on depends on which container
-   renders the list, not on viewport width — right in the sidebar, left
-   inline. See design.mdx, Table of contents. */
-.toc-portrait .toc-list li {
-    grid-template-columns: 1em 1fr;
-
-    > a {
-        grid-column: 2;
-    }
-
-    > details > summary {
-        grid-column: 1;
-        padding-left: 0;
-        padding-right: 0.5ch;
-    }
+.toc-sidebar {
+    @include vine-side(right);
 }
 
+.toc-portrait {
+    @include vine-side(left);
+}
+
+/* Paper carries the contents bare and whole: no vines, nothing folded. */
 @media print {
-    // Expand all for print
-    .toc-list details:not([open]) > .toc-list {
-        display: block;
+    .toc-list {
+        details::details-content {
+            block-size: auto;
+            content-visibility: visible;
+            mask-image: none;
+        }
+
+        summary::before,
+        ol::before,
+        li::before,
+        a::after {
+            display: none;
+        }
+
+        a {
+            animation: none;
+        }
     }
 }

@@ -19,3 +19,24 @@ check only catches that form too.
 `vine-image` in _ornaments.scss fails the build if the function is missing.
 Otherwise Sass would pass an unknown `vine(...)` through as a plain CSS
 function, which renders as nothing.
+
+## 2026-10-05 — one host function per question, kinds by name
+
+The table of contents added four more kinds of drawing (section vine, hanging
+shoot, shoot, blossom), so `vine($ratio, $seed, …)` became `vine($kind,
+$args)`, with `$args` a map: each kind takes what it needs and ignores the
+rest, so a whole `$vines` entry plus the scheme's inks is passed as it is.
+`vine-box($kind, $args)` answers where a placed drawing lies about its point,
+as a positional list (`x y w h frames`) in vine widths. A list rather than a
+map, because building a `SassMap` from JS needs `immutable`, which is only a
+transitive dependency. Drawings are memoised per argument set: each scheme is
+applied twice (system preference and override), and the boxes are asked for
+with no inks at all.
+
+Vite inlines assets under `assetsInlineLimit` (4 KB) as data URLs. That put
+the blossoms and the shortest section vine inline in every theme block and
+doubled the stylesheet, so the integration sets the limit to `false` for its
+own directory only; everything else keeps Vite's default.
+
+`blocks()` is Resolve's mask. It has no colour, so it is inline, written as
+one path per strength with only `%#<>` escaped (~6 KB for all three).

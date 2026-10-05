@@ -1,17 +1,19 @@
 ---
 /**
- * One level of a table of contents: a list of TocEntry.
+ * One level of a table of contents: a list of TocEntry, all at `depth`.
  *
- * `root` marks the outermost list, which alone carries the tracker and is
- * positioned for it to be measured against — see toc.scss. Its styles are
- * global rather than scoped, because the entries are slotted in from whichever
- * component builds the tree.
+ * The outermost list, at depth 1, alone carries the tracker and is positioned
+ * for it to be measured against — see toc.scss. Its styles are global rather
+ * than scoped, because the entries are slotted in from whichever component
+ * builds the tree.
  */
 interface Props {
-    root?: boolean;
+    depth: number;
 }
 
-const { root = false } = Astro.props;
+const { depth } = Astro.props;
 ---
 
-<ol class:list={["toc-list", root && "toc-root"]}><slot /></ol>
+<ol class:list={["toc-list", depth === 1 && "toc-root"]} data-depth={depth}>
+    <slot />
+</ol>

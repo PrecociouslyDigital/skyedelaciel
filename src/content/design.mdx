@@ -2,7 +2,7 @@
 title: Design Specification
 abstract: This is a living document describing the desired visual design of the website. It is intended to be a useful reference for human and machine alike.
 published: 2026-02-01
-updated: 2026-10-04
+updated: 2026-10-05
 ---
 
 # Design Goals
@@ -51,6 +51,8 @@ Every rule on the site is a flowering vine, after the vine-stem borders of illum
 
 A vine set flush left grows one way, pressed down where the pen began and rolling up at its tip; one centred in the column tapers to both ends, fullest in the middle. It still reads as a single line at a glance: the vine is ornament on a rule, not an illustration. Each place a rule appears — the front matter, a top-level heading, a horizontal rule, the start of a closing section — always draws the same vine, at its own fixed size.
 
+The [table of contents](#table-of-contents) is the one place a vine is drawn to a length rather than a size: each of its sections grows a vine down beside its entries, drawn for exactly as many entries as the section holds, so that it ends in its curl beside the last of them. Those vines bear no roses of their own, since every rose on them marks an entry.
+
 ## Colors
 
 There should be three color schemes: paper (light), ink (dark) and print. Paper and ink should default to the system preference, based on the css media query `prefers-color-scheme`, but should also be toggleable by the user (see [Navbar](#navbar)). Once a user sets a theme preference, that preference should be persisted to local storage and reloaded as early as possible in page load. Print is a scheme of its own and follows no preference.
@@ -77,7 +79,7 @@ Each pigment keeps its hue and chroma, and each scheme sets its lightness at bui
 
 The machine layer is one idea, and everything drawn in `signal` belongs to it: a second reader has been over this page and left its working visible. It never writes words of its own — it draws boxes and it stamps identifiers, which is the whole of its vocabulary.
 
-It draws a **bounding box** as four corner ticks, a right angle at each corner with the edges between them left open, around anything it has taken as a subject: the article, outside the ink frame rather than replacing it, so that both readers' boxes stand; a code block; the popover on a link. Where the thing it has boxed can scroll, the ticks are painted on it rather than around it, since a box drawn outside a scrolling element would be clipped.
+It draws a **bounding box** as four corner ticks, a right angle at each corner with the edges between them left open, around anything it has taken as a subject: the article, outside the ink frame rather than replacing it, so that both readers' boxes stand; a code block; the popover on a link; the entry of the [table of contents](#table-of-contents) being read. That last box never lands on the contents' vines: around a whole section — an entry with what it unfolded — it reaches out past the vine the section grows on, and around a single entry it hugs the words and stops short of the vine and its marks. Where the thing it has boxed can scroll, the ticks are painted on it rather than around it, since a box drawn outside a scrolling element would be clipped.
 
 It draws a **rail slug** down the right margin of a framed article, set in a vertical column in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. The column runs downward but the characters stand upright in it, as they do on a seal, rather than being turned on their side. It dates and counts the page: published, edited if it has been, and the revision the build was made from. An unedited page carries no edited date, and outside a git checkout the revision is simply absent. On [Tumblr](#tumblr) it stamps each post with its day and, once it has any, its count of notes.
 
@@ -97,9 +99,9 @@ The scale runs from the article title, which is the largest thing on the page, d
 
 A readout snaps to where it belongs rather than easing into it. Every transition on the site is linear, runs no longer than 120ms, and moves only geometry or colour; a longer one should fail the build rather than be caught by eye. Delays are exempt from that limit and are a separate tool — the link popover waits before it appears, so that a pointer crossing a link on its way somewhere else never summons one. A change tied to scrolling, like a popover's banner giving way to its text, is not a transition: it has no duration, and moves exactly as far as the reader scrolls.
 
-The logo is the one exception. It is not a readout but a hand, and when it is [rewritten](#content-1) it moves at a brush's pace and with a brush's easing.
+What grows is the exception. It is not a readout but a plant, or a hand, and it moves at a brush's pace and with a brush's easing, in no more than 600ms: the logo when it is [rewritten](#content-1), and the [table of contents](#table-of-contents) as its sections unfold and fold away. A section grows open in about half a second and folds in less, its growing edge soft rather than cut; the shoot over its ring unrolls into its vine as it opens and curls back as it folds. Each entry arrives as the growing tip reaches it, and resolves: coarse blocks of its own ink, finer blocks, finer still, then its words through a moment's blur, as a picture loads at rising resolutions. Folding plays the same backwards, last entry first. The blocks are not drawn from the letters, only cut to about their size.
 
-A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it. A change tied to scrolling is held still too, and the logo is never rewritten.
+A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero, and nothing grows or resolves — a section is simply open or shut. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it. A change tied to scrolling is held still too, and the logo is never rewritten.
 
 # Components
 
@@ -107,11 +109,11 @@ A reader who has asked for reduced motion gets none of it: under `prefers-reduce
 
 ### Wide viewports
 
-When there is enough space for both the navbar and sidenotes, the navbar sits to the side of the content, right-aligned to its left edge, and is arranged vertically.
+When there is enough space for both the navbar and sidenotes, the navbar sits to the side of the content, right-aligned to its left edge, and is arranged vertically. The column it sits in is as wide as the sidenotes' on the other side, so the article stands in the middle of the page.
 
 ### Narrow viewports
 
-The navbar is horizontal, in line with the content, before the title. It should match the content's maximum width so they align visually.
+The navbar is horizontal, in line with the content, before the title. It should match the content's maximum width so they align visually. The seal, the links and the scheme toggle share one band, unboxed, and every link is at least a fingertip (44px) tall. The links sit in centred rows, more on top than below, the lower row set between the upper one's so that no tap zone sits straight under another: three links go two over one where they will not fit on a line, and five would go three over two. On the narrowest screens the band gives a little rather than wrapping again — the seal, the type and the space round each link shrink with the width of the page, down to what still reads. The toggle is drawn small but answers a fingertip all round it, and nothing in the band lets the page scroll sideways.
 
 ### Print
 
@@ -122,7 +124,7 @@ The Navbar should not be shown on print pages, and should make space so that the
 The navbar contains, in order
 
 - A clickable logo that takes you to the homepage
-- Links to various internal and external landing pages, [Tumblr](#tumblr) among them. The one for where the reader is now is set in full ink rather than muted, and marked as the current page for a screen reader.
+- Links to the site's landing pages — Fiction, Nonfiction and [Tumblr](#tumblr) — set as apparatus, a size larger than the byline. The one for where the reader is now is set in full ink rather than muted, and marked as the current page for a screen reader.
 - A button that toggles the [Color Scheme](#colors)
 
 The logo is drawn as a seal: the mark, a woven six-petal flower painted in brush strokes, inside a square border of the same ink, in the scheme's `text` colour. It is set into the page rather than served as an image, so that it reads in both schemes without a second copy of the artwork, and so that it can be rewritten: when the pointer comes onto it, its strokes lift off one after another in the direction they were painted and are laid down again. Once begun, the rewrite plays to its end even if the pointer leaves. The scheme toggle is a small square, matching the seal and the frame rather than the circle it used to be.
@@ -131,17 +133,19 @@ The logo is drawn as a seal: the mark, a woven six-petal flower painted in brush
 
 ### Wide viewports
 
-When there is enough space for both the table of contents and sidenotes, the table of contents sits to the left of the content, arranged vertically, underneath the navbar. As the user scrolls, the top of the table of contents should "stick" to the top of the viewport (with pleasant margin, of course).
+When there is enough space for both the table of contents and sidenotes, the table of contents sits to the left of the content, arranged vertically, underneath the navbar. As the user scrolls, the top of the table of contents should "stick" to the top of the viewport (with pleasant margin, of course). When the contents are taller than the window leaves them, they scroll on their own while the navbar stays put, and their ends fade while there is more beyond them.
 
-The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the _right_ of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, the entry for the section being read is current: it unfolds, every other entry folds, and it is tracked twice over — its own text turns to the attention colour, and a [bounding box](#annotation) slides down the list to enclose it together with everything it unfolded. The section being read is the one the top of the viewport is in, whichever way the reader scrolled there; over the last screenful of the page that line runs down to the bottom of the viewport, so that a short last section is reached too. Without javascript there is no current entry and so no box.
+The contents are a trellis of [vines](#vines). Only the top level folds (so you'd expand a specific `h1` to see every `h2` and `h3` under it); the second level is always shown with its section, and lines up with the first. Collapse is controlled by an indicator to the _right_ of each top-level entry: an iron ring on a bolt from a square plate, with a shoot draped over it, hanging down the column beside the words. Folded, the shoot ends in a tight curl; as the section unfolds the curl unrolls downward and runs on into the section's own vine, which grows down that column beside the section's entries and ends in its curl beside the last of them. The vine is what groups a section's entries together. Each second-level entry is marked on it by a large ivy leaf with a rose set in the middle of its blade. The third level recedes, as an `h3` does in the article: set in from the second, in italic and a step smaller, and each of its entries is reached by a shoot of its own off the vine, which drops along the stem, turns out through a rounded elbow and runs toward the words, stopping a little short of them in a curl. How it all grows is described under [Motion](#motion).
+
+When a user has javascript enabled, the entry for the section being read is current: its section unfolds, every other section folds, and it is tracked twice over — its own text turns to the attention colour, and a [bounding box](#annotation) slides down the list to enclose it together with everything it unfolded. Where the contents scroll on their own, they bring the current entry into view once its section has finished growing, near the top so that what it unfolded shows below it. The section being read is the one the top of the viewport is in, whichever way the reader scrolled there; over the last screenful of the page that line runs down to the bottom of the viewport, so that a short last section is reached too. Without javascript there is no current entry and so no box, but the sections still unfold and grow by hand.
 
 ### Narrow viewports
 
-The table of contents is in line with the content, after the abstract, in a collapsible section. Each level should also be collapsible. Collapse should be controlled by an indicator to the _left_ of that element. All are collapsed by default. This table of contents should _not_ auto-expand and collapse.
+The table of contents is in line with the content, after the abstract, in a collapsible section that grows open and folds away as a section of it does. It is the same trellis, mirrored: the rings, the vines and the shoots grow on the _left_ of the words, and so does the collapse indicator. All are collapsed by default. This table of contents should _not_ auto-expand and collapse.
 
 ### Print
 
-In print, the table of contents should be in line with the content, but always expanded.
+In print, the table of contents should be in line with the content, always expanded, and bare: no vines, no rings, nothing to unfold.
 
 ## Headings
 

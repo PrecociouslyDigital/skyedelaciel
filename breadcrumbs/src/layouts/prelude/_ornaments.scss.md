@@ -159,3 +159,21 @@ each scheme bakes its own copy, as `texture()` does, and `apply-theme` sets
 `--vine-<name>`. The copies are files, not data URLs: twelve SVGs of
 15–43 KB inlined into the stylesheet would block every page's render on
 hundreds of KB of CSS. See breadcrumbs/src/integrations/vines.ts.md.
+
+## 2026-10-05 — the table of contents' drawings live in `$vines`
+
+The TOC's measures (`$toc-pitch`, `$toc-vine-width`, `$toc-column`,
+`$toc-gap`, `$toc-reach`, `$toc-elbow`, `$toc-shoot-clear`) sit next to
+`$vines` because the drawings are made to them: the shoot's reach is computed
+here from the distance between the vine's column and third-level words. The
+plan's `$toc-chev` became `$toc-column`, since there is no chevron any more.
+
+Sections of up to `$toc-counted` (20) entries get a vine drawn to their
+length, `(n − 0.3) · pitch / width`, so the curl sits beside the last entry.
+Longer sections, and Tumblr's (whose counts are unknown at build time), get
+`toc-long`, faded where the list ends. Seeds are `11 + min(n, 12)`, so the
+hanging strips for n ≥ 12 are identical files and deduplicate by content hash.
+
+The host functions are called through `-drawn-by()`, which fails the build if
+the integration isn't loaded; otherwise Sass writes `vine(...)` out as an
+unknown CSS function and the page silently shows nothing.

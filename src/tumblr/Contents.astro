@@ -21,20 +21,24 @@ const label = `${v("Month")} ${v("DayOfMonth")}${block(
 )}`;
 ---
 
-<TocList root>
+<TocList depth={1}>
     <Block name="Posts">
         <Block name="IndexPage">
-            <TocEntry href={`#post-${v("PostID")}`} text={label}>
-                <TocList>
+            <TocEntry href={`#post-${v("PostID")}`} text={label} depth={1}>
+                <TocList depth={2}>
                     <Block name="Tags">
-                        <TocEntry href={v("TagURL")} text={`#${v("Tag")}`} />
+                        <TocEntry
+                            href={v("TagURL")}
+                            text={`#${v("Tag")}`}
+                            depth={2}
+                        />
                     </Block>
                 </TocList>
             </TocEntry>
         </Block>
         <Block name="PermalinkPage">
             <Block name="Tags">
-                <TocEntry href={v("TagURL")} text={`#${v("Tag")}`} />
+                <TocEntry href={v("TagURL")} text={`#${v("Tag")}`} depth={1} />
             </Block>
         </Block>
     </Block>

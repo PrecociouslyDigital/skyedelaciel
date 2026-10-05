@@ -77,22 +77,48 @@ describe("TableOfContents", () => {
             .then(clean);
 
     /**
-     * A heading is a parent when some heading after it is deeper, before the
-     * next one at its own level or above. Stated here so the property below
-     * quantifies over heading lists rather than over one example.
+     * The headings under a heading: those after it that are deeper, before
+     * the next one at its own level or above. A heading is top-level when no
+     * heading before it is shallower. Stated here so the properties below
+     * quantify over heading lists rather than over one example.
      */
+    const descendantsOf = (headings: Heading[], index: number) => {
+        const after = headings.slice(index + 1);
+        const sibling = after.findIndex(
+            (later) => later.depth <= headings[index]!.depth,
+        );
+        return sibling === -1 ? after : after.slice(0, sibling);
+    };
+    const isTopLevel = (headings: Heading[], index: number) =>
+        headings
+            .slice(0, index)
+            .every((before) => before.depth >= headings[index]!.depth);
+
     const expectedParents = (headings: Heading[]) =>
         headings
-            .filter((heading, index) => {
-                const after = headings.slice(index + 1);
-                const sibling = after.findIndex(
-                    (later) => later.depth <= heading.depth,
-                );
-                const descendants =
-                    sibling === -1 ? after : after.slice(0, sibling);
-                return descendants.length > 0;
-            })
+            .filter(
+                (_, index) =>
+                    isTopLevel(headings, index) &&
+                    descendantsOf(headings, index).length > 0,
+            )
             .map((heading) => heading.slug);
+
+    const LISTS: Heading[][] = [
+        headings,
+        // No h2 in between: a skipped level must not orphan its children.
+        [
+            { depth: 1, slug: "top", text: "Top" },
+            { depth: 3, slug: "deep", text: "Deep" },
+        ],
+        [{ depth: 1, slug: "lonely", text: "Lonely" }],
+        // No h1 at all: the top level is whatever comes first.
+        [
+            { depth: 2, slug: "a", text: "A" },
+            { depth: 3, slug: "a-i", text: "A i" },
+            { depth: 3, slug: "a-ii", text: "A ii" },
+            { depth: 2, slug: "b", text: "B" },
+        ],
+    ];
 
     test("every heading appears once, in document order", async () => {
         expect(entriesIn(await render(headings))).toEqual(
@@ -100,21 +126,42 @@ describe("TableOfContents", () => {
         );
     });
 
-    test("a heading is collapsible exactly when it has children", async () => {
-        for (const list of [
-            headings,
-            // No h2 in between: a skipped level must not orphan its children.
-            [
-                { depth: 1, slug: "top", text: "Top" },
-                { depth: 3, slug: "deep", text: "Deep" },
-            ],
-            [{ depth: 1, slug: "lonely", text: "Lonely" }],
-        ]) {
+    test("only the top level folds, and exactly where it has children", async () => {
+        for (const list of LISTS) {
             const html = await render(list);
             expect(entriesIn(html).map((e) => e.slug)).toEqual(
                 list.map((h) => h.slug),
             );
             expect(parentsIn(html)).toEqual(expectedParents(list));
+        }
+    });
+
+    /**
+     * A section's vine is drawn to the number of entries it unfolds, and each
+     * of them arrives in turn as it grows: so every top-level entry says how
+     * many entries are under it, and every entry under it says its place
+     * among them, in the order a reader meets them.
+     */
+    test("a section counts its entries, and they arrive in order", async () => {
+        for (const list of LISTS) {
+            const tree = parse(await render(list));
+            const sections = selectAll('li[data-depth="1"]', tree);
+            const slugOf = (li: (typeof sections)[number]) =>
+                String(select(":scope > a", li)!.properties.href).slice(1);
+
+            for (const section of sections) {
+                const index = list.findIndex((h) => h.slug === slugOf(section));
+                const under = descendantsOf(list, index);
+                const entries = selectAll(":scope li", section);
+
+                expect(entries.map(slugOf)).toEqual(under.map((h) => h.slug));
+                expect(section.properties.dataEntries).toBe(
+                    String(under.length),
+                );
+                expect(
+                    entries.map((li) => String(li.properties.style)),
+                ).toEqual(under.map((_, i) => `--i: ${i}`));
+            }
         }
     });
 

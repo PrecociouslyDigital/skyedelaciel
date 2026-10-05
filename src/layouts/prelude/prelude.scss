@@ -313,12 +313,19 @@ figcaption {
     }
 }
 
+/* The sidebar's band is what the navbar sizes itself by, where it runs
+   across the top of a narrow page. */
+.sidebar {
+    container-type: inline-size;
+}
+
 /* Sidebar TOC - hidden by default (portrait) */
 .toc-sidebar {
     display: none;
 }
 
-/* Portrait TOC - collapsible checkbox hack */
+/* Portrait TOC - collapsible checkbox hack. Its contents grow open and fold
+   away as a section of them does. */
 .toc-portrait {
     margin-top: 1.25rem;
 
@@ -341,10 +348,14 @@ figcaption {
         }
     }
 
-    .toc-list {
-        @include motion.snap(max-height);
-        max-height: 0;
-        overflow: hidden;
+    > .toc-list {
+        @include motion.grow((block-size, visibility), toc.$fold);
+        interpolate-size: allow-keywords;
+        block-size: 0;
+        visibility: hidden;
+        overflow-y: clip;
+        // Room above the first entry for the ring its section hangs from.
+        overflow-clip-margin: 0.5rem;
     }
 
     &:has(#toc-toggle:checked) {
@@ -352,8 +363,10 @@ figcaption {
             content: "▾ ";
         }
 
-        .toc-list {
-            max-height: 50vh;
+        > .toc-list {
+            @include motion.grow((block-size, visibility), toc.$unfold);
+            block-size: auto;
+            visibility: visible;
         }
     }
 }
@@ -454,25 +467,105 @@ figcaption {
     }
 }
 
+/// How far the sidebar's contents hold what hangs off them clear of their
+/// scrolling edge: the vines and rings at every side, and, toward the article,
+/// the tracker's box, which reaches past the vines.
+$toc-room: 0.6rem;
+$toc-room-toward-article: 1.6rem;
+
+/// How deep the contents' ends fade while there is more beyond them.
+$toc-fade: 2rem;
+
+@property --toc-fade-top {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0;
+}
+
+@property --toc-fade-bottom {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0;
+}
+
 @include breakpoints.wide-sidebar {
+    /* The article in the middle, and a column as wide as the sidenotes'
+       either side of it: the navbar and contents on the left, the notes on
+       the right. */
+    body {
+        --sidenote-width: min(14rem, calc(var(--gutter) / 2 - 2.2rem));
+
+        grid-template-columns: 1fr var(--content-width) 1fr;
+    }
+
     .sidebar {
         grid-column: 1;
+        place-self: start end;
+        width: var(--sidenote-width);
+        container-type: normal;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         gap: 2rem;
         position: sticky;
         top: 2rem;
-        align-self: start;
+        max-height: calc(100dvh - 4rem);
         text-align: right;
     }
 
+    /* The seal and links stay put, and the contents scroll on their own
+       once they are taller than the window leaves them. A scrolling box
+       clips whatever hangs past it, so it is given room on every side and
+       drawn back out by the same amount, and nothing moves. */
     .toc-sidebar {
         display: block;
+        align-self: stretch;
+        flex: 0 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border) transparent;
+        padding: $toc-room $toc-room-toward-article $toc-room $toc-room;
+        margin: (-$toc-room) (-$toc-room-toward-article) (-$toc-room)
+            (-$toc-room);
+        mask-image: linear-gradient(
+            transparent,
+            #000 var(--toc-fade-top),
+            #000 calc(100% - var(--toc-fade-bottom)),
+            transparent
+        );
+    }
+
+    /* Its ends fade while there is more beyond them, by scroll position
+       alone: where it does not scroll there is no timeline, and no fade. */
+    @supports (animation-timeline: scroll()) {
+        .toc-sidebar {
+            animation: toc-ends linear both;
+            animation-timeline: scroll(self);
+        }
     }
 
     .toc-portrait {
         display: none;
+    }
+}
+
+@keyframes toc-ends {
+    0% {
+        --toc-fade-top: 0px;
+        --toc-fade-bottom: #{$toc-fade};
+    }
+
+    6%,
+    94% {
+        --toc-fade-top: #{$toc-fade};
+        --toc-fade-bottom: #{$toc-fade};
+    }
+
+    100% {
+        --toc-fade-top: #{$toc-fade};
+        --toc-fade-bottom: 0px;
     }
 }
 
@@ -507,8 +600,9 @@ figcaption {
             content: "";
         }
 
-        .toc-list {
-            max-height: none;
+        > .toc-list {
+            block-size: auto;
+            visibility: visible;
         }
     }
 }

@@ -1,25 +1,47 @@
 ---
 /**
  * One entry of a table of contents, with its section's own TocList, if it has
- * one, as the slot. The slot is folded under a disclosure whose chevron sits
- * beside the link.
+ * one, as the slot.
+ *
+ * Only the top level folds: a top-level entry's section is folded under a
+ * disclosure beside its link, and grows a vine of its own when it unfolds.
+ * Below that, an entry's section is always shown with it.
+ *
  */
 interface Props {
     href: string;
     text: string;
+    depth: number;
+    /**
+     * How many entries a top-level section unfolds, where that is known when
+     * the site is built, so that its vine can be drawn to their length.
+     */
+    entries?: number;
+    /**
+     * An entry's place in the top-level section it belongs to, which is when
+     * it arrives as the section grows.
+     */
+    index?: number;
 }
 
-const { href, text } = Astro.props;
+const { href, text, depth, entries, index } = Astro.props;
 ---
 
-<li>
+<li
+    data-depth={depth}
+    data-entries={entries}
+    style={index === undefined ? undefined : `--i: ${index}`}
+>
     <a href={href}>{text}</a>
     {
-        Astro.slots.has("default") && (
-            <details>
-                <summary aria-label="Expand section" />
+        Astro.slots.has("default") &&
+            (depth === 1 ? (
+                <details>
+                    <summary aria-label="Expand section" />
+                    <slot />
+                </details>
+            ) : (
                 <slot />
-            </details>
-        )
+            ))
     }
 </li>
