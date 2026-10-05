@@ -39,9 +39,8 @@ section("Navbar", () => {
             const navbar = page.locator(".navbar");
             await expect(navbar.locator(".logo")).toHaveAttribute("href", "/");
 
-            // Compared by document position rather than child index: the
-            // toggle is a Svelte island, so it arrives wrapped in an
-            // <astro-island> that `display: contents` makes boxless.
+            // Compared by document position rather than child index, so a
+            // part may be wrapped in an element of its own without moving.
             const positions = await navbar.evaluate((nav, parts) => {
                 const everything = [...document.querySelectorAll("*")];
                 return parts.map((part) => {

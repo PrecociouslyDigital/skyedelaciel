@@ -1,0 +1,12 @@
+---
+import { block, type TumblrBlock } from "./tags";
+
+interface Props {
+    name: TumblrBlock;
+}
+
+/* Opened and closed by the one call, so a block cannot be left unclosed. */
+const [open, close] = block(Astro.props.name, "\0").split("\0");
+---
+
+{open}<slot />{close}

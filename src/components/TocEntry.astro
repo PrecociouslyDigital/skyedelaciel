@@ -1,0 +1,25 @@
+---
+/**
+ * One entry of a table of contents, with its section's own TocList, if it has
+ * one, as the slot. The slot is folded under a disclosure whose chevron sits
+ * beside the link.
+ */
+interface Props {
+    href: string;
+    text: string;
+}
+
+const { href, text } = Astro.props;
+---
+
+<li>
+    <a href={href}>{text}</a>
+    {
+        Astro.slots.has("default") && (
+            <details>
+                <summary aria-label="Expand section" />
+                <slot />
+            </details>
+        )
+    }
+</li>

@@ -1,0 +1,131 @@
+import { describe, expect, test } from "vitest";
+import { hrefFor, isCurrent, navLinks, type Host } from "~/components/nav";
+import { parse, render } from "~/tumblr/render";
+import { readStamp, stamp, themeHash } from "~/tumblr/stamp.mjs";
+
+/**
+ * A small deterministic generator, so that the properties below quantify over
+ * many templates without a dependency, and a failure reproduces exactly.
+ */
+function random(seed: number) {
+    return () => {
+        seed = (seed * 1_103_515_245 + 12_345) % 2 ** 31;
+        return seed / 2 ** 31;
+    };
+}
+
+const NAMES = ["Posts", "Text", "Title", "Tags", "Caption"];
+
+/** A well-formed template: blocks nested properly, text between them. */
+function template(next: () => number, depth = 0): string {
+    const parts: string[] = [];
+    while (next() < 0.7 && parts.length < 4) {
+        const name = NAMES[Math.floor(next() * NAMES.length)]!;
+        parts.push(
+            depth < 3 && next() < 0.6
+                ? `{block:${name}}${template(next, depth + 1)}{/block:${name}}`
+                : `<p>{${name}}</p>`,
+        );
+    }
+    return parts.join("");
+}
+
+const templates = Array.from({ length: 200 }, (_, n) => template(random(n)));
+
+describe("parse", () => {
+    test("accepts every properly nested template", () => {
+        for (const source of templates)
+            expect(() => parse(source)).not.toThrow();
+    });
+
+    test("rejects any template with one closing tag removed", () => {
+        for (const source of templates) {
+            const close = source.lastIndexOf("{/block:");
+            if (close === -1) continue;
+            const broken =
+                source.slice(0, close) +
+                source.slice(source.indexOf("}", close) + 1);
+            expect(() => parse(broken), broken).toThrow();
+        }
+    });
+
+    test("rejects blocks closed out of turn", () => {
+        expect(() =>
+            parse("{block:Posts}{block:Text}{/block:Posts}{/block:Text}"),
+        ).toThrow(/closes \{block:Text\}/);
+    });
+});
+
+describe("render", () => {
+    test("a block repeats for a list, stays for true, and goes for false", () => {
+        const page =
+            "{block:Posts}[{block:Title}{Title}{/block:Title}]{/block:Posts}";
+        expect(
+            render(page, {
+                Posts: [{ Title: "a" }, { Title: false }, { Title: "c" }],
+            }),
+        ).toBe("[a][][c]");
+    });
+
+    test("a name resolves in the innermost scope that has it", () => {
+        const page = "{Title}{block:Posts}/{Title}{/block:Posts}";
+        expect(
+            render(page, { Title: "blog", Posts: [{ Title: "post" }, {}] }),
+        ).toBe("blog/post/blog");
+    });
+
+    test("a brace Tumblr does not know is left alone", () => {
+        expect(render("a{color:red}{e}{Body}", {})).toBe("a{color:red}{e}");
+    });
+
+    test("a template with every block dropped carries no tags at all", () => {
+        for (const source of templates)
+            expect(render(source, {})).not.toMatch(/\{\/?block:/);
+    });
+});
+
+describe("stamp", () => {
+    const theme = (body: string) =>
+        `<head><meta name="theme-hash" content="__THEME_HASH__"></head>${body}`;
+
+    test("stamping is idempotent, and carries the theme's own hash", () => {
+        for (const source of templates.slice(0, 50)) {
+            const once = stamp(theme(source));
+            expect(stamp(once)).toBe(once);
+            expect(readStamp(once)).toBe(themeHash(theme(source)));
+        }
+    });
+
+    test("a change to the theme changes its stamp", () => {
+        expect(readStamp(stamp(theme("a")))).not.toBe(
+            readStamp(stamp(theme("b"))),
+        );
+    });
+});
+
+describe("navbar links", () => {
+    const site = new URL("https://skyedelaciel.com");
+    const hosts: Host[] = ["site", "tumblr"];
+
+    test("off the site, every link names its host", () => {
+        for (const link of navLinks)
+            expect(hrefFor(link, "tumblr", site)).toMatch(/^https:\/\//);
+    });
+
+    test("on each host, exactly one entry is where the reader is", () => {
+        const places: Record<Host, string> = {
+            site: "/writing/some-essay/",
+            tumblr: "/",
+        };
+        for (const host of hosts)
+            expect(
+                navLinks.filter((link) => isCurrent(link, host, places[host])),
+            ).toHaveLength(1);
+    });
+
+    test("a page the navbar does not list has no current entry", () => {
+        expect(
+            navLinks.filter((link) => isCurrent(link, "site", "/design/")),
+        ).toEqual([]);
+    });
+});

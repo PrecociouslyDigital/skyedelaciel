@@ -13,7 +13,9 @@
         "test": "playwright test",
         "test:unit": "vitest run",
         "gallery": "node tools/gallery.mjs",
-        "lint:css": "stylelint \"src/**/*.{scss,astro,svelte}\""
+        "lint:css": "stylelint \"src/**/*.{scss,astro,svelte}\"",
+        "tumblr:check": "node tools/tumblr-check.mjs",
+        "tumblr:upload": "node tools/tumblr-upload.mjs"
     },
     "dependencies": {
         "@astrojs/mdx": "^5.0.0-beta.2",

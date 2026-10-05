@@ -71,6 +71,82 @@ section("Table of contents", () => {
         }) => {
             expect(await indicatorSide(page, ".toc-sidebar")).toBe("right");
         });
+
+        test.describe("as the reader scrolls", () => {
+            onlyIn("wide");
+
+            const current = (page: import("@playwright/test").Page) =>
+                page
+                    .locator(".toc-sidebar a[data-current]")
+                    .getAttribute("href");
+
+            /**
+             * Put the reading line `offset` pixels below where the heading
+             * behind the `index`th entry begins.
+             */
+            const readAt = (
+                page: import("@playwright/test").Page,
+                index: number,
+                offset: number,
+            ) =>
+                page.evaluate(
+                    ([index, offset]) => {
+                        const href = document
+                            .querySelectorAll(".toc-sidebar a[href^='#']")
+                            [index]!.getAttribute("href")!;
+                        const top = document
+                            .getElementById(href.slice(1))!
+                            .getBoundingClientRect().top;
+                        scrollTo(
+                            0,
+                            scrollY + top - innerHeight * 0.05 + offset,
+                        );
+                        return href;
+                    },
+                    [index, offset] as const,
+                );
+
+            /**
+             * Scrolling back up past where a section begins returns the reader
+             * to the section before it — the one they are now in — rather than
+             * leaving the later one current until the earlier one's top is
+             * reached again.
+             */
+            test("the current entry is the section being read, either way", async ({
+                page,
+            }) => {
+                const entry = await readAt(page, 2, 10);
+                await expect.poll(() => current(page)).toBe(entry);
+
+                const before = await readAt(page, 1, 0);
+                await readAt(page, 2, -10);
+                await expect.poll(() => current(page)).toBe(before);
+            });
+
+            test("the box holds the entry and what it unfolded", async ({
+                page,
+            }) => {
+                await readAt(page, 0, 10);
+                const entry = page.locator(".toc-sidebar a[data-current]");
+                await expect(entry).toHaveCount(1);
+
+                await expect
+                    .poll(() =>
+                        entry.evaluate((link) => {
+                            const item = link.parentElement!;
+                            const box = getComputedStyle(
+                                link.closest(".toc-root")!,
+                                "::before",
+                            );
+                            return (
+                                Math.round(parseFloat(box.height)) ===
+                                Math.round(item.getBoundingClientRect().height)
+                            );
+                        }),
+                    )
+                    .toBe(true);
+            });
+        });
     });
 
     section("Narrow viewports", () => {

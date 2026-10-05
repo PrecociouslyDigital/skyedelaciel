@@ -36,3 +36,6 @@ playwright-report/
 .gallery/
 # browse daemon: socket, pidfile and log
 .browse.*
+
+# the Tumblr theme, built alongside the site but never served by it
+dist-tumblr/

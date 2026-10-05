@@ -14,6 +14,13 @@ export { expect };
 export const SPEC_PAGE = "/design/";
 export const FIXTURE_PAGE = "/fixtures/kitchen-sink/";
 
+/**
+ * The Tumblr theme, filled in with the sample blog in
+ * src/content/fixtures/tumblr.ts: an index page, and one post's own page.
+ */
+export const TUMBLR_INDEX = "/fixtures/tumblr/";
+export const TUMBLR_POST = "/fixtures/tumblr/post/";
+
 export const test = base.extend<{
     profileName: ProfileName;
     profile: Profile;

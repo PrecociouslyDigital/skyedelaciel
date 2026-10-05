@@ -1,0 +1,72 @@
+---
+import "./prelude.scss";
+
+/* Self-hosted faces, bundled into the build rather than fetched from a CDN.
+   `standard` is the file carrying both of Source Serif 4's axes — weight and
+   optical size; `index`/`wght` drop the latter. Each declares every subset with
+   a `unicode-range`, so a Latin page downloads four files. */
+import "@fontsource-variable/source-serif-4/standard.css";
+import "@fontsource-variable/source-serif-4/standard-italic.css";
+import "@fontsource-variable/cormorant";
+import "@fontsource-variable/cormorant/wght-italic.css";
+
+import Navbar from "~/components/Navbar.astro";
+import type { Host } from "~/components/nav";
+
+/**
+ * Everything a page of this site has around its text, wherever it is served:
+ * the head, the faces, the scheme, and the sidebar holding the navbar and a
+ * table of contents. The text itself is the default slot; the contents go in
+ * the `toc` slot, and anything else the head needs in `head`.
+ */
+interface Props {
+    title: string;
+    description: string;
+    author?: string;
+    host: Host;
+}
+
+const { title, description, author = "Skye De La Ciel", host } = Astro.props;
+---
+
+<html lang="en">
+    <head>
+        {
+            /*
+                Applies a stored scheme choice before first paint, so the page
+                never flashes the scheme the reader turned off. ThemeToggle
+                clears this attribute once its script runs; colors.scss honours
+                either signal.
+
+                `is:inline` is required: without it, Astro bundles this as a
+                deferred `type="module"` script that runs after paint,
+                defeating the point. Being unprocessed, it must be plain
+                browser JS — no TypeScript, no imports.
+            */
+        }
+        <script is:inline>
+            if (JSON.parse(localStorage.getItem("theme-override") ?? "false")) {
+                document.documentElement.dataset.themeChecked = "true";
+            }
+        </script>
+        <script src="~/components/toc-scroll.ts"></script>
+        <meta charset="utf-8" />
+        <meta name="color-scheme" content="light dark" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width" />
+        <title>{title}</title>
+        <meta name="author" content={author} />
+        <meta name="description" content={description} />
+        <slot name="head" />
+    </head>
+    <body>
+        <aside class="sidebar">
+            <Navbar host={host} />
+            <nav class="toc toc-sidebar" aria-label="Table of contents">
+                <slot name="toc" />
+            </nav>
+        </aside>
+        <slot />
+    </body>
+</html>

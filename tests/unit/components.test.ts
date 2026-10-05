@@ -52,7 +52,7 @@ const entriesIn = (html: string) =>
 
 /** The slugs that own a collapsible section, in document order. */
 const parentsIn = (html: string) =>
-    [...html.matchAll(/<details[^>]*\bdata-slug="([^"]+)"/g)].map(
+    [...html.matchAll(/href="#([^"]+)">[^<]*<\/a>\s*<details/g)].map(
         (match) => match[1]!,
     );
 

@@ -1,0 +1,200 @@
+---
+import { RAIL_SEPARATOR } from "~/layouts/prelude/rail";
+import Block from "./Block.astro";
+import { block, date, v } from "./tags";
+
+/**
+ * One post, set as an article of the site: framed, stamped down the rail, and
+ * closed by its notes on its own page. Rendered once per post inside
+ * `{block:Posts}`; see design.mdx, Tumblr.
+ *
+ * The rail carries the post's figures — its day, and its notes once it has
+ * some — and nothing a reader would not want: the post's id appears only as
+ * the anchor the table of contents points at.
+ */
+const rail = `${date}${block("NoteCount", `${RAIL_SEPARATOR}${v("NoteCountWithLabel")}`)}`;
+---
+
+<article id={`post-${v("PostID")}`} class="post" data-rail={rail}>
+    <header class="front-matter">
+        <div class="title-line">
+            <Block name="Text">
+                <Block name="Title">
+                    <h1 class="title">
+                        <a href={v("Permalink")}>{v("Title")}</a>
+                    </h1>
+                </Block>
+            </Block>
+            <Block name="RebloggedFrom">
+                <span class="author">
+                    via <a href={v("ReblogParentURL")}
+                        >{v("ReblogParentName")}</a
+                    >
+                </span>
+            </Block>
+        </div>
+    </header>
+
+    {
+        /* A reblog's {Body} would carry the whole trail as nested
+           blockquotes; walked item by item, each hand gets its own name. */
+    }
+    <Block name="Text">
+        <Block name="NotReblog">{v("Body")}</Block>
+        <Block name="RebloggedFrom">
+            <Block name="Reblogs">
+                <section class="trail">
+                    <p class="author">{v("Username")}</p>
+                    {v("Body")}
+                </section>
+            </Block>
+        </Block>
+    </Block>
+
+    <Block name="Answer">
+        <blockquote>
+            <p class="author">{v("Asker")} asked</p>
+            {v("Question")}
+        </blockquote>
+        {v("Answer")}
+    </Block>
+
+    <Block name="Photo">
+        <img src={v("PhotoURL-HighRes")} alt={v("PhotoAlt")} />
+        <Block name="Caption">{v("Caption")}</Block>
+    </Block>
+
+    <Block name="Photoset">
+        {v("Photoset-700")}
+        <Block name="Caption">{v("Caption")}</Block>
+    </Block>
+
+    <Block name="Quote">
+        <blockquote>{v("Quote")}</blockquote>
+        <Block name="Source"><p class="author">{v("Source")}</p></Block>
+    </Block>
+
+    <Block name="Link">
+        <p><a class="content-link" href={v("URL")}>{v("Name")}</a></p>
+        <Block name="Description">{v("Description")}</Block>
+    </Block>
+
+    <Block name="Chat">
+        <Block name="Title"><h2>{v("Title")}</h2></Block>
+        <dl class="chat">
+            <Block name="Lines">
+                <Block name="Label"><dt>{v("Label")}</dt></Block>
+                <dd>{v("Line")}</dd>
+            </Block>
+        </dl>
+    </Block>
+
+    <Block name="Video">
+        {v("Video-700")}
+        <Block name="Caption">{v("Caption")}</Block>
+    </Block>
+
+    <Block name="Audio">
+        {v("AudioEmbed")}
+        <Block name="Caption">{v("Caption")}</Block>
+    </Block>
+
+    <footer class="post-foot">
+        <Block name="IndexPage"><a href={v("Permalink")}>Permalink</a></Block>
+        <Block name="HasTags">
+            <span class="post-tags">
+                <Block name="Tags">
+                    <a href={v("TagURL")}>#{v("Tag")}</a>
+                </Block>
+            </span>
+        </Block>
+    </footer>
+
+    <Block name="PermalinkPage">
+        <Block name="PostNotes">
+            <section id="notes" class="closing" aria-label="Notes">
+                <h2>Notes</h2>
+                {v("PostNotes")}
+            </section>
+        </Block>
+    </Block>
+</article>
+
+<style lang="scss">
+    @use "../layouts/prelude/breakpoints";
+    @use "../layouts/prelude/ornaments";
+    @use "../layouts/prelude/typography";
+
+    /* A post with neither a title nor a source has no front matter to set. */
+    .front-matter:not(:has(.title, .author)) {
+        display: none;
+    }
+
+    .title a {
+        text-decoration-line: none;
+    }
+
+    .author a {
+        color: inherit;
+    }
+
+    .trail {
+        & + .trail {
+            margin-top: 1.5rem;
+        }
+
+        > .author {
+            margin-bottom: 0.25rem;
+        }
+    }
+
+    .chat dt {
+        @include typography.apparatus;
+        color: var(--color-muted);
+    }
+
+    .chat dd {
+        margin: 0 0 0.5em;
+    }
+
+    .post-foot {
+        @include typography.apparatus(0.9rem);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0 1.5ch;
+        margin-top: 1.5rem;
+        color: var(--color-muted);
+
+        a {
+            text-decoration-line: none;
+
+            &:hover {
+                text-decoration-line: underline;
+            }
+        }
+    }
+
+    .post-tags {
+        display: contents;
+    }
+
+    /* Beside a sidebar the tags are in the contents, so the foot would only
+       repeat them. Paper has no sidebar, so it keeps them. */
+    @include breakpoints.wide-sidebar {
+        @media screen {
+            .post-tags {
+                display: none;
+            }
+        }
+    }
+
+    /* Where posts are not framed, a stroke divides one from the next. */
+    @include breakpoints.framed-title {
+        .post + .post::before {
+            @include ornaments.brush-rule(20, var(--color-text));
+            content: "";
+            width: 30%;
+            margin: 0 auto 2.5rem;
+        }
+    }
+</style>

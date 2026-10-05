@@ -1,18 +1,43 @@
 ---
-import ThemeToggle from "./ThemeToggle.svelte";
+import ThemeToggle from "./ThemeToggle.astro";
 import Mark from "~/assets/logo-reduced-brush.svg";
+import { hrefFor, isCurrent, navLinks, type Host } from "./nav";
+
+interface Props {
+    host: Host;
+}
+
+const { host } = Astro.props;
+const site = Astro.site;
+if (!site) throw new Error("astro.config.mts must set `site`.");
 ---
 
 <nav class="navbar" aria-label="Main navigation">
-    <a href="/" class="logo" aria-label="Home"><Mark /></a>
+    <a
+        href={hrefFor({ label: "Home", path: "/" }, host, site)}
+        class="logo"
+        aria-label="Home"><Mark /></a
+    >
 
     <div class="nav-links">
-        <a href="/about">About</a>
-        <a href="/writing">Writing</a>
-        <a href="https://github.com/skyedelaciel" rel="noopener">GitHub</a>
+        {
+            navLinks.map((link) => (
+                <a
+                    href={hrefFor(link, host, site)}
+                    rel={"url" in link ? "noopener" : undefined}
+                    aria-current={
+                        isCurrent(link, host, Astro.url.pathname)
+                            ? "page"
+                            : undefined
+                    }
+                >
+                    {link.label}
+                </a>
+            ))
+        }
     </div>
 
-    <ThemeToggle transition:persist client:load />
+    <ThemeToggle />
 </nav>
 
 <script>
@@ -128,6 +153,12 @@ import Mark from "~/assets/logo-reduced-brush.svg";
 
             &:hover {
                 color: var(--color-accent);
+            }
+
+            // Where the reader is: full ink rather than a chroma, since the
+            // three hands each mean something else.
+            &[aria-current="page"] {
+                color: var(--color-text);
             }
         }
     }

@@ -17,6 +17,7 @@ import { resolveRemoteLinks } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
 import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
+import tumblrTheme from "./src/integrations/tumblr-theme";
 
 loadCache();
 
@@ -64,7 +65,8 @@ function revision(): string {
 
 // https://astro.build/config
 export default defineConfig({
-    integrations: [mdx(), svelte()],
+    site: "https://skyedelaciel.com",
+    integrations: [mdx(), svelte(), tumblrTheme()],
     image: {
         // A link popover's image is copied onto this site at build time. Its
         // URL comes from resolving the link, never from a visitor, so any

@@ -45,3 +45,11 @@ also matches the scheme toggle beside it.
 A small speck stays visible near the bottom of the seal while the strokes are
 lifted; not yet traced. `public/logo.svg` is no longer referenced by anything,
 though `tools/logo.mjs` still writes it and the drift test still checks it.
+
+## 2026-10-04 — one link list, and a current entry
+
+The entries live in `src/components/nav.ts`, shared with the Tumblr theme. An
+entry is a site path or a full address; on Tumblr (`host="tumblr"`) site paths
+are resolved against `site` in astro.config.mts. The current entry is set in
+`--color-text`, not a chroma: accent, signal and attention each already mean a
+hand, and "you are here" is none of them.

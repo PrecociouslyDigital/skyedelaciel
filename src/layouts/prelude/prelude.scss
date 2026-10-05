@@ -1,36 +1,9 @@
 @use "colors";
+@use "toc";
 @use "breakpoints";
 @use "motion";
 @use "ornaments";
 @use "typography";
-
-/// Where the page's frame goes.
-///
-/// A framed article needs clear margin on both sides, so the frame is drawn
-/// around it only on a wide screen. Everywhere else — a narrow window, and
-/// paper, whatever the width of the sheet — the title block wears it instead.
-/// The two queries are complements, so exactly one of them ever fires.
-@mixin framed-article {
-    @media screen and (min-width: breakpoints.$wide) {
-        @content;
-    }
-}
-
-@mixin framed-title {
-    @media not screen and (min-width: breakpoints.$wide) {
-        @content;
-    }
-}
-
-/// Where the rail slug is set: the wide screen the frame needs, and paper as
-/// well, whatever the width of the sheet. It is the one mark of the machine's
-/// that survives the press — see design.mdx, Annotation — so it is gated on
-/// its own query rather than riding along with `framed-article`.
-@mixin stamped {
-    @media screen and (min-width: breakpoints.$wide), print {
-        @content;
-    }
-}
 
 /// How far the frame holds the text off the article's outer edge. Registered so
 /// that the `ch` in it resolves against the article's own font rather than
@@ -130,7 +103,7 @@ article {
     }
 }
 
-@include framed-title {
+@include breakpoints.framed-title {
     .front-matter {
         @include ornaments.frame-heavy;
         padding: 1.75rem 2ch 1.5rem;
@@ -321,8 +294,11 @@ figcaption {
     color: var(--color-muted);
 }
 
-/* — Bibliography — */
-.bibliography {
+/* — Closing sections —
+   What an article carries after its text rather than in it — the works it
+   referenced, the notes a post gathered — set off from the text by a broad
+   brush stroke. */
+.closing {
     margin-top: 3rem;
 
     &::before {
@@ -335,7 +311,9 @@ figcaption {
     h2 {
         margin-top: 0;
     }
+}
 
+.bibliography {
     li {
         margin-bottom: 0.5rem;
         font-size: 0.92rem;
@@ -418,7 +396,7 @@ figcaption {
     }
 }
 
-@include framed-article {
+@include breakpoints.framed-article {
     article {
         @include ornaments.frame-heavy;
         // 3px of that is the frame itself, so the text clears its inner rule
@@ -444,7 +422,7 @@ figcaption {
     }
 }
 
-@include stamped {
+@include breakpoints.stamped {
     /* 書口, carrying what identifies this copy to a machine rather than a
        title and fascicle number — see design.mdx, Annotation.
 

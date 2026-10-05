@@ -2,7 +2,7 @@
 title: Design Specification
 abstract: This is a living document describing the desired visual design of the website. It is intended to be a useful reference for human and machine alike.
 published: 2026-02-01
-updated: 2026-09-18
+updated: 2026-10-04
 ---
 
 # Design Goals
@@ -69,7 +69,7 @@ The machine layer is one idea, and everything drawn in `signal` belongs to it: a
 
 It draws a **bounding box** as four corner ticks, a right angle at each corner with the edges between them left open, around anything it has taken as a subject: the article, outside the ink frame rather than replacing it, so that both readers' boxes stand; a code block; the popover on a link. Where the thing it has boxed can scroll, the ticks are painted on it rather than around it, since a box drawn outside a scrolling element would be clipped.
 
-It draws a **rail slug** down the right margin of a framed article, set in a vertical column in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. The column runs downward but the characters stand upright in it, as they do on a seal, rather than being turned on their side. It dates the page: published, edited if it has been, and the revision the build was made from. An unedited page carries no edited date, and outside a git checkout the revision is simply absent.
+It draws a **rail slug** down the right margin of a framed article, set in a vertical column in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. The column runs downward but the characters stand upright in it, as they do on a seal, rather than being turned on their side. It dates and counts the page: published, edited if it has been, and the revision the build was made from. An unedited page carries no edited date, and outside a git checkout the revision is simply absent. On [Tumblr](#tumblr) it stamps each post with its day and, once it has any, its count of notes.
 
 It draws a **provenance mark** after every link in the prose: a single glyph naming what kind of address it is — `§` for a page of this site, `↗` for anywhere else, `¶` for a DOI (an arXiv paper included, since it has one), `W` for Wikipedia. The mark is a property of the kind, so a kind without one should fail to compile. Whether the link resolved is a separate question and is answered by colour rather than by a second glyph: a link nothing answered for keeps its own mark, drawn in `attention`. A same-document fragment is not unresolved — there was nothing to look up.
 
@@ -112,7 +112,7 @@ The Navbar should not be shown on print pages, and should make space so that the
 The navbar contains, in order
 
 - A clickable logo that takes you to the homepage
-- Links to various internal and external landing pages
+- Links to various internal and external landing pages, [Tumblr](#tumblr) among them. The one for where the reader is now is set in full ink rather than muted, and marked as the current page for a screen reader.
 - A button that toggles the [Color Scheme](#colors)
 
 The logo is drawn as a seal: the mark, a woven six-petal flower painted in brush strokes, inside a square border of the same ink, in the scheme's `text` colour. It is set into the page rather than served as an image, so that it reads in both schemes without a second copy of the artwork, and so that it can be rewritten: when the pointer comes onto it, its strokes lift off one after another in the direction they were painted and are laid down again. Once begun, the rewrite plays to its end even if the pointer leaves. The scheme toggle is a small square, matching the seal and the frame rather than the circle it used to be.
@@ -123,7 +123,7 @@ The logo is drawn as a seal: the mark, a woven six-petal flower painted in brush
 
 When there is enough space for both the table of contents and sidenotes, the table of contents sits to the left of the content, arranged vertically, underneath the navbar. As the user scrolls, the top of the table of contents should "stick" to the top of the viewport (with pleasant margin, of course).
 
-The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the _right_ of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, headings should auto-expand and collapse as a user scrolls through the document, and the current entry is tracked twice over: its own text turns to the attention colour, and a [bounding box](#annotation) slides down the list to enclose it. Without javascript there is no current entry and so no box.
+The table of contents should have each level be collapsible (so you'd expand a specific `h1` to see `h2`'s under it). Collapse should be controlled by an indicator to the _right_ of that element. A vertical line to the left of siblings groups them together. When a user has javascript enabled, the entry for the section being read is current: it unfolds, every other entry folds, and it is tracked twice over — its own text turns to the attention colour, and a [bounding box](#annotation) slides down the list to enclose it together with everything it unfolded. The section being read is the one the top of the viewport is in, whichever way the reader scrolled there; over the last screenful of the page that line runs down to the bottom of the viewport, so that a short last section is reached too. Without javascript there is no current entry and so no box.
 
 ### Narrow viewports
 
@@ -186,3 +186,11 @@ This behavior should not require javascript.[^scripter]
 [^demo]: So for example, this sidenote, which is much much much longer than it really needs to be for demonstration purposes, should not overlap with the sidenote below in any way. Instead, the following note is pushed down, so that the notes are completely readable, but still roughly on eye-level with their note locations.
 
 [^scripter]: Thanks to [A Scripter's notes](https://scripter.co/sidenotes-using-only-css/) for sharing a bunch of CSS tricks that make this possible.
+
+## Tumblr
+
+The blog at [skyedelaciel.tumblr.com](https://skyedelaciel.tumblr.com) is another part of the site rather than a site of its own: it is set in the same shell, with the same navbar, faces and schemes, and the navbar marks Tumblr as where the reader is. Its theme is built out of this site's own layout and stylesheet, so that the two cannot drift apart. Only the blog's own address wears it; Tumblr's views of the blog inside its dashboard and app do not use themes.
+
+An index page opens with the blog's title and description as its front matter. Each post is an article of its own, framed and stamped as an article of the site is, with its title, if it has one, as front matter, and the blog it was reblogged from as its author. A reblog sets out each hand's addition in turn, each under its own name. Pages of posts are paged rather than scrolled endlessly, so that a page is a bounded document like any other, with links to older and newer pages at its foot.
+
+The table of contents carries tags. On an index page it lists the posts, each named by its day and its title, with its tags folded under it, and follows the reader as the contents of an article do: the post being read unfolds its tags. A post's own page lists that post's tags. Where there is no sidebar, a post's tags close it instead. A post's own page closes with its notes, set off from it as [works referenced](#bibliography) are from an article.

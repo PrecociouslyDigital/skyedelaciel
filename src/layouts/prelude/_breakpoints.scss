@@ -8,8 +8,8 @@
 /// narrower widths to make room for sidenotes, leaving too little space
 /// for the sidebar. At 72rem+ the left gutter reaches ~8rem.
 ///
-/// The widths are exported as well as wrapped, because prelude.scss builds two
-/// complementary queries of its own out of `$wide`.
+/// Below them are the queries built out of `$wide` for the page's frame and
+/// its rail stamp, which every layout that sets an article has to agree on.
 
 $wide: 60rem;
 $wide-sidebar: 72rem;
@@ -22,6 +22,34 @@ $wide-sidebar: 72rem;
 
 @mixin wide-sidebar {
     @media (min-width: $wide-sidebar) {
+        @content;
+    }
+}
+
+/// Where the page's frame goes.
+///
+/// A framed article needs clear margin on both sides, so the frame is drawn
+/// around it only on a wide screen. Everywhere else — a narrow window, and
+/// paper, whatever the width of the sheet — the title block wears it instead.
+/// The two queries are complements, so exactly one of them ever fires.
+@mixin framed-article {
+    @media screen and (min-width: $wide) {
+        @content;
+    }
+}
+
+@mixin framed-title {
+    @media not screen and (min-width: $wide) {
+        @content;
+    }
+}
+
+/// Where the rail slug is set: the wide screen the frame needs, and paper as
+/// well, whatever the width of the sheet. It is the one mark of the machine's
+/// that survives the press — see design.mdx, Annotation — so it is gated on
+/// its own query rather than riding along with `framed-article`.
+@mixin stamped {
+    @media screen and (min-width: $wide), print {
         @content;
     }
 }

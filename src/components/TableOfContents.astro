@@ -1,5 +1,7 @@
 ---
 import { match, P } from "ts-pattern";
+import TocEntry from "./TocEntry.astro";
+import TocList from "./TocList.astro";
 
 interface Heading {
     depth: number;
@@ -45,11 +47,6 @@ function buildTree(headings: Heading[]): TocNode[] {
     return root.children;
 }
 
-/**
- * `root` separates the page's own list from the ones the recursion below
- * renders. Only the outermost list carries the tracker, and only it is
- * positioned for the tracker to be measured against.
- */
 const { nodes, root } = match(Astro.props)
     .with({ headings: P.nonNullable }, ({ headings }) => ({
         nodes: buildTree(headings.filter((h) => h.depth <= 3)),
@@ -61,154 +58,16 @@ const { nodes, root } = match(Astro.props)
 
 {
     nodes.length > 0 && (
-        <ol class:list={["toc-list", root && "toc-root"]}>
-            {nodes.map((node) => (
-                <li>
-                    <a href={`#${node.slug}`}>{node.text}</a>
-                    {node.children.length > 0 && (
-                        <details data-slug={node.slug}>
-                            <summary aria-label="Expand section" />
-                            <Astro.self nodes={node.children} />
-                        </details>
-                    )}
-                </li>
-            ))}
-        </ol>
+        <TocList root={root}>
+            {nodes.map((node) =>
+                node.children.length > 0 ? (
+                    <TocEntry href={`#${node.slug}`} text={node.text}>
+                        <Astro.self nodes={node.children} />
+                    </TocEntry>
+                ) : (
+                    <TocEntry href={`#${node.slug}`} text={node.text} />
+                ),
+            )}
+        </TocList>
     )
 }
-
-<style lang="scss">
-    @use "../layouts/prelude/motion";
-    @use "../layouts/prelude/ornaments";
-
-    /* The tracker: a box the machine holds around whatever it has decided you
-       are reading, sliding from one entry to the next as you scroll.
-
-       It is the outer list's own ::before rather than an element, so there is
-       nothing in the markup to hide when there is nothing to track — and
-       nothing to hide when scripting is off, since `data-current` is set by
-       toc-scroll.ts and the box only exists while one is set. That module
-       supplies the two lengths below; they are the contract between it and
-       this file. */
-    .toc-root {
-        position: relative;
-
-        &:has(a[data-current])::before {
-            @include ornaments.corner-ticks(var(--color-signal), 0.45rem, 1px);
-            @include motion.snap((transform, height), 110ms);
-            content: "";
-            position: absolute;
-            inset-inline: 0;
-            top: 0;
-            height: var(--toc-tracker-height, 0);
-            transform: translateY(var(--toc-tracker-top, 0));
-            pointer-events: none;
-        }
-    }
-
-    .toc-list {
-        font-family: var(--font-prose);
-        font-size: var(--text-small);
-        list-style: none;
-        padding-left: 0;
-        margin: 0;
-
-        .toc-list {
-            padding-left: 1ch;
-            border-left: 1px solid var(--color-border);
-            margin-left: 0.5ch;
-        }
-
-        a {
-            text-decoration: none;
-            color: var(--color-muted);
-
-            &:hover {
-                color: var(--color-text);
-            }
-
-            // Coloured rather than bolded: the sidebar is shrink-wrapped, so
-            // a heavier entry would widen it and drag the grouping line
-            // sideways as the reader scrolls. Ochre, because the current
-            // entry is the one transient thing here.
-            &[data-current] {
-                color: var(--color-attention);
-            }
-        }
-
-        li {
-            display: grid;
-            grid-template-columns: 1fr 1em;
-            grid-template-rows: auto auto;
-
-            // Link in first column
-            > a {
-                grid-column: 1;
-                grid-row: 1;
-            }
-
-            > details {
-                display: contents;
-
-                // Chevron to the right of link
-                > summary {
-                    grid-column: 2;
-                    grid-row: 1;
-                    cursor: pointer;
-                    list-style: none;
-                    padding-left: 0.5ch;
-                    color: var(--color-muted);
-
-                    &::marker,
-                    &::-webkit-details-marker {
-                        display: none;
-                    }
-
-                    &::before {
-                        @include motion.snap(transform);
-                        content: "▸";
-                        display: inline-block;
-                    }
-                }
-
-                &[open] > summary::before {
-                    transform: rotate(90deg);
-                }
-
-                > .toc-list {
-                    grid-column: 1 / -1;
-                    grid-row: 2;
-                    margin-top: 0.25em;
-                }
-            }
-        }
-    }
-
-    /* Which side the collapse indicator sits on depends on which container
-       renders this component, not on viewport width — right in the sidebar,
-       left inline. See design.mdx, Table of contents. */
-    :global(.toc-portrait) .toc-list li {
-        grid-template-columns: 1em 1fr;
-
-        > a {
-            grid-column: 2;
-        }
-
-        > details > summary {
-            grid-column: 1;
-            padding-left: 0;
-            padding-right: 0.5ch;
-        }
-    }
-
-    @media print {
-        details {
-            // Expand all for print
-            &:not([open]) {
-                > .toc-list {
-                    display: block;
-                }
-            }
-        }
-    }
-</style>

@@ -20,3 +20,10 @@ lists rather than one.
 are deeper, up to the next one at its own level or above) rather than calling
 `buildTree`; a test that imported the implementation would agree with it by
 construction.
+
+## 2026-10-04 — `data-slug` is gone
+
+The table of contents is now built from `TocList`/`TocEntry`, which the Tumblr
+theme shares, and `<details>` no longer carries `data-slug` — nothing but this
+test read it. `parentsIn` now reads the entry whose link is followed directly
+by a `<details>`.

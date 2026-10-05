@@ -1,0 +1,26 @@
+# Builds the Tumblr theme from the site, offers it as an artifact, and fails
+# while the blog is wearing an older one. Tumblr has no API for themes, so the
+# fix for a red run is `npm run tumblr:upload` and a re-run of this workflow.
+name: Tumblr theme
+
+on:
+    push:
+        branches: [release]
+    workflow_dispatch:
+
+jobs:
+    theme:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: npm
+            - run: npm ci
+            - run: npm run build
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: tumblr-theme
+                  path: dist-tumblr/theme.html
+            - run: npm run tumblr:check

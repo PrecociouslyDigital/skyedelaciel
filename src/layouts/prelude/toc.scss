@@ -1,0 +1,141 @@
+@use "motion";
+@use "ornaments";
+
+/// A table of contents, built of TocList and TocEntry. Global rather than
+/// scoped to either, because each is slotted into whichever component builds
+/// the tree — TableOfContents.astro for a page's headings, the Tumblr theme for
+/// a page of posts.
+
+/* The tracker: a box the machine holds around whatever it has decided you
+   are reading, sliding from one entry to the next as you scroll.
+
+   It is the outer list's own ::before rather than an element, so there is
+   nothing in the markup to hide when there is nothing to track — and
+   nothing to hide when scripting is off, since `data-current` is set by
+   toc-scroll.ts and the box only exists while one is set. That module
+   supplies the two lengths below; they are the contract between it and
+   this file. */
+.toc-root {
+    position: relative;
+
+    &:has(a[data-current])::before {
+        @include ornaments.corner-ticks(var(--color-signal), 0.45rem, 1px);
+        @include motion.snap((transform, height), 110ms);
+        content: "";
+        position: absolute;
+        inset-inline: 0;
+        top: 0;
+        height: var(--toc-tracker-height, 0);
+        transform: translateY(var(--toc-tracker-top, 0));
+        pointer-events: none;
+    }
+}
+
+.toc-list {
+    font-family: var(--font-prose);
+    font-size: var(--text-small);
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+
+    .toc-list {
+        padding-left: 1ch;
+        border-left: 1px solid var(--color-border);
+        margin-left: 0.5ch;
+    }
+
+    a {
+        text-decoration: none;
+        color: var(--color-muted);
+
+        &:hover {
+            color: var(--color-text);
+        }
+
+        // Coloured rather than bolded: the sidebar is shrink-wrapped, so
+        // a heavier entry would widen it and drag the grouping line
+        // sideways as the reader scrolls. Ochre, because the current
+        // entry is the one transient thing here.
+        &[data-current] {
+            color: var(--color-attention);
+        }
+    }
+
+    li {
+        display: grid;
+        grid-template-columns: 1fr 1em;
+        grid-template-rows: auto auto;
+
+        // Link in first column
+        > a {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        > details {
+            display: contents;
+
+            // Chevron to the right of link
+            > summary {
+                grid-column: 2;
+                grid-row: 1;
+                cursor: pointer;
+                list-style: none;
+                padding-left: 0.5ch;
+                color: var(--color-muted);
+
+                &::marker,
+                &::-webkit-details-marker {
+                    display: none;
+                }
+
+                &::before {
+                    @include motion.snap(transform);
+                    content: "▸";
+                    display: inline-block;
+                }
+            }
+
+            &[open] > summary::before {
+                transform: rotate(90deg);
+            }
+
+            > .toc-list {
+                grid-column: 1 / -1;
+                grid-row: 2;
+                margin-top: 0.25em;
+            }
+
+            // A section that turned out to be empty — a post with no tags,
+            // which only Tumblr knows when it fills the page in — has nothing
+            // to disclose, so it shows no chevron.
+            &:not(:has(li)) {
+                display: none;
+            }
+        }
+    }
+}
+
+/* Which side the collapse indicator sits on depends on which container
+   renders the list, not on viewport width — right in the sidebar, left
+   inline. See design.mdx, Table of contents. */
+.toc-portrait .toc-list li {
+    grid-template-columns: 1em 1fr;
+
+    > a {
+        grid-column: 2;
+    }
+
+    > details > summary {
+        grid-column: 1;
+        padding-left: 0;
+        padding-right: 0.5ch;
+    }
+}
+
+@media print {
+    // Expand all for print
+    .toc-list details:not([open]) > .toc-list {
+        display: block;
+    }
+}

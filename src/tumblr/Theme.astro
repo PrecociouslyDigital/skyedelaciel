@@ -1,0 +1,99 @@
+---
+import Shell from "~/layouts/prelude/Shell.astro";
+import Block from "./Block.astro";
+import Contents from "./Contents.astro";
+import Post from "./Post.astro";
+import { THEME_HASH_PLACEHOLDER } from "./stamp.mjs";
+import { block, v } from "./tags";
+
+/**
+ * The Tumblr theme: the site's own shell around a page of posts, written in
+ * Tumblr's template language for Tumblr to fill in. The tumblr-theme
+ * integration builds it into one self-contained file; see design.mdx, Tumblr.
+ */
+const title = `${v("Title")}${block("PostSummary", ` — ${v("PostSummary")}`)}`;
+---
+
+<Shell title={title} description={v("MetaDescription")} host="tumblr">
+    <Fragment slot="head">
+        <link rel="alternate" type="application/rss+xml" href={v("RSS")} />
+        <meta name="theme-hash" content={THEME_HASH_PLACEHOLDER} />
+    </Fragment>
+
+    <Contents slot="toc" />
+
+    <main class="feed">
+        <Block name="IndexPage">
+            <header class="front-matter">
+                <div class="title-line">
+                    <h1 class="title">{v("Title")}</h1>
+                </div>
+                <Block name="Description">
+                    <div class="abstract">{v("Description")}</div>
+                </Block>
+            </header>
+        </Block>
+
+        <Block name="Posts"><Post /></Block>
+
+        <Block name="Pagination">
+            <nav class="pagination" aria-label="Pages">
+                <Block name="PreviousPage">
+                    <a href={v("PreviousPage")} rel="prev">Newer</a>
+                </Block>
+                <Block name="NextPage">
+                    <a href={v("NextPage")} rel="next">Older</a>
+                </Block>
+            </nav>
+        </Block>
+    </main>
+</Shell>
+
+<style lang="scss">
+    @use "../layouts/prelude/breakpoints";
+    @use "../layouts/prelude/typography";
+
+    /* One column of articles, where the site has one. The grid in prelude.scss
+       places the body's children, so the posts are gathered into one of them
+       — which also keeps the sidebar's sticky area as tall as the feed. */
+    .feed {
+        display: flex;
+        flex-direction: column;
+        gap: 3rem;
+        max-width: 80ch;
+        margin: 0 auto;
+    }
+
+    @include breakpoints.wide {
+        .feed {
+            grid-column: 2;
+            min-width: 0;
+            margin: 0;
+        }
+    }
+
+    .pagination {
+        @include typography.apparatus;
+        display: flex;
+        justify-content: space-between;
+
+        a {
+            color: var(--color-muted);
+            text-decoration-line: none;
+
+            &:hover {
+                color: var(--color-text);
+            }
+        }
+
+        [rel="next"] {
+            margin-left: auto;
+        }
+    }
+
+    @media print {
+        .pagination {
+            display: none;
+        }
+    }
+</style>

@@ -1,18 +1,9 @@
 ---
 import type { MarkdownHeading } from "astro";
 import type { CollectionEntry } from "astro:content";
-import "./prelude.scss";
 
-/* Self-hosted faces, bundled into the build rather than fetched from a CDN.
-   `standard` is the file carrying both of Source Serif 4's axes — weight and
-   optical size; `index`/`wght` drop the latter. Each declares every subset with
-   a `unicode-range`, so a Latin page downloads four files. */
-import "@fontsource-variable/source-serif-4/standard.css";
-import "@fontsource-variable/source-serif-4/standard-italic.css";
-import "@fontsource-variable/cormorant";
-import "@fontsource-variable/cormorant/wght-italic.css";
-
-import Navbar from "~/components/Navbar.astro";
+import Shell from "./Shell.astro";
+import { RAIL_SEPARATOR } from "./rail";
 import TableOfContents from "~/components/TableOfContents.astro";
 import Bibliography from "~/components/mdx/links/Bibliography.astro";
 import type { LinkMeta } from "~/components/mdx/links/types";
@@ -27,6 +18,7 @@ export interface Props {
 }
 
 const { frontmatter, headings } = Astro.props;
+const author = frontmatter.author ?? "Skye De La Ciel";
 
 /* A frontmatter date is a day, not an instant: it parses to UTC midnight, and
    reading it back out in UTC is what returns the day that was written down. */
@@ -45,72 +37,39 @@ const rail = [
     __GIT_REVISION__ && `rev ${__GIT_REVISION__}`,
 ]
     .filter(Boolean)
-    .join(" · ");
+    .join(RAIL_SEPARATOR);
 ---
 
-<html lang="en">
-    <head>
-        {
-            /*
-                Applies a stored scheme choice before first paint, so the page
-                never flashes the scheme the reader turned off. ThemeToggle
-                clears this attribute once it hydrates; colors.scss honours
-                either signal.
-
-                `is:inline` is required: without it, Astro bundles this as a
-                deferred `type="module"` script that runs after paint,
-                defeating the point. Being unprocessed, it must be plain
-                browser JS — no TypeScript, no imports.
-            */
-        }
-        <script is:inline>
-            if (JSON.parse(localStorage.getItem("theme-override") ?? "false")) {
-                document.documentElement.dataset.themeChecked = "true";
-            }
-        </script>
-        <script src="~/components/toc-scroll.ts"></script>
-        <meta charset="utf-8" />
-        <meta name="color-scheme" content="light dark" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="viewport" content="width=device-width" />
-        <title>{frontmatter.title}</title>
-        <meta name="author" content={frontmatter.author ?? "Skye De La Ciel"} />
-        <meta name="description" content={frontmatter.abstract} />
-    </head>
-    <body>
-        <aside class="sidebar">
-            <Navbar />
-            <nav class="toc toc-sidebar" aria-label="Table of contents">
+<Shell
+    title={frontmatter.title}
+    description={frontmatter.abstract}
+    author={author}
+    host="site"
+>
+    <TableOfContents slot="toc" headings={headings} />
+    <article data-rail={rail}>
+        <header class="front-matter">
+            <div class="title-line">
+                <h1 class="title">{frontmatter.title}</h1>
+                <span class="author">{author}</span>
+            </div>
+            <p class="abstract">{frontmatter.abstract}</p>
+            <nav class="toc toc-portrait" aria-label="Table of contents">
+                <input type="checkbox" id="toc-toggle" />
+                <label for="toc-toggle">Contents</label>
                 <TableOfContents headings={headings} />
             </nav>
-        </aside>
-        <article data-rail={rail}>
-            <header class="front-matter">
-                <div class="title-line">
-                    <h1 class="title">{frontmatter.title}</h1>
-                    <span class="author"
-                        >{frontmatter.author ?? "Skye De La Ciel"}</span
-                    >
-                </div>
-                <p class="abstract">{frontmatter.abstract}</p>
-                <nav class="toc toc-portrait" aria-label="Table of contents">
-                    <input type="checkbox" id="toc-toggle" />
-                    <label for="toc-toggle">Contents</label>
-                    <TableOfContents headings={headings} />
-                </nav>
-            </header>
+        </header>
 
-            <slot />
+        <slot />
 
-            {
-                frontmatter.bibliography && (
-                    <Bibliography
-                        linkMeta={frontmatter.linkMeta}
-                        citations={frontmatter.citation}
-                    />
-                )
-            }
-        </article>
-    </body>
-</html>
+        {
+            frontmatter.bibliography && (
+                <Bibliography
+                    linkMeta={frontmatter.linkMeta}
+                    citations={frontmatter.citation}
+                />
+            )
+        }
+    </article>
+</Shell>

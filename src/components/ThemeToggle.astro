@@ -1,27 +1,22 @@
-<script lang="ts">
-    // Only runs client-side; SSR renders unchecked checkbox
-    $effect.pre(() => {
-        //Hack: clear previous hack to prevent FOUC
-        delete document.querySelector("html")!.dataset.themeChecked;
-        const toggle = document.getElementById(
-            "theme-toggle",
-        ) as HTMLInputElement;
-        toggle.checked = JSON.parse(
-            localStorage.getItem("theme-override") ?? "false",
-        );
-        toggle.addEventListener("change", () => {
-            localStorage.setItem(
-                "theme-override",
-                JSON.stringify(toggle.checked),
-            );
-        });
-    });
-</script>
-
 <label class="theme-toggle" aria-label="Toggle color scheme">
     <input type="checkbox" id="theme-toggle" />
     <span class="toggle-icon" aria-hidden="true"></span>
 </label>
+
+<script>
+    // The server renders the box unchecked; a stored choice is applied here.
+    // The pre-paint script in Shell.astro has already applied it to the page,
+    // through an attribute that the checkbox now takes over from.
+    const toggle = document.querySelector<HTMLInputElement>("#theme-toggle")!;
+
+    delete document.documentElement.dataset.themeChecked;
+    toggle.checked = JSON.parse(
+        localStorage.getItem("theme-override") ?? "false",
+    );
+    toggle.addEventListener("change", () => {
+        localStorage.setItem("theme-override", JSON.stringify(toggle.checked));
+    });
+</script>
 
 <style lang="scss">
     @use "../layouts/prelude/breakpoints";

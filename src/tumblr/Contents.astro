@@ -1,0 +1,41 @@
+---
+import TocEntry from "~/components/TocEntry.astro";
+import TocList from "~/components/TocList.astro";
+import Block from "./Block.astro";
+import { block, v } from "./tags";
+
+/**
+ * The blog's table of contents, which carries tags — see design.mdx, Tumblr.
+ *
+ * An index page lists its posts, each with its tags folded under it, so that
+ * toc-scroll.ts unfolds the tags of whichever post is being read. A permalink
+ * page lists the tags of its one post. Tumblr only exposes a post inside
+ * `{block:Posts}`, so this walks the posts a second time.
+ *
+ * A post is named by its day, and by its title as well when it has one:
+ * `{PostSummary}`, which would name every post, only exists on a permalink.
+ */
+const label = `${v("Month")} ${v("DayOfMonth")}${block(
+    "Text",
+    block("Title", ` — ${v("Title")}`),
+)}`;
+---
+
+<TocList root>
+    <Block name="Posts">
+        <Block name="IndexPage">
+            <TocEntry href={`#post-${v("PostID")}`} text={label}>
+                <TocList>
+                    <Block name="Tags">
+                        <TocEntry href={v("TagURL")} text={`#${v("Tag")}`} />
+                    </Block>
+                </TocList>
+            </TocEntry>
+        </Block>
+        <Block name="PermalinkPage">
+            <Block name="Tags">
+                <TocEntry href={v("TagURL")} text={`#${v("Tag")}`} />
+            </Block>
+        </Block>
+    </Block>
+</TocList>
