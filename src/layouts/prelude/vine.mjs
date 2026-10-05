@@ -1,0 +1,730 @@
+/* A flowering vine drawn as a rule, after the vine-stem borders of
+   illuminated manuscripts: one pen-drawn stem running left to right, steered
+   by hand rather than by a wave, branching into spirals large and small, some
+   holding a rose in the eye; ivy leaves on short stalks along every stem; and
+   hairline tendrils curling wherever there is room.
+
+   Everything is drawn in a fixed 40-unit-tall space, and the call site scales
+   the whole drawing to its height, so the pen's weight, and the filter
+   lengths that give the paint its edge, never depend on where it is drawn.
+   Plain JS, so that Sass can call it while it compiles; see
+   src/integrations/vines.ts. */
+
+const H = 40;
+
+/* — Chance — */
+
+/* A seeded PRNG (cyrb53-style hash into mulberry32), so a seed is a drawing. */
+function chance(seed) {
+    let h = 0x9e3779b9;
+    for (const c of String(seed))
+        h = Math.imul(h ^ c.charCodeAt(0), 0x5bd1e995) ^ (h >>> 15);
+    let a = h >>> 0;
+    const next = () => {
+        a = (a + 0x6d2b79f5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    return {
+        between: (lo, hi) => lo + (hi - lo) * next(),
+        odds: (p) => next() < p,
+        sign: () => (next() < 0.5 ? -1 : 1),
+        integer: (n) => Math.floor(next() * n),
+    };
+}
+
+/* — Geometry — */
+
+const TAU = 2 * Math.PI;
+const toward = ([x, y], θ, r) => [x + r * Math.cos(θ), y + r * Math.sin(θ)];
+const lerp = (a, b, t) => a + (b - a) * t;
+const smoothstep = (a, b, x) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+};
+
+/* A path traced through points, measured so that anything can be placed on
+   it by distance along it. Headings follow the chords between samples. */
+function trace(points) {
+    const lengths = [0];
+    for (let i = 1; i < points.length; i++) {
+        lengths.push(
+            lengths[i - 1] +
+                Math.hypot(
+                    points[i][0] - points[i - 1][0],
+                    points[i][1] - points[i - 1][1],
+                ),
+        );
+    }
+    const length = lengths[lengths.length - 1];
+    const at = (d) => {
+        const x = Math.min(length, Math.max(0, d));
+        let [i, j] = [0, points.length - 1];
+        while (j - i > 1) {
+            const m = (i + j) >> 1;
+            if (lengths[m] <= x) i = m;
+            else j = m;
+        }
+        const [a, b] = [points[i], points[i + 1]];
+        const t = (x - lengths[i]) / (lengths[i + 1] - lengths[i] || 1);
+        return {
+            p: [lerp(a[0], b[0], t), lerp(a[1], b[1], t)],
+            θ: Math.atan2(b[1] - a[1], b[0] - a[0]),
+        };
+    };
+    return { points, lengths, length, at };
+}
+
+/* Walk from `start`, turning by `curl(s)` radians per unit at arc length s.
+   A positive curl turns clockwise on the page. */
+function walk(start, θ0, length, curl, step = 0.6) {
+    const points = [start];
+    let [p, θ] = [start, θ0];
+    for (let s = 0; s < length; s += step) {
+        θ += curl(s) * step;
+        p = toward(p, θ, step);
+        points.push(p);
+    }
+    return points;
+}
+
+/* A scroll: a line that leaves its base along the heading θ, already bending
+   by κ0 (the bend of whatever it grew from, so the join is smooth), and
+   curls ever tighter in the direction `turn` (±1) until it has turned
+   through `turns` revolutions. Returns the path, and the curvature it ends
+   with, whose reciprocal is the radius of the scroll's eye. */
+function scroll(base, θ, turn, { length, turns, κ0 = 0, growth = 2 }) {
+    const rise = ((turns * TAU - κ0 * length) * (growth + 1)) / length;
+    const κ = (s) => κ0 + rise * (s / length) ** growth;
+    /* Walked finely, then kept only as finely as its curl needs. */
+    const path = resample(
+        trace(walk(base, θ, length, (s) => turn * κ(s), 0.25)),
+        (s) => Math.min(3, Math.max(0.8, 1 / κ(s))),
+    );
+    return { path, κ: κ(length) };
+}
+
+/* The centre of the eye a scroll ends in, at distance `r` inside its last turn. */
+function eye(path, turn, r) {
+    const { p, θ } = path.at(path.length);
+    return toward(p, θ + (turn * Math.PI) / 2, r);
+}
+
+/* The outline of a stroke drawn along a path, `width(s)` across at fraction s
+   of its length. A stroke that starts with a width starts with a round press. */
+function ribbon(path, width) {
+    const { points, lengths, length } = path;
+    const n = points.length - 1;
+    const heading = (i) => {
+        const [a, b] = [points[Math.max(0, i - 1)], points[Math.min(n, i + 1)]];
+        return Math.atan2(b[1] - a[1], b[0] - a[0]);
+    };
+    const side = (sign) =>
+        points.map((p, i) =>
+            toward(
+                p,
+                heading(i) + (sign * Math.PI) / 2,
+                width(lengths[i] / length) / 2,
+            ),
+        );
+    const press = width(0) / 2;
+    const cap = [];
+    if (press > 0.05) {
+        const n = Math.max(2, Math.round(4 * press));
+        for (let k = 1; k < n; k++)
+            cap.push(
+                toward(
+                    points[0],
+                    heading(0) + (3 * Math.PI) / 2 - (k / n) * Math.PI,
+                    press,
+                ),
+            );
+    }
+    return [...side(1), ...side(-1).reverse(), ...cap];
+}
+
+/* Evenly spaced points along a path, `step(d)` apart, for an outline that is
+   smooth without being heavier than it needs to be. */
+function resample(path, step) {
+    const points = [];
+    for (let d = 0; d < path.length; d += step(d)) points.push(path.at(d).p);
+    points.push(path.at(path.length).p);
+    return trace(points);
+}
+
+/* An ellipse, its first axis along θ. */
+function oval([cx, cy], rx, ry, θ = 0) {
+    const [c, s] = [Math.cos(θ), Math.sin(θ)];
+    return Array.from({ length: 10 }, (_, i) => {
+        const a = (i / 10) * TAU;
+        const [x, y] = [rx * Math.cos(a), ry * Math.sin(a)];
+        return [cx + x * c - y * s, cy + x * s + y * c];
+    });
+}
+
+/* A closed outline through the points, smoothed with Catmull-Rom splines.
+   Written compactly, as relative moves in tenths of a unit, with the points
+   rounded before they are differenced so that rounding never accumulates
+   along a long stroke. */
+function closedPath(points) {
+    const tenths = (v) => Math.round(v * 10);
+    const at = (i) => points[(i + points.length) % points.length];
+    const number = (t) => (t / 10).toString().replace(/^(-?)0\./, "$1.");
+    const numbers = (ts) => ts.map(number).join(" ").replace(/ -/g, "-");
+    let here = at(0).map(tenths);
+    let d = `M${numbers(here)}c`;
+    for (let i = 0; i < points.length; i++) {
+        const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+        const c1 = [
+            p1[0] + (p2[0] - p0[0]) / 6,
+            p1[1] + (p2[1] - p0[1]) / 6,
+        ].map(tenths);
+        const c2 = [
+            p2[0] - (p3[0] - p1[0]) / 6,
+            p2[1] - (p3[1] - p1[1]) / 6,
+        ].map(tenths);
+        const to = p2.map(tenths);
+        d +=
+            (i ? " " : "") +
+            numbers([...c1, ...c2, ...to].map((t, k) => t - here[k % 2]));
+        here = to;
+    }
+    return d.replace(/ -/g, "-") + "Z";
+}
+
+/* — The plant — */
+
+/* Every mark is painted in one of the two inks and one of two hands: the
+   pen's line, or a dab of the brush. A mark may be several overlapping
+   outlines, which paint as one shape with one rim. */
+const mark = (ink, hand, ...outlines) => ({ ink, hand, outlines });
+
+/* How wide each kind of stem is drawn, at fraction s of its length: pen
+   lines of nearly even weight, lightly tapered. The main stem has a slight
+   press where the pen came down. */
+const WEIGHT = {
+    shoot: (s) => lerp(1.4, 0.75, s),
+    stalk: (s) => lerp(0.8, 0.6, s),
+    tendril: (s) => lerp(0.7, 0.32, s),
+};
+
+/* How the vine sits in its rule. A rule set flush left grows one way: the
+   pen presses down at the start, the vine is full along its length, and the
+   tip rolls up at the end. A centred rule is balanced: the stem thins toward
+   both ends and rolls up alike at each, and the growth along it, its
+   `vigour` at a given x, is fullest in the middle and dies away to either
+   side. */
+function form(width, centred) {
+    if (!centred) {
+        return {
+            centred,
+            weight: (s, length) =>
+                lerp(1.75, 1, smoothstep(0.6, 1, s)) +
+                0.4 * Math.exp(-(((s * length - 1.5) / 3.5) ** 2)),
+            vigour: () => 1,
+        };
+    }
+    return {
+        centred,
+        weight: (s) => lerp(0.9, 1.75, Math.sin(Math.PI * s) ** 0.5),
+        vigour: (x) =>
+            Math.sin(Math.PI * Math.min(1, Math.max(0, x / width))) ** 1.4,
+    };
+}
+
+/* The room left on the page: discs round everything drawn so far, kept in a
+   grid, so that each new growth can look for space instead of piling onto
+   the last. Growth must also stay inside the rule. */
+function room(width) {
+    const cell = 6;
+    const grid = new Map();
+    const key = (x, y) => `${Math.floor(x / cell)},${Math.floor(y / cell)}`;
+    const inside = ([x, y], r) =>
+        x - r > 0.5 && x + r < width - 0.5 && y - r > 1 && y + r < H - 1;
+    const clear = ([x, y], r) => {
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                for (const d of grid.get(key(x + i * cell, y + j * cell)) ??
+                    []) {
+                    if (Math.hypot(d.x - x, d.y - y) < d.r + r) return false;
+                }
+            }
+        }
+        return true;
+    };
+    return {
+        /* Discs may skip the room check (`free`) where a growth joins what
+           it grew from, but never the edges of the rule. */
+        fits: (discs) =>
+            discs.every(
+                ({ p, r, free }) => inside(p, r) && (free || clear(p, r)),
+            ),
+        claim: (discs) => {
+            for (const { p, r } of discs) {
+                const k = key(...p);
+                if (!grid.has(k)) grid.set(k, []);
+                grid.get(k).push({ x: p[0], y: p[1], r });
+            }
+        },
+    };
+}
+
+/* The space a curl encloses, as a disc about the middle of its coils: the
+   eye of a curl is part of the curl, and nothing else may grow into it. A
+   spiral's eye is in its later coils, from `from` of the way along; a loop's
+   is the whole loop. */
+function hollow(points, from = 0.35) {
+    const coil = points.slice(Math.floor(points.length * from));
+    const c = [0, 1].map(
+        (k) => coil.reduce((sum, p) => sum + p[k], 0) / coil.length,
+    );
+    const distances = coil
+        .map(([x, y]) => Math.hypot(x - c[0], y - c[1]))
+        .sort((a, b) => a - b);
+    return { p: c, r: 0.85 * distances[Math.floor(distances.length / 2)] };
+}
+
+/* How far a curl runs beside its parent, in units, before the two are clear
+   of each other. */
+const CLEAR = 8;
+
+/* The discs a stroke occupies, one a unit along it, with a margin of paper.
+   The first `joint` units, where it leaves its parent, are free: a growth
+   that leaves along its parent's tangent runs beside it for a while before
+   the two are clear of each other. */
+function discs(path, weight, joint = 0, margin = 0.6) {
+    const out = [];
+    for (let d = 0; d <= path.length; d += 1) {
+        out.push({
+            p: path.at(d).p,
+            r: weight(d / path.length, path.length) / 2 + margin,
+            free: d < joint,
+        });
+    }
+    return out;
+}
+
+/* An ivy leaf: three pointed lobes, the middle one longest, on a heart-shaped
+   base. Points are repeated at the tips so the spline comes to a point. */
+const IVY = [
+    [0.06, 0],
+    [0.04, -0.14],
+    [0.14, -0.32],
+    [0.3, -0.47],
+    [0.3, -0.47],
+    [0.4, -0.3],
+    [0.52, -0.19],
+    [0.78, -0.12],
+    [1, 0],
+    [1, 0],
+    [0.78, 0.12],
+    [0.52, 0.19],
+    [0.4, 0.3],
+    [0.3, 0.47],
+    [0.3, 0.47],
+    [0.14, 0.32],
+    [0.04, 0.14],
+];
+function ivy(base, θ, size) {
+    const [c, s] = [Math.cos(θ), Math.sin(θ)];
+    return IVY.map(([x, y]) => [
+        base[0] + size * (x * c - y * s),
+        base[1] + size * (x * s + y * c),
+    ]);
+}
+
+/* A small rose: five round petals about an open eye. */
+const rose = (c, radius, θ) =>
+    Array.from({ length: 5 }, (_, i) =>
+        oval(
+            toward(c, θ + (i * TAU) / 5, 0.56 * radius),
+            0.45 * radius,
+            0.45 * radius,
+        ),
+    );
+
+/* The main stem, one continuous pen line from left to right, steered like a
+   hand drawing it: a run of gentle arcs, each bending back toward the middle
+   of the rule through a different angle and at a different radius, never
+   steeper than about a third of a right angle; now and then, near the
+   middle, a loop that crosses itself; and at the end a spiral. A centred
+   rule starts with a spiral too. Returns the path, and the stretch of it,
+   between the spirals, that runs along the rule. */
+function mainStem(width, r, { centred }) {
+    const points = [
+        [centred ? r.between(13, 17) : 2.5, H / 2 + r.between(-2, 2)],
+    ];
+    let θ = r.between(-0.15, 0.15);
+    const θ0 = θ;
+    const step = 0.5;
+    const steep = 0.5;
+    const end = width - r.between(20, 26);
+    const hollows = [];
+    let loops = Math.max(0, Math.round(width / 240 + r.between(-0.6, 0.5)));
+    const here = () => points[points.length - 1];
+    const advance = () => points.push(toward(here(), θ, step));
+    /* Which way to turn to come back toward the middle, judged a little way
+       ahead along the current heading. */
+    const drift = () => here()[1] - H / 2 + 8 * Math.sin(θ);
+    const homeward = () => (drift() > 0 ? -1 : 1);
+
+    while (here()[0] < end) {
+        if (
+            loops > 0 &&
+            here()[0] > 30 &&
+            here()[0] < end - 30 &&
+            Math.abs(drift()) < 3 &&
+            r.odds(0.25)
+        ) {
+            loops--;
+            const from = points.length;
+            /* A teardrop rather than a ring: the pen turns gently into the
+               loop, hard round its far end, and gently out across itself. */
+            const [turn, κ] = [r.sign(), r.between(0.13, 0.17)];
+            const total = TAU * r.between(1, 1.05);
+            for (let turned = 0; turned < total; ) {
+                const κt =
+                    κ * (0.35 + 1.3 * Math.sin((Math.PI * turned) / total));
+                θ += turn * κt * step;
+                turned += κt * step;
+                advance();
+            }
+            θ = Math.atan2(Math.sin(θ), Math.cos(θ));
+            hollows.push(hollow(points.slice(from), 0));
+            continue;
+        }
+        /* Near the middle the hand may wander either way; away from it, it
+           always comes back. */
+        const far = Math.abs(here()[1] - H / 2) > 4;
+        const turn =
+            !far && Math.abs(drift()) < 2.5 && r.odds(0.35)
+                ? -homeward()
+                : homeward();
+        const κ = turn * (far ? r.between(0.07, 0.1) : r.between(0.025, 0.065));
+        const angle = r.between(0.3, 1);
+        /* An arc ends early if it would climb too steeply, or if it is
+           bending away from the middle and has carried the stem too far. */
+        const outward = turn !== homeward();
+        const away = () => outward && Math.abs(here()[1] - H / 2) > 3.5;
+        for (let turned = 0; turned < angle; turned += Math.abs(κ) * step) {
+            const next = θ + κ * step;
+            if (
+                (Math.abs(next) > steep && Math.abs(next) > Math.abs(θ)) ||
+                away()
+            )
+                break;
+            θ = next;
+            advance();
+        }
+        advance();
+    }
+    /* An end rolls up toward the middle, as large as the room left allows.
+       The start's spiral is drawn outward from the first point, heading
+       back, then reversed, so the pen comes out of the curl into the stem. */
+    const within = ({ path }) =>
+        path.points.every(
+            ([x, y]) => x > 1.5 && x < width - 1.5 && y > 1.5 && y < H - 1.5,
+        );
+    const curl = (from, heading, turn) => {
+        const spiral = { turns: r.between(1.15, 1.45), κ0: 0.04, growth: 1.3 };
+        const sizes = centred ? [14, 11, 8, 6] : [20, 16, 12, 9, 6];
+        return (
+            sizes
+                .map((length) =>
+                    scroll(from, heading, turn, { ...spiral, length }),
+                )
+                .find(within) ??
+            scroll(from, heading, turn, { ...spiral, length: 4 })
+        ).path.points;
+    };
+    const tip = curl(here(), θ, homeward());
+    const [x0, y0] = points[0];
+    const head = centred
+        ? curl(points[0], θ0 + Math.PI, y0 > H / 2 ? 1 : -1)
+        : null;
+    const tail = head ? [...head].reverse() : [points[0]];
+    const path = resample(
+        trace([...tail, ...points.slice(1), ...tip.slice(1)]),
+        () => 2,
+    );
+    const along = (x) =>
+        path.lengths[path.points.findIndex(([px]) => px >= x)] ?? path.length;
+    return {
+        path,
+        span: [along(x0), along(here()[0])],
+        hollows: [
+            ...hollows,
+            ...[tip, head].filter(Boolean).map((points) => hollow(points)),
+        ],
+    };
+}
+
+/* The whole vine: the main stem, then, in order of size, what grows from it
+   wherever there is room. Shoots spiral off along the stem's tangent, large
+   and open or small and tight; a large one may hold a rose in its eye, or end
+   in a leaf. Ivy leaves on short stalks follow the stems at varied angles,
+   and hairline tendrils off the main stem fill what gaps are left. Curls grow
+   only from the main stem, never from one another. */
+function grow(width, r, { weight, vigour, centred }) {
+    const space = room(width);
+    const marks = [];
+    const stems = [];
+
+    /* Paint the marks if the discs they occupy are free, and take the room. */
+    const place = (occupied, ...painted) => {
+        if (!space.fits(occupied)) return false;
+        space.claim(occupied);
+        marks.push(...painted);
+        return true;
+    };
+    const line = (path, weight) =>
+        mark(
+            "leaf",
+            "line",
+            ribbon(path, (s) => weight(s, path.length)),
+        );
+    const stem = (path, weight, joint, ...more) => {
+        const placed = place(
+            [...discs(path, weight, joint), ...more.flatMap((m) => m.discs)],
+            line(path, weight),
+            ...more.map((m) => m.mark).filter(Boolean),
+        );
+        if (placed) stems.push({ path, weight });
+        return placed;
+    };
+    /* A curl is a stem that also holds the space inside its coils. */
+    const curl = (path, weight, ...more) =>
+        stem(
+            path,
+            weight,
+            CLEAR,
+            { discs: [hollow(path.points)], mark: null },
+            ...more,
+        );
+
+    const { path: main, span, hollows } = mainStem(width, r, { centred });
+    space.claim([...discs(main, weight), ...hollows]);
+    marks.push(line(main, weight));
+    stems.push({ path: main, weight });
+    /* How strongly the vine grows where a growth would leave its stem. */
+    const strength = (path, d) => vigour(path.at(d).p[0]);
+
+    /* A leaf at the end of a short stalk, off a stem at distance d. */
+    const sprig = (path, d, side) => {
+        const { p, θ } = path.at(d);
+        const stalk = trace(
+            walk(
+                p,
+                θ + side * r.between(0.6, 1.25),
+                r.between(1.6, 3),
+                () => side * 0.08,
+                0.8,
+            ),
+        );
+        const end = stalk.at(stalk.length);
+        const size = r.between(4.6, 6.4) * lerp(0.75, 1, strength(path, d));
+        const heading = end.θ + r.between(-0.35, 0.35);
+        const blade = {
+            p: toward(end.p, heading, 0.45 * size),
+            r: 0.42 * size + 0.4,
+        };
+        return place(
+            [...discs(stalk, WEIGHT.stalk, Infinity), blade],
+            line(stalk, WEIGHT.stalk),
+            mark("leaf", "dab", ivy(end.p, heading, size)),
+        );
+    };
+
+    const roseBudget = Math.max(1, Math.round(width / 70));
+    let roses = 0;
+    const bloom = (c, radius) => {
+        if (roses >= roseBudget) return null;
+        return {
+            discs: [{ p: c, r: radius + 0.3 }],
+            mark: mark("flower", "dab", ...rose(c, radius, r.between(0, TAU))),
+        };
+    };
+
+    /* Shoots off the main stem, mostly alternating sides. */
+    let side = r.sign();
+    for (
+        let d = span[0] + r.between(10, 18);
+        d < span[1] - 6;
+        d += r.between(12, 24)
+    ) {
+        side = r.odds(0.75) ? -side : side;
+        const { p, θ } = main.at(d);
+        const v = vigour(p[0]);
+        if (!r.odds(0.3 + 0.7 * v)) continue;
+        const large = r.odds(0.5 * v);
+        const shape = large
+            ? {
+                  length: r.between(26, 40) * lerp(0.7, 1, v),
+                  turns: r.between(1.05, 1.4),
+                  κ0: 0.07,
+                  growth: 0.9,
+              }
+            : {
+                  length: r.between(10, 17),
+                  turns: r.between(1.2, 1.7),
+                  κ0: 0.09,
+                  growth: 1.4,
+              };
+        /* Where a shoot has no room it grows smaller, but never so small
+           that its curl knots up against the stem. */
+        for (const shrink of [1, 0.7, 0.5].filter(
+            (k) => shape.length * k >= 10,
+        )) {
+            const { path, κ } = scroll(p, θ + side * 0.2, side, {
+                ...shape,
+                length: shape.length * shrink,
+            });
+            /* A large shoot ends in a rose if it can: in the eye of its
+               curl when that is wide enough, or else just past its tip. */
+            const eyeRadius = 1 / κ;
+            const end = path.at(path.length);
+            const crowns =
+                !large || !r.odds(0.8 * v)
+                    ? []
+                    : [
+                          eyeRadius > 3.2 &&
+                              bloom(
+                                  eye(path, side, eyeRadius),
+                                  Math.min(4.4, eyeRadius - 0.6),
+                              ),
+                          bloom(toward(end.p, end.θ, 3.3), 3.2),
+                      ].filter(Boolean);
+            const crowned = crowns.some((crown) =>
+                curl(path, WEIGHT.shoot, crown),
+            );
+            if (crowned) roses++;
+            if (!crowned && !curl(path, WEIGHT.shoot)) continue;
+            if (large && !crowned) sprig(path, path.length, side);
+            break;
+        }
+    }
+
+    /* Ivy along the main stem and the shoots. */
+    for (const { path, weight } of [...stems]) {
+        if (weight === WEIGHT.tendril) continue;
+        let leafSide = r.sign();
+        for (
+            let d = r.between(3, 7);
+            d < path.length - 3;
+            d += r.between(6, 12)
+        ) {
+            leafSide = r.odds(0.7) ? -leafSide : leafSide;
+            if (r.odds(0.35 + 0.65 * strength(path, d)))
+                sprig(path, d, leafSide);
+        }
+    }
+
+    /* If no rose found a curl to sit in, one grows on a stalk of its own. */
+    for (let tries = 0; roses === 0 && tries < 40; tries++) {
+        const { p, θ } = main.at(lerp(...span, r.between(0.25, 0.75)));
+        const s = r.sign();
+        const stalk = trace(
+            walk(p, θ + s * 0.9, r.between(4, 6), () => s * 0.1, 1),
+        );
+        const end = stalk.at(stalk.length);
+        if (
+            stem(
+                stalk,
+                WEIGHT.stalk,
+                CLEAR,
+                bloom(toward(end.p, end.θ, 3.4), 3.3),
+            )
+        )
+            roses++;
+    }
+
+    /* Hairline tendrils in the gaps, from the main stem only: a curl never
+       grows from another curl. */
+    for (let i = 0; i < Math.round(width / 12); i++) {
+        const at = main.at(lerp(...span, r.between(0, 1)));
+        if (!r.odds(vigour(at.p[0]))) continue;
+        const turn = r.sign();
+        const tendril = scroll(at.p, at.θ + turn * 0.35, turn, {
+            length: r.between(9, 15),
+            turns: r.between(1, 1.5),
+            κ0: 0.06,
+            growth: 2.2,
+        });
+        curl(tendril.path, WEIGHT.tendril);
+    }
+
+    return marks;
+}
+
+/* — The paint — */
+
+/* A slight tremor at the edge, as a pen or a fine brush leaves on paper. */
+const tremor = (frequency, amount, seed) => `
+    <feTurbulence type='fractalNoise' baseFrequency='${frequency}' numOctaves='2' seed='${seed}' result='edge'/>
+    <feDisplacementMap in='SourceGraphic' in2='edge' scale='${amount}' xChannelSelector='A' yChannelSelector='G' result='shape'/>`;
+
+/* Water carries pigment to the wet edge and leaves it there as it dries: the
+   rim keeps full strength while the interior thins. Built on alpha, so it
+   keeps whatever colour the shape was painted in. Lines are narrower than
+   twice the reach, so they have no interior and stay at full strength; leaves
+   and roses get a darker outline round a paler wash. */
+const rim = (reach, thinning) => `
+    <feMorphology in='shape' operator='erode' radius='${reach}'/>
+    <feGaussianBlur stdDeviation='0.6'/>
+    <feComponentTransfer result='core'><feFuncA type='linear' slope='${thinning}'/></feComponentTransfer>
+    <feComposite in='shape' in2='core' operator='out'/>`;
+
+/**
+ * A vine `ratio` times as wide as it is tall, as the markup of an SVG. The
+ * same arguments always draw the same vine.
+ *
+ * @param {object} vine
+ * @param {number} vine.ratio Its width over its height.
+ * @param {number} vine.seed Which vine of that shape.
+ * @param {boolean} vine.centred Whether it is centred in its column, and so
+ *     tapers to both ends, or set flush left and grows one way.
+ * @param {string} vine.leaf The colour of stem, leaf and tendril.
+ * @param {string} vine.flower The colour of the roses.
+ * @returns {string}
+ */
+export function vine({ ratio, seed, centred, leaf, flower }) {
+    const width = ratio * H;
+    const r = chance(seed);
+    const marks = grow(width, r, form(width, centred));
+    const id = `vine-${hash([ratio, seed, leaf, flower, centred].join())}`;
+    const noise = () => r.integer(1000);
+    const filter = (name, body) =>
+        `<filter id='${id}-${name}' x='-20%' y='-20%' width='140%' height='140%' color-interpolation-filters='sRGB'>${body}</filter>`;
+    const defs = [
+        filter("line", tremor("0.4", 0.3, noise())),
+        filter("dab", tremor("0.4", 0.35, noise()) + rim(0.6, 0.45)),
+    ]
+        .join("")
+        .replace(/\s+/g, " ")
+        .replace(/> </g, "><");
+    /* Each ink and hand is one path, so its filter runs once: lines first,
+       then leaves, then flowers on top. Growth never lets two marks of a
+       layer overlap, so painting them as one shape changes nothing. */
+    const ink = { leaf, flower };
+    const layers = [
+        ["leaf", "line"],
+        ["leaf", "dab"],
+        ["flower", "dab"],
+    ];
+    const paint = ([which, hand]) => {
+        const outlines = marks
+            .filter((m) => m.ink === which && m.hand === hand)
+            .flatMap((m) => m.outlines);
+        return outlines.length
+            ? `<path d='${outlines.map(closedPath).join("")}' fill='${ink[which]}' filter='url(#${id}-${hand})'/>`
+            : "";
+    };
+    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${+width.toFixed(3)} ${H}'><defs>${defs}</defs>${layers.map(paint).join("")}</svg>`;
+}
+
+function hash(text) {
+    let h = 5381;
+    for (const c of text) h = (Math.imul(h, 33) ^ c.charCodeAt(0)) >>> 0;
+    return h.toString(36);
+}

@@ -55,7 +55,7 @@ body {
 }
 
 /* Links. Ink for the text; the only rule that ever shows under one is the one
-   drawn while it is hovered, so it is ochre — the colour of right now. */
+   drawn while it is hovered, so it is in `attention` — the colour of right now. */
 a {
     color: inherit;
     text-decoration-color: var(--color-attention);
@@ -73,7 +73,7 @@ a {
     text-decoration-line: none;
 
     // Longhands, not the shorthand: `text-decoration: underline` would reset
-    // the colour to `currentColor` and take the ochre back off again.
+    // the colour to `currentColor` and take `attention` back off again.
     &:hover {
         text-decoration-line: underline;
         text-decoration-thickness: 2px;
@@ -93,12 +93,11 @@ article {
 .front-matter {
     margin-bottom: 2.5rem;
 
-    /* The brush rule that closes the title block. In vermilion: it is the one
-       ornament a reader meets before the text, and it stands for the seal. */
+    /* The vine that closes the title block: the first ornament a reader
+       meets, before the text. */
     &::after {
-        @include ornaments.brush-rule(18, var(--color-accent));
+        @include ornaments.vine-rule("title");
         content: "";
-        width: 9rem;
         margin-top: 1.25rem;
     }
 }
@@ -178,11 +177,10 @@ h6 {
     letter-spacing: 0.04em;
 }
 
-/* A stroke under each part heading. The title block has its own, in vermilion. */
+/* A short vine under each part heading. */
 h1.heading::after {
-    @include ornaments.brush-rule(12);
+    @include ornaments.vine-rule("heading");
     content: "";
-    width: 5rem;
     margin-top: 0.4rem;
 }
 
@@ -270,12 +268,8 @@ th {
     border-bottom: 2px solid var(--color-text);
 }
 
-/* The ink is named rather than taken from `currentColor`, which every other
-   ornament here uses: the HTML standard's own stylesheet sets `hr { color:
-   gray }`, so the stroke would come out half-tone in both schemes. */
 hr {
-    @include ornaments.brush-rule(20, var(--color-text));
-    width: 30%;
+    @include ornaments.vine-rule("break");
     margin: 2.5rem auto;
 }
 
@@ -296,15 +290,14 @@ figcaption {
 
 /* — Closing sections —
    What an article carries after its text rather than in it — the works it
-   referenced, the notes a post gathered — set off from the text by a broad
-   brush stroke. */
+   referenced, the notes a post gathered — set off from the text by a long
+   vine. */
 .closing {
     margin-top: 3rem;
 
     &::before {
-        @include ornaments.brush-rule(24);
+        @include ornaments.vine-rule("closing");
         content: "";
-        width: 40%;
         margin: 0 auto 1.75rem;
     }
 

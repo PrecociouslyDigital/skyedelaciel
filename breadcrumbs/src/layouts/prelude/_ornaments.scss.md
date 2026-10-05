@@ -127,3 +127,35 @@ A `saturate()` in the backdrop filter did the same damage from the other side,
 pulling the page's own hue up through the glass, and is gone. A 1px white lit
 edge along the top, after Comeau's glass-thickness edge, was barely visible on
 paper and a hard white rule on ink; it is gone too.
+
+## 2026-10-05 — the brush rules became vines
+
+`$stroke` and `brush-rule` are gone. Every rule is now a flowering vine drawn
+by src/layouts/prelude/vine.mjs, one per place in `$vines`, called through
+`vine-rule($name)`. Each name has a fixed seed, so a place always shows the
+same vine. The width lives in `$vines` beside the ratio, not at the call
+site, because the drawing's density and pen weight were tuned for that size.
+
+**How the design got here, since each rejection is part of it.** The user
+first asked for watercolour strokes. Four filters were tried on the old 橫:
+pressed (bloomed edge), wash (dried rim, pale interior), granulated, and dry
+wash (the logo's bristle edge plus 飛白 streaks); dry wash won. They then
+asked for "vines with flowers instead of a straight line".
+
+1. A brush-stroke vine with one *Wisteria* or *Vicia* raceme. Rejected: the
+   user wanted "more flowing and rounded, a la medieval European manuscripts".
+2. A rinceau: an even sine wave with a rosette, raceme or trefoil at each
+   bend. Rejected as "still a bit regular". The reference became the white
+   vine-stem idiom and a painted ivy-and-rose border the user supplied, with
+   "a single vine, not an illustrated section".
+3. The ivy vine-stem, which the user loved, after three refinements:
+   - "a liiitle straighter";
+   - centred rules taper at both ends rather than being "oddly asymmetrical";
+   - "no curlies on top of existing curlies".
+
+**Two-tone, so colours are baked per scheme.** The user chose separate vine
+and flower colours (`signal` and `accent`). A mask carries only one colour, so
+each scheme bakes its own copy, as `texture()` does, and `apply-theme` sets
+`--vine-<name>`. The copies are files, not data URLs: twelve SVGs of
+15–43 KB inlined into the stylesheet would block every page's render on
+hundreds of KB of CSS. See breadcrumbs/src/integrations/vines.ts.md.

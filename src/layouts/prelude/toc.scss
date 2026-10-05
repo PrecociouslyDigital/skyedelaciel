@@ -54,7 +54,7 @@
 
         // Coloured rather than bolded: the sidebar is shrink-wrapped, so
         // a heavier entry would widen it and drag the grouping line
-        // sideways as the reader scrolls. Ochre, because the current
+        // sideways as the reader scrolls. In `attention`, because the current
         // entry is the one transient thing here.
         &[data-current] {
             color: var(--color-attention);

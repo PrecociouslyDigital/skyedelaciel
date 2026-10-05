@@ -159,3 +159,33 @@ transparent grain compiles to `none`, which is how print stays clean.
 Paper's grain is a warm brown fibre (rgb(96 72 40 / 6%)), not ink: tinted
 with ink, the first attempt read as a grey, dirty sheet. Like the chalk, its
 values were tuned by eye from screenshots.
+
+## 2026-10-05 — herbarium pigments, fitted at compile time
+
+Vermilion, malachite and ochre are replaced by the pigments of flowering vines
+pressed in the NYBG's C. V. Starr Virtual Herbarium, after a visit there. The
+images are © NYBG: reference only, linked from design.mdx, never copied.
+
+**Sources.** Median colours were sampled from each sheet's flower and leaf
+pixels. Candidates were *Wisteria sinensis* (NY 02549569), *Vicia cracca* (NY
+02688479), *Clitoria mariana* (NY 03106574) and *W. frutescens* (NY 02532657).
+The user picked *W. frutescens*'s violet for `accent` over *Vicia*'s
+ultramarine. Every leaf on the sheets has dried to olive, and the user wanted
+a deeper, bluer green "between a forest and emerald", then chose forest
+(h 145), so `signal` is chosen rather than sampled. `attention` is
+*Clitoria*'s hue at chroma 0.079: the sheet's own mauve (#907f93, C 0.036) has
+faded too far to read as a colour at 6.5:1.
+
+**Two hues, not three.** `attention` is a second violet rather than a green or
+a third hue because tests/design/annotation.spec.ts needs a broken link's mark
+(`attention`) to look different from a working one's (`signal`), and the two
+differ only in colour.
+
+**Fitted, not chosen.** `$pigments` gives each chroma a hue and chroma only.
+`contrast.fit` binary-searches OKLCH lightness until the colour, rounded to the
+hex it will be written as, stands at `$chroma-ratios` against the scheme's
+grainiest ground (6.5:1 on screen, 9:1 in print), cutting chroma where sRGB
+cannot hold it. So a palette cannot drift out of its band, and the old "all
+three between 6 and 7:1" became an equality. The `assert-at-least` loop stays
+as a backstop. tests/unit/vine.test.ts checks fit's three properties: it meets
+the ratio, it goes no further than it must, and it keeps the hue.

@@ -18,6 +18,7 @@ import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
 import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
 import tumblrTheme from "./src/integrations/tumblr-theme";
+import vines from "./src/integrations/vines";
 
 loadCache();
 
@@ -66,7 +67,7 @@ function revision(): string {
 // https://astro.build/config
 export default defineConfig({
     site: "https://skyedelaciel.com",
-    integrations: [mdx(), svelte(), tumblrTheme()],
+    integrations: [mdx(), svelte(), tumblrTheme(), vines()],
     image: {
         // A link popover's image is copied onto this site at build time. Its
         // URL comes from resolving the link, never from a visitor, so any

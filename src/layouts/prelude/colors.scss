@@ -22,25 +22,45 @@ $tokens: (
     "grain"
 );
 
-/// Paper, ink, and print.
+/// The pigments the chromas are mixed from: the violets and the green of
+/// flowering vines pressed in the New York Botanical Garden's herbarium. Only
+/// the hue and chroma of each is used; every scheme fits its own lightness,
+/// below.
+///
+/// The violets are sampled from the specimen sheets: the median of each
+/// sheet's darkest flower pixels. The leaves on every sheet have dried to
+/// olive, so the green is chosen rather than sampled, as a forest green.
+$pigments: (
+    // Wisteria frutescens, NY 02532657.
+    "accent": #645c9a,
+    // Forest green.
+    "signal": oklch(50% 0.11 145deg),
+    // Clitoria mariana, NY 03106574. The sampled #907f93 has faded on the
+    // sheet, so this keeps its hue and restores some chroma.
+    "attention": oklch(62% 0.079 321.6deg)
+);
+
+/// How far each scheme's chromas stand from their ground, where the grain is
+/// thickest. One figure for all three, so that none of them shouts louder
+/// than the others by contrast alone; print's is higher because paper cannot
+/// be backlit.
+$chroma-ratios: (
+    "light": 6.5,
+    "dark": 6.5,
+    "print": 9,
+);
+
+/// Paper, ink, and print, before their chromas.
 ///
 /// The light scheme is a bare sheet under warm black ink; the dark scheme is
-/// chalk on a slate blackboard, its chromas the softer pigments of coloured
-/// chalk. `muted` is the lighter of the five tones of ink a brush carries, or
-/// chalk half wiped away, not a grey.
-///
-/// Three chromas, three hands, and none of them ever sets running text:
-/// `accent` is the vermilion of a seal and marks what the author vouched for;
-/// `signal` is malachite and belongs to the machine that read the page
-/// afterwards; `attention` is ochre and touches only what the reader is
-/// looking at this second. 朱 and 赭 beside each other is the traditional
-/// pairing, which is why the machine's hand does not read as an import.
+/// chalk on a slate blackboard. `muted` is the lighter of the five tones of
+/// ink a brush carries, or chalk half wiped away, not a grey.
 ///
 /// `grain` is the colour of the texture worked into the article's ground, at
 /// the strength of its thickest patch: the chalk an eraser leaves on the board,
 /// or the fibre in a sheet. Print leaves the texture to the paper it is
 /// printed on, so its grain is transparent.
-$themes: (
+$grounds: (
     "light": (
         "background": #fff,
         "raised": #fbfbfa,
@@ -48,9 +68,6 @@ $themes: (
         "muted": #565c58,
         "border": #d6d9d4,
         "border-faint": #edeeea,
-        "accent": #a8321e,
-        "signal": #2a6a4a,
-        "attention": #7e5a19,
         "shadow": rgb(0 0 0 / 12%),
         "grain": rgb(96 72 40 / 6%),
     ),
@@ -61,9 +78,6 @@ $themes: (
         "muted": #a3a5a6,
         "border": #3d4247,
         "border-faint": #282c30,
-        "accent": #f3907a,
-        "signal": #70b998,
-        "attention": #cca660,
         "shadow": rgb(0 0 0 / 45%),
         "grain": rgb(236 234 228 / 12%),
     ),
@@ -74,15 +88,50 @@ $themes: (
         "muted": #444,
         "border": #999,
         "border-faint": #ddd,
-        "accent": #8a1f14,
-        "signal": #1f4a35,
-        "attention": #5a3f10,
         // Paper carries no shadow, but the token still has to exist so that
         // every rule reading it stays valid under `@media print`.
         "shadow": transparent,
         "grain": transparent,
     ),
 );
+
+/// A scheme's ground where its grain lies thickest: text can land on any
+/// patch of the texture, so that is where every floor is measured.
+@function grainiest($scheme) {
+    $grain: map.get($scheme, "grain");
+    @return color.mix(
+        color.change($grain, $alpha: 1),
+        map.get($scheme, "background"),
+        color.alpha($grain) * 100%
+    );
+}
+
+/// Paper, ink, and print, with their chromas.
+///
+/// Three chromas, three hands, and none of them ever sets running text:
+/// `accent` is the violet of a wisteria and marks what the author vouched
+/// for; `signal` is the green of a leaf and belongs to the machine that read
+/// the page afterwards; `attention` is a mauve and touches only what the
+/// reader is looking at this second. `attention` is a second violet rather
+/// than a third hue because a broken link's mark, in `attention`, has to be
+/// told apart from a working link's, in `signal`, at a glance.
+$themes: ();
+@each $name, $ground in $grounds {
+    $theme: $ground;
+    @each $chroma, $pigment in $pigments {
+        $theme: map.set(
+            $theme,
+            $chroma,
+            contrast.fit(
+                $pigment,
+                grainiest($ground),
+                map.get($chroma-ratios, $name)
+            )
+        );
+    }
+
+    $themes: map.set($themes, $name, $theme);
+}
 
 /// The shape each theme's grain takes; see `texture` in _ornaments.scss.
 $textures: (
@@ -119,13 +168,9 @@ $text-ratios: ();
     }
 
     // The floors hold where the grain lies thickest, not only where the ground
-    // is clean: text can land on any patch of the texture.
-    $grain: map.get($theme, "grain");
-    $ground: color.mix(
-        color.change($grain, $alpha: 1),
-        $background,
-        color.alpha($grain) * 100%
-    );
+    // is clean. The chromas were fitted to their ratio there already; these
+    // asserts are the backstop should the fitting ever be undone.
+    $ground: grainiest($theme);
 
     @include contrast.assert-at-least(
         7,
@@ -191,6 +236,14 @@ $print-ratio: map.get($text-ratios, "print");
             map.get($textures, $theme-name),
             map.get($theme, "grain")
         )};
+    // Vines grow in the two pigments, leaf green and wisteria violet.
+    @each $vine, $_ in ornaments.$vines {
+        --vine-#{$vine}: #{ornaments.vine-image(
+                $vine,
+                map.get($theme, "signal"),
+                map.get($theme, "accent")
+            )};
+    }
 }
 
 // Matches either sign of an override: the checkbox (works without JS, but

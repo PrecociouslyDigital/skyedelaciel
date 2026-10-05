@@ -7,22 +7,80 @@
 @use "sass:list";
 @use "sass:map";
 @use "sass:math";
+@use "sass:meta";
 
-/// One tapered horizontal — a 橫 — filled in a 400 x 20 box that stretches to
-/// whatever the call site is. Carried as a mask rather than an image so the
-/// stroke takes `currentColor` and needs no second copy for the dark scheme.
-$stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 20' preserveAspectRatio='none'%3E%3Cpath d='M5.6 6C7.2 3.6 12.4 3.4 15.6 5.4C19.2 7.6 23 8.6 30 8.8C100 9.6 190 8.2 268 7.2C320 6.6 354 5.6 376 4.2C387 3.4 396 4.8 398 7.8C400 11 397.8 14.4 392 16C385 17.6 378 17.2 371.6 15.8C348 14 318 13.6 268 14.4C190 15.4 100 16.2 28 14.8C13 14.6 5.8 11.6 5.6 6Z'/%3E%3C/svg%3E");
+/// The rules the site draws, each a flowering vine, after the vine-stem
+/// borders of illuminated manuscripts: one per place a rule appears, so that
+/// the same place always shows the same vine.
+///
+/// A vine is drawn for its size, its pen's weight and the room its curls
+/// need fixed in proportion to its height, so the width belongs here with the
+/// shape rather than at the call site. `centred` is for a rule centred in its
+/// column, which tapers to both ends; otherwise it is set flush left and grows
+/// one way, pressed down at the start and rolling up at the tip.
+$vines: (
+    "title": (
+        "ratio": 5.5,
+        "width": 10.5rem,
+        "seed": 1,
+        "centred": false,
+    ),
+    "heading": (
+        "ratio": 4,
+        "width": 5.5rem,
+        "seed": 2,
+        "centred": false,
+    ),
+    "break": (
+        "ratio": 8,
+        "width": 13rem,
+        "seed": 3,
+        "centred": true,
+    ),
+    "closing": (
+        "ratio": 10,
+        "width": 18rem,
+        "seed": 4,
+        "centred": true,
+    ),
+);
 
-/// A brush rule. The call site sets a width; the height follows from `$ratio`,
-/// so the stroke can never be squashed into a bar by mistake. Longer rules want
-/// a larger ratio — a sweep of the same brush is relatively thinner than a
-/// flick of it.
-@mixin brush-rule($ratio: 20, $ink: currentColor) {
+/// A vine drawn in a scheme's `$leaf` and `$flower`, as a `url()`. Each scheme
+/// bakes its own colours into its own copy, since an image cannot read a
+/// custom property; colors.scss sets the copies as `--vine-<name>`.
+@function vine-image($name, $leaf, $flower) {
+    @if not meta.function-exists("vine") {
+        @error "vine() is not defined: the vines integration draws the vines, and is not loaded.";
+    }
+
+    $vine: vine-of($name);
+    @return vine(
+        map.get($vine, "ratio"),
+        map.get($vine, "seed"),
+        map.get($vine, "centred"),
+        $leaf,
+        $flower
+    );
+}
+
+/// A vine rule. Its height follows from its width, so the drawing is never
+/// stretched; on a column narrower than the vine, it shrinks as a whole.
+@mixin vine-rule($name) {
+    $vine: vine-of($name);
     display: block;
-    aspect-ratio: $ratio;
+    width: map.get($vine, "width");
+    max-width: 100%;
+    aspect-ratio: map.get($vine, "ratio");
     border: 0;
-    background-color: $ink;
-    mask: $stroke 0 0 / 100% 100% no-repeat;
+    background: var(--vine-#{$name}) 0 0 / 100% 100% no-repeat;
+}
+
+/// The `$vines` entry for `$name`.
+@function vine-of($name) {
+    @if not map.has-key($vines, $name) {
+        @error "there is no #{$name} vine; the vines are #{map.keys($vines)}.";
+    }
+    @return map.get($vines, $name);
 }
 
 /// 文武線: a heavy rule outside, a hairline inside, and a channel of ground
@@ -63,6 +121,7 @@ $stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewB
         $value: math.div(color.channel($color, $channel, $space: rgb), 255);
         $rgb: "#{$rgb}0 0 0 0 #{math.div(math.round($value * 1000), 1000)} ";
     }
+
     $matrix: "#{$rgb}#{$gain * $alpha} 0 0 0 #{$offset * $alpha}";
 
     @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='#{$tile}' height='#{$tile}'%3E%3Cfilter id='n' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='#{$frequency}' numOctaves='#{$octaves}' stitchTiles='stitch'/%3E%3CfeColorMatrix values='#{$matrix}'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");

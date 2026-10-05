@@ -188,12 +188,12 @@ const rail = `${date}${block("NoteCount", `${RAIL_SEPARATOR}${v("NoteCountWithLa
         }
     }
 
-    /* Where posts are not framed, a stroke divides one from the next. */
+    /* Where posts are not framed, a vine divides one from the next, as it
+       does the sections of an article. */
     @include breakpoints.framed-title {
         .post + .post::before {
-            @include ornaments.brush-rule(20, var(--color-text));
+            @include ornaments.vine-rule("break");
             content: "";
-            width: 30%;
             margin: 0 auto 2.5rem;
         }
     }

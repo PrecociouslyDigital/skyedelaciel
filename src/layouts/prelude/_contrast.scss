@@ -32,6 +32,57 @@
     @return math.div(math.max($x, $y) + 0.05, math.min($x, $y) + 0.05);
 }
 
+/// `$pigment` made just dark or light enough to stand `$ratio`:1 against
+/// `$ground`, and no further. Only its OKLCH lightness moves: its hue stays,
+/// and so does its chroma unless the lightness found leaves it outside sRGB,
+/// where the chroma is cut back until it fits.
+///
+/// A binary search on lightness, between the ground's own and black (on a
+/// light ground) or white (on a dark one). Every colour tried is rounded to
+/// the hex it will be written as before it is measured, so the colour
+/// returned meets the ratio as written, not only before rounding.
+@function fit($pigment, $ground, $ratio) {
+    $hue: color.channel($pigment, "hue", $space: oklch);
+    $chroma: color.channel($pigment, "chroma", $space: oklch);
+    $from: color.channel($ground, "lightness", $space: oklch);
+    // Toward whichever of black and white the ground has more room to reach.
+    $to: 100%;
+    @if contrast($ground, #000) > contrast($ground, #fff) {
+        $to: 0%;
+    }
+
+    $fitted: null;
+
+    @for $_ from 1 through 24 {
+        $lightness: math.div($from + $to, 2);
+        $candidate: written(oklch($lightness $chroma $hue));
+        @if contrast($candidate, $ground) >= $ratio {
+            $fitted: $candidate;
+            $to: $lightness;
+        } @else {
+            $from: $lightness;
+        }
+    }
+    @if not $fitted {
+        @error "#{$pigment} cannot reach #{$ratio}:1 against #{$ground} at any lightness.";
+    }
+    @return $fitted;
+}
+
+/// A colour brought into sRGB by cutting its chroma, then rounded to the
+/// nearest hex.
+@function written($color) {
+    $rgb: color.to-space(
+        color.to-gamut($color, $space: rgb, $method: local-minde),
+        rgb
+    );
+    @return rgb(
+        math.round(color.channel($rgb, "red", $space: rgb))
+            math.round(color.channel($rgb, "green", $space: rgb))
+            math.round(color.channel($rgb, "blue", $space: rgb))
+    );
+}
+
 /// Fail the build unless `$color` reads clearly against `$against`.
 @mixin assert-at-least($ratio, $color, $against, $what) {
     $measured: contrast($color, $against);
