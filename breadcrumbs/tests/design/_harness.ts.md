@@ -32,3 +32,10 @@ before this, which is part of why it reported 34 failures for 4 links.
 Most of these tests assert that a list of offenders is empty. That is also what
 they report when their selector matches nothing at all, so the ones whose
 selector could plausibly stop matching assert a non-zero count first.
+
+## 2026-10-06 — `copyLink()`
+
+Waits for `astro-island:not([ssr])` before handing back a copy link. Clicking
+a `client:visible` island too early follows the plain link. The motion spec
+hit this on /design/, where the page is heavy enough for the race to show.
+The nojs test deliberately clicks the raw locator.

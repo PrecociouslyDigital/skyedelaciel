@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import {
     CONTENT_HEADINGS,
+    copyLink,
     expect,
     FIXTURE_PAGE,
     onlyIn,
@@ -102,16 +103,14 @@ section("Headings", () => {
                 "clipboard-read",
                 "clipboard-write",
             ]);
-            await page
-                .locator(`${HEADING} .copy-link`)
-                .scrollIntoViewIfNeeded();
+            await copyLink(page, HEADING);
         });
 
         test("clicking the number copies the address, sets it, and stays put", async ({
             page,
         }) => {
             const before = await page.evaluate(() => scrollY);
-            await page.locator(`${HEADING} .copy-link`).click();
+            await (await copyLink(page, HEADING)).click();
 
             await expect
                 .poll(() => page.evaluate(() => navigator.clipboard.readText()))
@@ -124,7 +123,7 @@ section("Headings", () => {
             page,
             profileName,
         }) => {
-            await page.locator(`${HEADING} .copy-link`).click();
+            await (await copyLink(page, HEADING)).click();
             await expect
                 .poll(async () => (await geometry(page)).shown)
                 .toBe("visible");
@@ -154,7 +153,7 @@ section("Headings", () => {
         test("a screen reader hears that the link was copied", async ({
             page,
         }) => {
-            await page.locator(`${HEADING} .copy-link`).click();
+            await (await copyLink(page, HEADING)).click();
             await expect(page.locator(`${HEADING} [role=status]`)).toHaveText(
                 "Link copied",
             );
@@ -163,7 +162,7 @@ section("Headings", () => {
         test("the receipt lifts after a moment and a half", async ({
             page,
         }) => {
-            await page.locator(`${HEADING} .copy-link`).click();
+            await (await copyLink(page, HEADING)).click();
             await expect
                 .poll(async () => (await geometry(page)).shown)
                 .toBe("visible");
@@ -181,7 +180,7 @@ section("Headings", () => {
             page,
         }) => {
             await page.emulateMedia({ reducedMotion: "reduce" });
-            await page.locator(`${HEADING} .copy-link`).click();
+            await (await copyLink(page, HEADING)).click();
             await expect
                 .poll(async () => (await geometry(page)).shown)
                 .toBe("visible");

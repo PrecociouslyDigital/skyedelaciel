@@ -91,8 +91,8 @@ $leave: 260ms;
 
     /* Under the box's right-hand corner, where the next tick would be. */
     &[data-placement="below"] {
-        right: 0;
-        top: calc(100% + 0.35rem);
+        right: calc(-1 * var(--receipt-reach, 0px));
+        top: calc(100% + var(--receipt-reach, 0px) + 0.35rem);
     }
 }
 

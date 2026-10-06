@@ -1,0 +1,23 @@
+---
+import Caption from "./Caption.astro";
+
+/**
+ * A table as a numbered figure, captioned above, as a table is read from its
+ * title down. Written by remark-figures, from a `Table: caption` paragraph and
+ * the table after it. The table scrolls sideways on its own where it is
+ * wider than the column, and can be reached from the keyboard to do so.
+ */
+interface Props {
+    id: `tab-${string}`;
+    label: string;
+}
+
+const { id, label } = Astro.props;
+---
+
+<figure id={id} class="table-figure receipt-box">
+    <Caption href={`#${id}`} label={label}><slot name="caption" /></Caption>
+    <div class="table-scroll" tabindex="0">
+        <slot />
+    </div>
+</figure>

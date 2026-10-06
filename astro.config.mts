@@ -18,6 +18,7 @@ import { resolveRemoteLinks } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
 import remarkSections from "./src/plugins/remark-sections";
+import remarkFigures from "./src/plugins/remark-figures";
 import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
 import rehypeTaskLists from "./src/plugins/rehype-task-lists";
 import tumblrTheme, {
@@ -81,7 +82,12 @@ const rehypePlugins = [rehypeSlug, rehypeCodeBlocks, rehypeTaskLists];
  * `remarkPlugins`, MDX drops Markdown's rather than extending them, so the
  * shared ones are restated.
  */
-const mdxRemarkPlugins = [...remarkPlugins, remarkSidenotes, remarkSections];
+const mdxRemarkPlugins = [
+    ...remarkPlugins,
+    remarkSidenotes,
+    remarkSections,
+    [remarkFigures, { root: new URL("./", import.meta.url) }],
+];
 
 // https://astro.build/config
 export default defineConfig({

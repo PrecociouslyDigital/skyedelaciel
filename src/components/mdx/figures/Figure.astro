@@ -1,0 +1,41 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+import { PLATE_PAD } from "~/layouts/prelude/brush.mjs";
+import Caption from "./Caption.astro";
+
+/**
+ * An image as a figure: set on a plate ruled round by the brush, and
+ * captioned. Written by remark-figures, from `![alt](./file "caption")`.
+ *
+ * The plate was drawn for the image at `width`, so the figure is never wider
+ * than that; on a narrower column it shrinks as a whole, frame and all.
+ */
+interface Props {
+    id: `fig-${string}`;
+    label: string;
+    image: ImageMetadata;
+    alt: string;
+    /** The URL of its plate's drawing. */
+    plate: string;
+    /** How wide the image is drawn, in px. */
+    width: number;
+}
+
+const { id, label, image, alt, plate, width } = Astro.props;
+const geometry = [
+    `--plate: url("${plate}")`,
+    `--plate-width: ${width + 2 * PLATE_PAD}`,
+    `--plate-pad: ${PLATE_PAD}`,
+].join("; ");
+---
+
+<figure id={id} class="figure receipt-box" style={geometry}>
+    <div class="plate">
+        <Image src={image} alt={alt} width={width} densities={[1, 2]} />
+    </div>
+    <Caption href={`#${id}`} label={label}>
+        <slot name="caption" />
+        {Astro.slots.has("credit") && <slot name="credit" slot="credit" />}
+    </Caption>
+</figure>

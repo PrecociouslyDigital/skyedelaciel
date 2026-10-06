@@ -514,6 +514,10 @@ export const PLATE = {
     inner: { inset: 14, width: 6.5, past: 20 },
 };
 
+/* How far a plate's frame holds what it frames in from its edge, in px:
+   clear of both rules and the channel between them. */
+export const PLATE_PAD = 18;
+
 /* How many of the brush's units a px of plate is drawn in. */
 const UNITS_PER_PX = 3.25;
 

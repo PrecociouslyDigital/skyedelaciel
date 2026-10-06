@@ -1,0 +1,83 @@
+/// Figures and tables, as remark-figures writes them. Global, because their
+/// parts are slotted across Figure.astro, TableFigure.astro and Caption.astro;
+/// and keyed on their own classes, so that a Tumblr post's images and tables
+/// are left as Tumblr gives them.
+
+.figure,
+.table-figure {
+    // The machine's box stands this far outside the figure, and COPIED under
+    // its corner.
+    --receipt-reach: 0.6rem;
+    --receipt-outset: calc(-1 * var(--receipt-reach));
+
+    margin: 2rem 0;
+}
+
+/* As wide as its plate was drawn for, or the column, whichever is less, and
+   centred in the column. The plate's padding is a fixed share of its width,
+   so a figure shrunk to fit keeps the frame's proportions. */
+.figure {
+    container-type: inline-size;
+    width: min(100%, calc(var(--plate-width) * 1px));
+    margin-inline: auto;
+}
+
+.plate {
+    position: relative;
+    padding: calc(100cqi * var(--plate-pad) / var(--plate-width));
+
+    img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    // The brushed frame, painted in ink through its drawing.
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: var(--color-text);
+        mask: var(--plate) 0 0 / 100% 100% no-repeat;
+        pointer-events: none;
+    }
+}
+
+.caption {
+    margin-top: 0.6rem;
+    line-height: 1.5;
+
+    // A figure's number is its handle, set in full ink beside the author's
+    // muted words.
+    .copy-link:not([data-receipt="shown"]) {
+        color: var(--color-text);
+    }
+
+    .copy-link {
+        margin-right: 0.6ch;
+    }
+}
+
+.table-figure .caption {
+    margin: 0 0 0.6rem;
+}
+
+.credit {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    font-style: normal;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.06em;
+}
+
+/* Room under the last row for its stroke, which straddles the table's foot
+   and would otherwise be cut by the scroll. */
+.table-scroll {
+    overflow-x: auto;
+    padding-block-end: 4px;
+
+    table {
+        margin: 0;
+    }
+}

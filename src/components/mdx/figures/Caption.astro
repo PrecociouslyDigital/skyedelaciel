@@ -1,0 +1,28 @@
+---
+import CopyLink from "../copy/CopyLink.svelte";
+
+/**
+ * A figure's or a table's caption: its number, which is its address and
+ * copies as a heading's does; the author's words; and the credit, if the
+ * figure has one.
+ */
+interface Props {
+    href: `#${string}`;
+    /** "Fig. 2", "Table 1". */
+    label: string;
+}
+
+const { href, label } = Astro.props;
+---
+
+<figcaption class="caption">
+    <CopyLink href={href} label={label} placement="below" client:visible />
+    <slot />
+    {
+        Astro.slots.has("credit") && (
+            <span class="credit">
+                <slot name="credit" />
+            </span>
+        )
+    }
+</figcaption>

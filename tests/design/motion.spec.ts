@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
+    copyLink,
     expect,
     FIXTURE_PAGE,
     onlyIn,
@@ -116,7 +117,7 @@ section("Motion", () => {
         }) => {
             await context.grantPermissions(["clipboard-write"]);
             await page.goto(path);
-            await page.locator("article .copy-link").first().click();
+            await (await copyLink(page, "article")).click();
 
             const receipt = (await running(page)).filter(({ where }) =>
                 where.startsWith("receipt-word"),
@@ -135,7 +136,7 @@ section("Motion", () => {
             expect(await running(page)).toEqual([]);
 
             // Not even a copy's receipt.
-            await page.locator("article .copy-link").first().click();
+            await (await copyLink(page, "article")).click();
             await expect(
                 page.locator("article [role=status]").first(),
             ).toHaveText("Link copied");

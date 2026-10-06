@@ -2,6 +2,7 @@
  * How a page's apparatus is numbered. Pure functions, so the remark plugins
  * that apply them stay thin and the numbering can be tested as properties.
  */
+import { slug } from "github-slugger";
 
 /** A heading at a level the one before it does not open. */
 export class SkippedLevel extends Error {
@@ -38,3 +39,88 @@ export function sectionNumbers(depths: readonly number[]): string[] {
         return counts.join(".");
     });
 }
+
+/**
+ * What a page sets apart from its running text, each numbered in its own
+ * sequence and anchored by its own prefix: "Figure 2" is `#fig-fuji`.
+ */
+export type Kind = "figure" | "table";
+
+export const KINDS: Record<
+    Kind,
+    {
+        /** What an id starts with, before the hyphen. */
+        prefix: string;
+        /** How the text names one: "Figure 2". */
+        label: string;
+        /** How its own caption names it: "Fig. 2". */
+        short: string;
+    }
+> = {
+    figure: { prefix: "fig", label: "Figure", short: "Fig." },
+    table: { prefix: "tab", label: "Table", short: "Table" },
+};
+
+/** A thing set apart, named for its id: a figure by its file, a table by its caption. */
+export interface Apparatus {
+    kind: Kind;
+    name: string;
+}
+
+export interface Numbered extends Apparatus {
+    id: string;
+    number: number;
+}
+
+/** Two things on one page whose names come to the same id. */
+export class DuplicateId extends Error {
+    constructor(
+        /** The second of them, in document order. */
+        readonly index: number,
+        readonly id: string,
+    ) {
+        super(
+            `two things on this page would both be #${id}; rename one of them.`,
+        );
+    }
+}
+
+/** A link to a figure, table or listing the page does not have. */
+export class DanglingReference extends Error {
+    constructor(readonly href: string) {
+        super(`${href} names nothing on this page.`);
+    }
+}
+
+/**
+ * Each thing's id and number: numbered from 1 in document order, each kind
+ * on its own, and identified by its kind's prefix and the slug of its name.
+ * Throws `DuplicateId` where two would share an id.
+ */
+export function numberApparatus(items: readonly Apparatus[]): Numbered[] {
+    const counts = new Map<Kind, number>();
+    const ids = new Set<string>();
+    return items.map((item, index) => {
+        const id = `${KINDS[item.kind].prefix}-${slug(item.name)}`;
+        if (ids.has(id)) throw new DuplicateId(index, id);
+        ids.add(id);
+        const number = (counts.get(item.kind) ?? 0) + 1;
+        counts.set(item.kind, number);
+        return { ...item, id, number };
+    });
+}
+
+/** Whether `href` is a link to apparatus at all, of any kind. */
+export const namesApparatus = (href: string) =>
+    Object.values(KINDS).some(({ prefix }) => href.startsWith(`#${prefix}-`));
+
+/** What a link to `href` reads as: "Figure 2". */
+export function referenceText(numbered: readonly Numbered[], href: string) {
+    const target = numbered.find(({ id }) => `#${id}` === href);
+    if (!target) throw new DanglingReference(href);
+    return `${KINDS[target.kind].label} ${target.number}`;
+}
+
+/** What a thing's own caption calls it: "Fig. 2". */
+export const captionLabel = ({ kind, number }: Numbered) =>
+    `${KINDS[kind].short} ${number}`;

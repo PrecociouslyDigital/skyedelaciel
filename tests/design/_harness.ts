@@ -1,4 +1,4 @@
-import { test as base, expect } from "@playwright/test";
+import { test as base, expect, type Page } from "@playwright/test";
 import type { Profile, ProfileName } from "../../tools/browser/profiles.mjs";
 import { profiles } from "../../tools/browser/profiles.mjs";
 
@@ -129,3 +129,20 @@ export const contrast = (a: string, b: string) => {
     const [dark, light] = [luminance(a), luminance(b)].sort((x, y) => x - y);
     return (light! + 0.05) / (dark! + 0.05);
 };
+
+/**
+ * The copy link in `scope`, once its island has hydrated, ready to click.
+ *
+ * A copy link is an ordinary link until its script arrives, and a click
+ * before then follows it rather than copying, so a test that clicks too soon
+ * tests the page without its script. Astro drops `ssr` from an island once it
+ * has hydrated, and a `client:visible` one only hydrates once on screen.
+ */
+export async function copyLink(page: Page, scope: string) {
+    const link = page.locator(`${scope} .copy-link`).first();
+    await link.scrollIntoViewIfNeeded();
+    await expect(
+        page.locator(`${scope} astro-island:not([ssr]) .copy-link`).first(),
+    ).toBeAttached();
+    return link;
+}
