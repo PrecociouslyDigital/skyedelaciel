@@ -243,6 +243,12 @@ $print-ratio: map.get($text-ratios, "print");
             --vine-#{$vine}: #{ornaments.vine-image($vine, $theme)};
         }
     }
+    // A highlight is a swipe of the brush behind the words, in a wash of the
+    // accent. Baked in rather than masked, because a mask would clip the words.
+    --swipe: #{ornaments.brush-mark(
+            "across",
+            color.change(map.get($theme, "accent"), $alpha: 0.2)
+        )};
 }
 
 // Matches either sign of an override: the checkbox (works without JS, but

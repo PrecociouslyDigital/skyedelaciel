@@ -189,3 +189,9 @@ cannot hold it. So a palette cannot drift out of its band, and the old "all
 three between 6 and 7:1" became an equality. The `assert-at-least` loop stays
 as a backstop. tests/unit/vine.test.ts checks fit's three properties: it meets
 the ratio, it goes no further than it must, and it keeps the hue.
+
+## 2026-10-06 — `--swipe`
+
+The highlight's swipe is the 橫 brush mark filled with each scheme's accent
+at 20%, the specimen's figure. It is baked into each scheme, print included,
+because it is a background behind text.

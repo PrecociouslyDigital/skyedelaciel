@@ -18,6 +18,7 @@ import { resolveRemoteLinks } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
 import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
+import rehypeTaskLists from "./src/plugins/rehype-task-lists";
 import tumblrTheme, {
     ROUTE as TUMBLR_THEME_ROUTE,
 } from "./src/integrations/tumblr-theme";
@@ -112,6 +113,6 @@ export default defineConfig({
         // scheme. Code is set in ink on paper like the rest of the page.
         syntaxHighlight: false,
         remarkPlugins: [extractLinks, remarkSidenotes],
-        rehypePlugins: [rehypeSlug, rehypeCodeBlocks],
+        rehypePlugins: [rehypeSlug, rehypeCodeBlocks, rehypeTaskLists],
     },
 });

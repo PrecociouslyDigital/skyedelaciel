@@ -224,12 +224,96 @@ blockquote {
     }
 }
 
+/* Bullets are brush marks, one per depth: a 點 in the accent colour, a 橫 in
+   muted ink, then a smaller 點. Task lists carry a class from the Markdown
+   renderer and keep their own squares.
+
+   The marker is emptied rather than removed: WebKit drops the list from the
+   accessibility tree under `list-style: none`. */
 ul {
     padding-left: 2ch;
+}
 
-    li::marker {
-        color: var(--color-accent);
+ul:not([class]) {
+    list-style-type: "";
+
+    > li {
+        position: relative;
     }
+
+    > li::before {
+        content: "";
+        position: absolute;
+        left: -1.15em;
+        top: 0.5em;
+        width: 0.42em;
+        height: 0.5em;
+        background-color: var(--color-accent);
+        mask: ornaments.brush-mark("dot") 0 0 / 100% 100% no-repeat;
+    }
+
+    ul:not([class]) > li::before {
+        left: -1.3em;
+        top: 0.75em;
+        width: 0.75em;
+        height: 0.16em;
+        background-color: var(--color-muted);
+        mask-image: ornaments.brush-mark("across");
+    }
+
+    ul:not([class]) ul:not([class]) > li::before {
+        left: -1.05em;
+        top: 0.6em;
+        width: 0.3em;
+        height: 0.36em;
+        mask-image: ornaments.brush-mark("dot");
+    }
+}
+
+/* A task's square is ruled in ink and filled with the accent colour once
+   done, when its words fade to muted ink. */
+.contains-task-list {
+    list-style-type: "";
+    padding-left: 0;
+}
+
+.task-list-item {
+    $square: 0.75em;
+    $gap: 0.9ch;
+
+    padding-left: calc(#{$square} + #{$gap});
+    text-indent: calc(-1 * (#{$square} + #{$gap}));
+
+    input {
+        appearance: none;
+        width: $square;
+        height: $square;
+        margin: 0 $gap 0 0;
+        vertical-align: -0.05em;
+        border: 1px solid var(--color-text);
+        background: var(--color-background);
+
+        &:checked {
+            background: var(--color-accent);
+            box-shadow: inset 0 0 0 2px var(--color-background);
+        }
+    }
+
+    &:has(input:checked) {
+        color: var(--color-muted);
+    }
+}
+
+dl {
+    margin: 1.25em 0;
+}
+
+dt {
+    font-weight: 600;
+}
+
+dd {
+    margin: 0 0 0.6em 2ch;
 }
 
 ol {
@@ -247,6 +331,52 @@ code {
     background: var(--color-border-faint);
     padding: 0.05em 0.35em;
     border-radius: 2px;
+}
+
+/* — Inline — */
+
+/* The swipe is drawn per scheme in colors.scss; cloned, so that a highlight
+   broken across lines is swiped on each. */
+mark {
+    color: inherit;
+    background: var(--swipe) 0 88% / 100% 0.7em no-repeat;
+    box-decoration-break: clone;
+    padding-inline: 0.1em;
+}
+
+/* A keycap: a raised face on a heavier foot. */
+kbd {
+    font-family: var(--font-mono);
+    font-size: 0.78em;
+    padding: 0.05em 0.45em 0.1em;
+    border: 1px solid var(--color-border);
+    border-bottom: 2px solid var(--color-muted);
+    border-radius: 2px;
+    background: var(--color-raised);
+}
+
+abbr {
+    text-decoration: none;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.05em;
+
+    &[title] {
+        cursor: help;
+    }
+}
+
+/* Struck text recedes under an ink stroke; inserted text is underlined in
+   the accent. */
+del {
+    color: var(--color-muted);
+    text-decoration-color: var(--color-text);
+}
+
+ins {
+    text-decoration-line: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
 }
 
 /* Painted on the block itself rather than on a pseudo-element outside it: a

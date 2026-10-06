@@ -187,3 +187,10 @@ layer is `100% - 2·end + 1px` wide, overlapping each end by a pixel, which
 is how the specimen hid the seams. The call site supplies `--band`, the
 size, the position and the ink, so the same mixin serves table rows,
 quotations and sidenotes.
+
+## 2026-10-06 — `$brush-marks` and `brush-mark()`
+
+The 點 and 橫 are hand-kept paths from the specimen, not drawn by brush.mjs:
+at bullet size the generated stroke's grain is lost, and these read better.
+`brush-mark()` inlines them as data URLs, about 300 bytes each. A fill colour
+is written as `rgba()` with commas, because a hex `#` would end the data URL.

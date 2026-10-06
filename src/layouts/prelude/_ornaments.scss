@@ -275,6 +275,47 @@ $strokes: (
     }
 }
 
+/// Brush marks small enough to keep by hand, each a path in its own view box:
+/// a 點 (`dot`), the brush set down and lifted, heavier where it leaves; and a
+/// 橫 (`across`), one tapered stroke that stretches to any length.
+$brush-marks: (
+    "dot": (
+        "view": "0 0 20 24",
+        "d":
+            "M6 2.5C9.5 2 14.5 6.5 16.5 11.5C18.3 16 16.8 20.6 12.8 21.4C9.2 22.1 7.6 18.6 7 15C6.4 11.4 4.2 8.6 3.6 6.2C3.1 4.2 4.2 2.8 6 2.5Z",
+    ),
+    "across": (
+        "view": "0 0 400 20",
+        "d":
+            "M5.6 6C7.2 3.6 12.4 3.4 15.6 5.4C19.2 7.6 23 8.6 30 8.8C100 9.6 190 8.2 268 7.2C320 6.6 354 5.6 376 4.2C387 3.4 396 4.8 398 7.8C400 11 397.8 14.4 392 16C385 17.6 378 17.2 371.6 15.8C348 14 318 13.6 268 14.4C190 15.4 100 16.2 28 14.8C13 14.6 5.8 11.6 5.6 6Z",
+    ),
+);
+
+/// A brush mark as an inline `url()`, stretched to its box: black for masking,
+/// or in `$fill` when the colour must be baked in.
+@function brush-mark($name, $fill: #000) {
+    @if not map.has-key($brush-marks, $name) {
+        @error "there is no #{$name} brush mark; the marks are #{map.keys($brush-marks)}.";
+    }
+    $mark: map.get($brush-marks, $name);
+    @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='#{map.get($mark, "view")}' preserveAspectRatio='none'%3E%3Cpath fill='#{-rgba($fill)}' d='#{map.get($mark, "d")}'/%3E%3C/svg%3E");
+}
+
+/// A colour as comma-separated `rgba()`, which an SVG attribute in a data URL
+/// carries without escaping, unlike a hex `#`.
+@function -rgba($color) {
+    $rgb: color.to-space($color, rgb);
+    $channels: ();
+    @each $channel in ("red", "green", "blue") {
+        $channels: list.append(
+            $channels,
+            math.round(color.channel($rgb, $channel, $space: rgb)),
+            $separator: comma
+        );
+    }
+    @return "rgba(#{$channels}, #{color.alpha($color)})";
+}
+
 /// 文武線: a heavy rule outside, a hairline inside, and a channel of ground
 /// between them. `border-style: double` divides its width into three equal
 /// parts and so cannot draw a thick/thin pair; two stacked inset shadows can,

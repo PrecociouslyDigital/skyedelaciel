@@ -145,3 +145,23 @@ checked: the suite runs Chromium only.
 A blockquote is `min-block-size: 2lh` so that a one-line quotation still has
 room for both the head and the tail. Under 6 bands (42px) they would
 overlap.
+
+## 2026-10-06 — brush bullets, task lists, inline elements
+
+Bullets apply only to `ul:not([class])`. GFM classes a task list
+`contains-task-list`, and the selector is how the task squares and the brush
+marks keep out of each other's way. Depth is counted by nesting
+`ul:not([class])`, so a task list nested inside a bulleted list does not
+shift the depths.
+
+The marker is hidden with `list-style-type: ""` rather than
+`list-style: none`, because WebKit drops list semantics under `none`. The
+content spec asserts the computed `""`.
+
+Task items lay out inline with a hanging indent (`padding-left` plus a
+negative `text-indent`), not as the specimen's flex row. GFM puts the words
+straight into the `li` next to the input, with no span, so under flex every
+inline child (a link, emphasis) would become a flex item of its own.
+
+The `mark` swipe is a background with its colour baked in (`--swipe`, from
+colors.scss), not a mask. A mask on `mark` would clip its words.
