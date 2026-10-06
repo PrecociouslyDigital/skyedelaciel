@@ -136,10 +136,28 @@ section("Table of contents", () => {
             expect(folds).not.toContain(false);
 
             // Below it, an entry's section is shown as soon as it is.
-            await openSection(page, "#nesting");
+            await openSection(page, "#heading-1");
             await expect(
-                page.locator('.toc-sidebar a[href="#third-level"]'),
+                page.locator('.toc-sidebar a[href="#heading-3"]'),
             ).toBeVisible();
+        });
+
+        test("the first level is set heavier than the second", async ({
+            page,
+        }) => {
+            await openSection(page, "#heading-1");
+            const weights = (depth: number) =>
+                page.$$eval(
+                    `.toc-sidebar li[data-depth="${depth}"] > a`,
+                    (links) =>
+                        links.map((link) =>
+                            Number(getComputedStyle(link).fontWeight),
+                        ),
+                );
+
+            expect(Math.min(...(await weights(1)))).toBeGreaterThan(
+                Math.max(...(await weights(2))),
+            );
         });
 
         /**
@@ -150,8 +168,8 @@ section("Table of contents", () => {
         test("a third-level entry has a shoot from the vine to its words", async ({
             page,
         }) => {
-            await openSection(page, "#nesting");
-            const link = 'a[href="#third-level"]';
+            await openSection(page, "#heading-1");
+            const link = 'a[href="#heading-3"]';
             const shoot = await drawing(page, `.toc-sidebar li:has(> ${link})`);
             const list = (await page
                 .locator(".toc-sidebar .toc-root")

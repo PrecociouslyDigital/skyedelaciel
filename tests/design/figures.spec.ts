@@ -2,10 +2,13 @@ import type { Page } from "@playwright/test";
 import {
     copyLink,
     expect,
+    FIGURES,
     FIXTURE_PAGE,
+    numbering,
     onlyIn,
     section,
     SPEC_PAGE,
+    STATEMENTS,
     test,
     token,
 } from "./_harness";
@@ -46,9 +49,7 @@ section("Figures", () => {
     });
 
     section("Images", () => {
-        test("every image in the prose is a numbered figure, in order", async ({
-            page,
-        }) => {
+        test("every image in the prose is a figure", async ({ page }) => {
             const figures = await page.evaluate(() => ({
                 // A link's popover carries a picture of where it leads,
                 // which is not the page's own.
@@ -58,17 +59,10 @@ section("Figures", () => {
                     ),
                 ].filter((img) => !img.closest("figure.figure[id^='fig-']"))
                     .length,
-                labels: [
-                    ...document.querySelectorAll(
-                        "figure.figure figcaption .copy-link",
-                    ),
-                ].map((link) => link.textContent),
+                count: document.querySelectorAll("figure.figure").length,
             }));
             expect(figures.loose).toBe(0);
-            expect(figures.labels).toEqual(
-                figures.labels.map((_, i) => `Fig. ${i + 1}`),
-            );
-            expect(figures.labels.length).toBeGreaterThanOrEqual(2);
+            expect(figures.count).toBeGreaterThanOrEqual(2);
         });
 
         test("a figure, its plate and its caption are one width, and the figure is centred", async ({
@@ -246,45 +240,42 @@ section("Figures", () => {
         });
     });
 
-    section("Listings", () => {
-        const LISTING = "#lst-the-woodblock-frame";
+    section("Code", () => {
+        const CODE = "#fig-captioned-code";
 
-        test("every block of code is a numbered listing, stamped with its language and length", async ({
+        test("every block of code is a figure, stamped with its language and length", async ({
             page,
         }) => {
             for (const path of [FIXTURE_PAGE, SPEC_PAGE]) {
                 await page.goto(path);
-                const listings = await page.evaluate(() => ({
+                const blocks = await page.evaluate(() => ({
                     loose: [...document.querySelectorAll("article pre")].filter(
-                        (pre) => !pre.closest("figure.listing"),
+                        (pre) => !pre.closest("figure.code-figure"),
                     ).length,
-                    each: [...document.querySelectorAll("figure.listing")].map(
-                        (listing) => ({
-                            label: listing.querySelector(".copy-link")!
-                                .textContent,
-                            stamp: listing.querySelector(".listing-stamp")!
-                                .textContent,
-                            lines: listing.querySelectorAll("pre .line").length,
-                            lang: listing
-                                .querySelector("pre")!
-                                .getAttribute("data-language"),
-                        }),
-                    ),
+                    each: [
+                        ...document.querySelectorAll("figure.code-figure"),
+                    ].map((block) => ({
+                        stamp: block.querySelector(".code-stamp")!.textContent,
+                        lines: block.querySelectorAll("pre .line").length,
+                        lang: block
+                            .querySelector("pre")!
+                            .getAttribute("data-language"),
+                    })),
                 }));
-                expect(listings.loose, path).toBe(0);
-                listings.each.forEach((listing, i) => {
-                    expect(listing.label).toBe(`Listing ${i + 1}`);
-                    expect(listing.stamp).toBe(
-                        `${listing.lang} · ${listing.lines}`,
-                    );
+                expect(blocks.loose, path).toBe(0);
+                blocks.each.forEach((block) => {
+                    expect(block.stamp).toBe(`${block.lang} · ${block.lines}`);
                 });
             }
         });
 
-        test("nothing in a listing is styled inline", async ({ page }) => {
+        test("nothing in a block of code is styled inline", async ({
+            page,
+        }) => {
             const styled = await page.evaluate(
                 () =>
-                    document.querySelectorAll("figure.listing [style]").length,
+                    document.querySelectorAll("figure.code-figure [style]")
+                        .length,
             );
             expect(styled).toBe(0);
         });
@@ -300,7 +291,7 @@ section("Figures", () => {
                 const inks = await page.evaluate(() => {
                     const ink = (selector: string) => {
                         const el = document.querySelector(
-                            `figure.listing ${selector}`,
+                            `figure.code-figure ${selector}`,
                         );
                         return el && getComputedStyle(el).color;
                     };
@@ -323,7 +314,7 @@ section("Figures", () => {
         test("it is framed thick and thin, and no box of the machine's", async ({
             page,
         }) => {
-            const pre = await page.locator(`${LISTING} pre`).evaluate((pre) => {
+            const pre = await page.locator(`${CODE} pre`).evaluate((pre) => {
                 const style = getComputedStyle(pre);
                 return {
                     border: style.borderTopWidth,
@@ -336,7 +327,7 @@ section("Figures", () => {
 
         test("selecting the code takes no line numbers", async ({ page }) => {
             const { selected, code } = await page
-                .locator(`${LISTING} pre code`)
+                .locator(`${CODE} pre code`)
                 .evaluate((code) => {
                     const range = document.createRange();
                     range.selectNodeContents(code);
@@ -365,12 +356,12 @@ section("Figures", () => {
                 "clipboard-read",
                 "clipboard-write",
             ]);
-            await page.locator(LISTING).scrollIntoViewIfNeeded();
-            const button = page.locator(`${LISTING} .copy-code`);
+            await page.locator(CODE).scrollIntoViewIfNeeded();
+            const button = page.locator(`${CODE} .copy-code`);
             await button.click();
 
             const code = await page
-                .locator(`${LISTING} pre code`)
+                .locator(`${CODE} pre code`)
                 .evaluate((code) => code.textContent);
             await expect
                 .poll(() =>
@@ -385,7 +376,7 @@ section("Figures", () => {
                 .toBe(code);
             await expect(button).toHaveAttribute("data-copied");
             await expect(
-                page.locator(`${LISTING} [role=status]`).last(),
+                page.locator(`${CODE} [role=status]`).last(),
             ).toHaveText("Code copied");
         });
 
@@ -398,14 +389,41 @@ section("Figures", () => {
         });
     });
 
+    section("Numbering", () => {
+        for (const [track, selector] of [
+            ["figures", FIGURES],
+            ["statements", STATEMENTS],
+        ] as const)
+            test(`${track} are numbered within their top-level section`, async ({
+                page,
+            }) => {
+                for (const path of [SPEC_PAGE, FIXTURE_PAGE]) {
+                    await page.goto(path);
+                    const { carried, counted } = await numbering(
+                        page,
+                        selector,
+                    );
+                    expect(carried, path).toEqual(counted);
+                    // The kitchen sink holds enough of each to count past one.
+                    if (path === FIXTURE_PAGE)
+                        expect(carried.length).toBeGreaterThanOrEqual(2);
+                }
+            });
+    });
+
     section("References", () => {
-        test("a link to a figure or table reads as its number", async ({
+        test("a link to a figure or a statement reads as its number", async ({
             page,
         }) => {
             const references = await page.evaluate(() =>
                 [
                     ...document.querySelectorAll(
-                        "article a.content-link[href^='#fig-'], article a.content-link[href^='#tab-']",
+                        ["fig", "tab", "def", "lem", "thm"]
+                            .map(
+                                (prefix) =>
+                                    `article a.content-link[href^='#${prefix}-']`,
+                            )
+                            .join(", "),
                     ),
                 ].map((link) => {
                     const target = document.querySelector(
@@ -413,17 +431,17 @@ section("Figures", () => {
                     )!;
                     return {
                         says: link.firstChild!.textContent!.trim(),
-                        number: target.querySelector("figcaption .copy-link")!
+                        number: target.querySelector(".copy-link")!
                             .textContent!,
                     };
                 }),
             );
-            expect(references.length).toBeGreaterThanOrEqual(3);
+            expect(references.length).toBeGreaterThanOrEqual(4);
             for (const { says, number } of references)
                 expect(says).toBe(
                     number
                         .replace(/^Fig\. /, "Figure ")
-                        .replace(/^Table /, "Table "),
+                        .replace(/^Def\. /, "Definition "),
                 );
         });
 

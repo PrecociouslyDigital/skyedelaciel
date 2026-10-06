@@ -1,6 +1,6 @@
 @use "motion";
 
-/// Figures, tables and listings, as remark-figures writes them. Global,
+/// Figures and tables, as remark-figures writes them. Global,
 /// because their parts are slotted across the components in
 /// src/components/mdx/figures/;
 /// and keyed on their own classes, so that a Tumblr post's images and tables
@@ -85,11 +85,11 @@
     }
 }
 
-/* — Listings —
+/* — Code figures —
 
    Above the code: number and caption on the left; language-and-length stamp
    and Copy button on the right. */
-.listing {
+.code-figure {
     margin: 1.5rem 0;
 
     pre {
@@ -97,7 +97,7 @@
     }
 }
 
-.listing-head {
+.code-head {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
@@ -110,11 +110,11 @@
     }
 }
 
-.listing-caption {
+.code-caption {
     font-style: italic;
 }
 
-.listing-stamp {
+.code-stamp {
     margin-left: auto;
     font-family: var(--font-mono);
     font-size: 0.6rem;
@@ -147,7 +147,7 @@
 
 /* Print keeps the code, not the stamp or the Copy button. */
 @media print {
-    .listing-stamp,
+    .code-stamp,
     .copy-code {
         display: none;
     }

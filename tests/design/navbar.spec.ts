@@ -1,4 +1,5 @@
 import { expect, onlyIn, section, SPEC_PAGE, test } from "./_harness";
+import type { Page } from "@playwright/test";
 
 /** The navbar's three parts, in the order the spec lists them. */
 const PARTS = [".logo", ".nav-links", ".theme-toggle"];
@@ -24,6 +25,20 @@ const arrangement = (parts: readonly string[]) => {
         return "side-by-side";
     return "neither";
 };
+
+/**
+ * Laid out as on a narrow page: across the top of the article, above its
+ * title, and as wide as it.
+ */
+async function inTheBand(page: Page) {
+    const navbar = (await page.locator(".navbar").boundingBox())!;
+    const title = (await page.locator(".title").boundingBox())!;
+    const article = (await page.locator("article").boundingBox())!;
+
+    expect(navbar.y + navbar.height).toBeLessThanOrEqual(title.y);
+    expect(await page.evaluate(arrangement, PARTS)).toBe("side-by-side");
+    expect(navbar.width).toBeCloseTo(article.width, 0);
+}
 
 section("Navbar", () => {
     test.beforeEach(async ({ page }) => {
@@ -107,22 +122,23 @@ section("Navbar", () => {
         });
     });
 
+    section("Room for sidenotes, not yet for the navbar's column", () => {
+        onlyIn("wide", "nojs");
+
+        // Between `wide` (60rem) and `wide-sidebar` (80rem).
+        test.use({ viewport: { width: 1100, height: 900 } });
+
+        test("it is horizontal, above the title, matching the measure", ({
+            page,
+        }) => inTheBand(page));
+    });
+
     section("Narrow viewports", () => {
         onlyIn("narrow");
 
-        test("it is horizontal, above the title, matching the measure", async ({
+        test("it is horizontal, above the title, matching the measure", ({
             page,
-        }) => {
-            const navbar = (await page.locator(".navbar").boundingBox())!;
-            const title = (await page.locator(".title").boundingBox())!;
-            const article = (await page.locator("article").boundingBox())!;
-
-            expect(navbar.y + navbar.height).toBeLessThanOrEqual(title.y);
-            expect(await page.evaluate(arrangement, PARTS)).toBe(
-                "side-by-side",
-            );
-            expect(navbar.width).toBeCloseTo(article.width, 0);
-        });
+        }) => inTheBand(page));
 
         /** The phone widths the band is drawn for, narrowest last. */
         for (const width of [420, 375, 340]) {
@@ -136,7 +152,7 @@ section("Navbar", () => {
                         (await link.boundingBox())!.height,
                     ).toBeGreaterThanOrEqual(44);
 
-                // One band: the seal, the links and the toggle side by side.
+                // One band: the logo, the links and the toggle side by side.
                 expect(await page.evaluate(arrangement, PARTS)).toBe(
                     "side-by-side",
                 );

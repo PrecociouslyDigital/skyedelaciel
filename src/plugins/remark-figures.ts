@@ -1,8 +1,8 @@
 /**
- * Remark plugin: makes every image a numbered, captioned figure on a brushed
- * plate, every table a numbered, captioned table, and every block of code a
- * numbered listing, each with an address of its own; and fills in the text of
- * a link to one.
+ * Remark plugin: numbers what a page sets apart, gives each an address of its
+ * own, and fills in the text of a link to one. Images, blocks of code and
+ * tables are figures; definitions, lemmas and theorems are statements. Each
+ * of the two is numbered within its top-level section (see numbering.ts).
  *
  *     ![What it shows](./images/fuji.jpg "Why it is here.")
  *
@@ -14,25 +14,32 @@
  *
  *     ```scss title="What the code does"
  *
- *     As [](#fig-fuji) shows…   →   As Figure 2 shows…
+ *     <dl><dt>What the term is</dt><dd>…</dd></dl>
+ *
+ *     <Theorem name="What it is called">…</Theorem>
+ *
+ *     As [](#fig-fuji) shows…   →   As Figure 3.2 shows…
  *
  * An image stands alone in its paragraph, with alt text saying what it shows
  * and a title saying why it is there, which becomes its caption. A credit is
  * the paragraph after it, if that begins `Credit:`. A table's caption is the
- * paragraph before it, beginning `Table:`, and is required. A listing's
+ * paragraph before it, beginning `Table:`, and is required. A block of code's
  * caption is its fence's title, which is optional; a fence takes nothing
- * else. Anything else (a figure missing either text, a stray caption or
- * credit, two figures with one id, a link to a figure that is not there)
- * fails the build where it stands.
+ * else. A `<Lemma>` or `<Theorem>` takes a name, which is optional, and
+ * nothing else. Anything else (a figure missing either text, a stray caption
+ * or credit, two things with one id, a link to one that is not there) fails
+ * the build where it stands.
  *
- * A figure's id is its file's name, and a table's or a listing's its
- * caption's, so MDX, which cannot carry `{#id}`, needs none written. An
- * untitled listing is known by its number and cannot be cited.
+ * An image's id is its file's name, a table's or a block of code's its
+ * caption's, a definition's its term and a lemma's or theorem's its name, so
+ * MDX, which cannot carry `{#id}`, needs none written. A block of code, lemma
+ * or theorem without a name is known by its number and cannot be cited.
  */
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
 import { imageMetadata } from "astro/assets/utils";
 import type {
     Code,
+    Heading,
     Image,
     Node,
     Paragraph,
@@ -42,13 +49,14 @@ import type {
     RootContent,
     Table,
 } from "mdast";
+import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, extname, resolve } from "node:path";
 import { visit } from "unist-util-visit";
 import type { VFile } from "vfile";
 import { store } from "../integrations/drawn";
 import { PLATE_PAD, plate } from "../layouts/prelude/brush.mjs";
-import { block, importDefault, inline } from "./mdx-nodes";
+import { block, importDefault, inline, recast } from "./mdx-nodes";
 import {
     captionLabel,
     DanglingReference,
@@ -89,23 +97,78 @@ function lone(node: Paragraph): Image | null {
     return meant.length === 1 && meant[0]!.type === "image" ? meant[0] : null;
 }
 
-interface Figure {
-    kind: "figure";
+/** Where a thing stands: the number of its top-level section, if it is in one. */
+interface Placed {
+    section?: string;
+}
+
+interface ImageFigure extends Placed {
+    kind: "image";
     node: Paragraph;
     image: Image;
     credit?: Paragraph;
 }
 
-interface TableFigure {
+interface TableFigure extends Placed {
     kind: "table";
     node: Table;
     caption: Paragraph;
 }
 
-interface Listing {
-    kind: "listing";
+interface CodeFigure extends Placed {
+    kind: "code";
     node: Code;
     title?: string;
+}
+
+interface DefinedTerm extends Placed {
+    kind: "term";
+    node: MdxJsxFlowElement | MdxJsxTextElement;
+}
+
+/** A lemma or a theorem, written `<Theorem name="…">…</Theorem>`. */
+interface Statement extends Placed {
+    kind: "lemma" | "theorem";
+    node: MdxJsxFlowElement;
+    name?: string;
+}
+
+type SetApart =
+    | ImageFigure
+    | TableFigure
+    | CodeFigure
+    | DefinedTerm
+    | Statement;
+
+/**
+ * The number of the top-level section a heading opens or stands in: "3" for
+ * § 3.2. remark-sections has put it on the heading already.
+ */
+function topSection(heading: Heading, file: VFile): string {
+    const number = heading.data?.hProperties?.["data-section"];
+    if (typeof number !== "string")
+        file.fail(
+            "this heading has no section number; remark-sections runs before remark-figures.",
+            heading,
+        );
+    return number.split(".")[0]!;
+}
+
+/** What a lemma or theorem may say: a name, name="…", and nothing else. */
+function statementName(node: MdxJsxFlowElement, file: VFile) {
+    const [first, ...rest] = node.attributes;
+    if (
+        rest.length > 0 ||
+        (first &&
+            (first.type !== "mdxJsxAttribute" ||
+                first.name !== "name" ||
+                typeof first.value !== "string"))
+    )
+        file.fail(
+            `a ${node.name} takes a name, name="…", and nothing else.`,
+            node,
+        );
+    return first?.value as string | undefined;
 }
 
 /** What a fence may say after its language: a title, and nothing else. */
@@ -113,13 +176,25 @@ const FENCE = /^title="([^"]+)"$/;
 
 /** Where everything set apart sits, in document order, with its captions. */
 function survey(tree: Root, file: VFile) {
-    const found: (Figure | TableFigure | Listing)[] = [];
+    const found: SetApart[] = [];
     const captions = new Set<Paragraph>();
     const claimed = new Set<Paragraph>();
     const parents = new Map<Node, Parent>();
+    let section: string | undefined;
 
     visit(tree, (node, index, parent) => {
         if (parent) parents.set(node, parent);
+        if (node.type === "heading") section = topSection(node, file);
+        if (
+            node.type === "mdxJsxFlowElement" &&
+            (node.name === "Theorem" || node.name === "Lemma")
+        )
+            found.push({
+                kind: node.name === "Theorem" ? "theorem" : "lemma",
+                node,
+                name: statementName(node, file),
+                section,
+            });
         if (node.type === "imageReference")
             file.fail(
                 'write an image inline, ![alt](./file "caption"), so that it can be a figure.',
@@ -135,7 +210,7 @@ function survey(tree: Root, file: VFile) {
                           node,
                       );
             claimed.add(caption);
-            found.push({ kind: "table", node, caption });
+            found.push({ kind: "table", node, caption, section });
         }
         if (node.type === "code") {
             const meta = node.meta?.trim() ?? "";
@@ -145,8 +220,14 @@ function survey(tree: Root, file: VFile) {
                     `a fence takes a title, title="…", and nothing else; this one says ${meta}.`,
                     node,
                 );
-            found.push({ kind: "listing", node, title });
+            found.push({ kind: "code", node, title, section });
         }
+        if (
+            (node.type === "mdxJsxFlowElement" ||
+                node.type === "mdxJsxTextElement") &&
+            node.name === "dt"
+        )
+            found.push({ kind: "term", node, section });
         if (node.type !== "paragraph") return;
         if (marked(node, "Table:") || marked(node, "Credit:"))
             captions.add(node);
@@ -158,7 +239,7 @@ function survey(tree: Root, file: VFile) {
                     ? after
                     : undefined;
             if (credit) claimed.add(credit);
-            found.push({ kind: "figure", node, image, credit });
+            found.push({ kind: "image", node, image, credit, section });
         } else if (node.children.some((child) => child.type === "image")) {
             file.fail(
                 "an image is a figure, and stands alone in its paragraph.",
@@ -178,18 +259,35 @@ function survey(tree: Root, file: VFile) {
 }
 
 /**
- * What a thing's id is made from: a figure's file, less its extension, a
- * table's caption, or a listing's title if it has one.
+ * What a thing is numbered as, and what its id is made from: an image's
+ * file, less its extension, a table's caption, a block of code's title or a
+ * lemma's or theorem's name if it has one, or a definition's term. Images and
+ * code are numbered as figures alike.
  */
-const apparatusOf = (item: Figure | TableFigure | Listing): Apparatus =>
-    item.kind === "figure"
-        ? {
-              kind: item.kind,
-              name: basename(item.image.url, extname(item.image.url)),
-          }
-        : item.kind === "table"
-          ? { kind: item.kind, name: toString(marked(item.caption, "Table:")!) }
-          : { kind: item.kind, name: item.title };
+function apparatusOf(item: SetApart): Apparatus {
+    const { section } = item;
+    switch (item.kind) {
+        case "image":
+            return {
+                kind: "figure",
+                name: basename(item.image.url, extname(item.image.url)),
+                section,
+            };
+        case "table":
+            return {
+                kind: "table",
+                name: toString(marked(item.caption, "Table:")!),
+                section,
+            };
+        case "code":
+            return { kind: "figure", name: item.title, section };
+        case "term":
+            return { kind: "definition", name: toString(item.node), section };
+        case "lemma":
+        case "theorem":
+            return { kind: item.kind, name: item.name, section };
+    }
+}
 
 /** The size a figure is drawn at, in px: no wider or taller than the page allows. */
 export function drawnSize(natural: { width: number; height: number }) {
@@ -222,11 +320,31 @@ const remarkFigures: RemarkPlugin<[{ root: URL }]> =
             const thing = numbered[i]!;
             const label = captionLabel(thing);
 
-            if (item.kind === "listing") {
+            if (item.kind === "term") {
+                replaced.set(
+                    item.node,
+                    recast(item.node, "Term", { id: thing.id, label }),
+                );
+                continue;
+            }
+
+            if (item.kind === "lemma" || item.kind === "theorem") {
+                replaced.set(
+                    item.node,
+                    recast(item.node, "Statement", {
+                        id: thing.id,
+                        label,
+                        name: item.name,
+                    }),
+                );
+                continue;
+            }
+
+            if (item.kind === "code") {
                 replaced.set(
                     item.node,
                     block(
-                        "Listing",
+                        "CodeFigure",
                         {
                             id: thing.id,
                             label,

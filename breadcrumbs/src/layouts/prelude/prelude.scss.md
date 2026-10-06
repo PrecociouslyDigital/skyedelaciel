@@ -174,3 +174,57 @@ printed on `raised`. The padding grows by the frame's 4px. The left padding
 is smaller because the line-number gutter supplies the rest. `.said` (the
 live regions' visually-hidden style) moved here from CopyLink.svelte now
 that CopyCode needs it too.
+
+## 2026-10-06 — `--rail-band`
+
+The slug's `left` offset (was 0.5rem past the ticks) and the sidenotes'
+standoff (was 2rem past them) were two numbers that had to agree by hand. Both
+now read `--rail-band` on `article`: the slug centres itself in it (it is 1em
+wide, set sideways at line-height 1), and Sidenote.astro begins notes at its
+far edge. 1.4rem leaves 0.4rem either side of the 0.6rem slug. It is set under
+`stamped`, which is the same set of media where notes go to the margin.
+annotation.spec's "rail slug clears the frame and the notes" guards both sides.
+
+## 2026-10-06 — `--rail-band` became `--margin-gap`, 0.2rem
+
+Superseded the entry above within the hour. The user tried 0rem, settled on
+0.2rem, then asked for the slug to move off the ticks. A 0.6rem slug cannot be
+centred in a 0.2rem band, so the slug no longer centres: it and the notes both
+begin `--margin-gap` past the ticks. They share a left edge, so a note set
+level with the top of the article can run alongside the slug.
+annotation.spec's "rail slug clears the frame and the notes" was written for
+the old arrangement and is expected to fail; the user deferred tests to an
+end-of-session pass.
+
+## 2026-10-06 — the sidebar between `wide` and `wide-sidebar`
+
+It was `display: none` there, so the navbar vanished from 60rem to 80rem. It
+now sits in grid column 2 above the article and keeps its narrow, horizontal
+layout (its container query reads the sidebar's width, which is the measure).
+The sidebar TOC is hidden by its own default rule; the portrait TOC covers
+that tier. No browser profile is in that range, so navbar.spec sets its own
+viewport (1100px) for the test.
+
+## 2026-10-06 — portrait TOC drops quicker and resolves its entries
+
+Asked for directly. `toc.$drop`/`$lift` (320/200ms) replace `$unfold`/`$fold`
+for the dropdown. Top-level entries resolve via the same mixins as section
+entries (`toc.resolvable`, `toc.resolving`), staggered `toc.$drop-step` apart
+and capped at 0.75 of the drop. No unresolve on close: print shows the list
+expanded while the checkbox is unchecked, and a leaving animation would leave
+the entries gone there.
+
+Follow-up: the grid's `gap: 2rem` was also a row gap, which put the navbar
+2rem above the article in that tier. The grid now sets `column-gap` only, and
+the sidebar stands `$tick-reach` off the article, just clear of its corner
+ticks. On a narrow page it sits flush, since the title wears the frame there
+and has no ticks.
+
+## 2026-10-06 — no `a:visited` rule
+
+`a:visited { color: inherit }` (0,1,1) outranked `.copy-link`'s muted colour
+(0,1,0), so an address lit up in full ink once its `#…` had been visited,
+which copying does by putting it in the address bar. It was redundant: `a {
+color: inherit }` is an author rule and already beats the browser's visited
+colour, whatever the specificity. Not covered by a test: browsers report
+unvisited styles to `getComputedStyle` for privacy, so a test cannot see it.

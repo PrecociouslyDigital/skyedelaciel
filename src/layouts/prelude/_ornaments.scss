@@ -23,15 +23,18 @@
 $vines: (
     "title": (
         "kind": "rule",
-        "ratio": 5.5,
-        "width": 10.5rem,
+        // A horizontal rule's size: it divides the front matter from the text
+        // as a rule divides the text.
+        "ratio": 8,
+        "width": 13rem,
         "seed": 1,
-        "centred": false,
+        "centred": true,
     ),
     "heading": (
         "kind": "rule",
-        "ratio": 4,
-        "width": 5.5rem,
+        "ratio": 10,
+        // About a third of the measure, at a wide article's 80ch.
+        "width": 13.5rem,
         "seed": 2,
         "centred": false,
     ),
@@ -57,13 +60,22 @@ $vines: (
 /// column, where a section's disclosure hangs and down which its vine grows.
 /// A third-level entry is set in from the second, and a shoot reaches out to
 /// it from the vine, stopping a little short of its words.
-$toc-pitch: 1.6rem;
-$toc-vine-width: 1.3rem;
-$toc-column: 1.05rem;
-$toc-gap: 0.25rem;
-$toc-reach: 1.5rem;
-$toc-elbow: 0.55rem;
-$toc-shoot-clear: 0.5rem;
+///
+/// They are all in proportion, so the trellis grows or shrinks as a whole, its
+/// type with it, by `$toc-scale`.
+$toc-scale: 1.1;
+$toc-pitch: 1.6rem * $toc-scale;
+$toc-vine-width: 1.3rem * $toc-scale;
+$toc-column: 1.05rem * $toc-scale;
+$toc-gap: 0.25rem * $toc-scale;
+$toc-reach: 1.5rem * $toc-scale;
+$toc-elbow: 0.55rem * $toc-scale;
+$toc-shoot-clear: 0.5rem * $toc-scale;
+
+/// How far below the middle of its entry's line a section's ring is hung once
+/// the section is open: at the middle, with the vine running down from it, it
+/// reads as high. Folded, it lifts back to the middle.
+$toc-ring-drop: 0.125rem * $toc-scale;
 
 /// A section of up to this many entries grows a vine drawn to its length,
 /// ending in its curl beside its last entry. A longer one, or one whose
@@ -88,6 +100,7 @@ $toc-variants: 3;
         "hang-#{$name}": (
             "kind": "hanging",
             "seed": $seed,
+            "rise": math.div($toc-pitch * 0.5 - $toc-ring-drop, $toc-vine-width),
         )
     );
 }
@@ -171,6 +184,21 @@ $-shoot-reach: $toc-reach + $toc-column * 0.5 + $toc-gap - $toc-shoot-clear;
 /// their own: the entry paints them in its ink.
 @function blocks-of($cols, $rows, $seed) {
     @return -drawn-by("blocks", $cols, $rows, $seed);
+}
+
+/// Frame `$frame` of `$frames` in which a quilt of blocks, `$cols` by `$rows`,
+/// is laid down in the order `$order` draws, as an inline mask `url()`. See
+/// patchwork.mjs.
+@function patchwork-of($cols, $rows, $seed, $order, $frame, $frames) {
+    @return -drawn-by(
+        "patchwork",
+        $cols,
+        $rows,
+        $seed,
+        $order,
+        $frame,
+        $frames
+    );
 }
 
 /// Calls `$function`, which the vines integration defines, or fails the build
@@ -283,9 +311,9 @@ $strokes: (
 /// 橫 (`across`), one tapered stroke that stretches to any length.
 $brush-marks: (
     "dot": (
-        "view": "0 0 20 24",
+        "view": "0 0 20 20",
         "d":
-            "M6 2.5C9.5 2 14.5 6.5 16.5 11.5C18.3 16 16.8 20.6 12.8 21.4C9.2 22.1 7.6 18.6 7 15C6.4 11.4 4.2 8.6 3.6 6.2C3.1 4.2 4.2 2.8 6 2.5Z",
+            "M5.6 3C9.6 1.8 15.4 4.4 16.9 9.4C18.2 13.9 15.6 17.8 11.2 18C6.9 18.2 3.5 15.3 3.1 11.2C2.8 8 3.4 4.6 5.6 3Z",
     ),
     "across": (
         "view": "0 0 400 20",

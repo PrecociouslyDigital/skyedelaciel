@@ -192,7 +192,7 @@ section("Annotation", () => {
             text: "§",
             colour: await token(page, "attention"),
         });
-        expect(await mark("/design")).toEqual({
+        expect(await mark("/fixtures/design")).toEqual({
             text: "§",
             colour: await token(page, "signal"),
         });
@@ -218,14 +218,14 @@ section("Annotation", () => {
                     ),
                 ),
             ).toEqual([]);
-            // Nor the copy receipts or listing stamps.
-            await expect(page.locator(".listing-stamp")).not.toHaveCount(0);
+            // Nor the copy receipts or code stamps.
+            await expect(page.locator(".code-stamp")).not.toHaveCount(0);
             expect(
                 await page.evaluate(
                     () =>
                         [
                             ...document.querySelectorAll(
-                                ".receipt-word, .listing-stamp",
+                                ".receipt-word, .code-stamp",
                             ),
                         ].filter((mark) => mark.checkVisibility()).length,
                 ),

@@ -16,8 +16,8 @@ const GROW_LIMIT_MS = 600;
 /**
  * Every transition the page declares, and every keyframed animation that runs
  * on the clock rather than on the scroll, wherever it was declared, and
- * whether it is paced — a table of contents growing, or a receipt resolving
- * the word COPIED, the two things here that take a brush's time.
+ * whether it is paced — a table of contents growing, or anything resolving,
+ * the things here that take a brush's time.
  *
  * Read off the rendered page rather than off the stylesheets, because that is
  * the only reading that covers Astro's scoped rules, Svelte's scoped rules and
@@ -47,10 +47,11 @@ const running = (page: Page) =>
                     durations.split(", ").forEach((value, index) => {
                         const ms = parseFloat(value) * 1000;
                         if (ms <= 0) return;
+                        const what = of[index] ?? "?";
                         found.push({
-                            where: `${name}${pseudo} (${kind} ${of[index] ?? "?"})`,
+                            where: `${name}${pseudo} (${kind} ${what})`,
                             ms,
-                            growing,
+                            growing: growing || /resolve/.test(what),
                         });
                     });
 
@@ -124,6 +125,65 @@ section("Motion", () => {
             );
             expect(receipt.length, "the word resolves").toBeGreaterThan(0);
             expect(receipt.filter(({ ms }) => ms > GROW_LIMIT_MS)).toEqual([]);
+        });
+
+        test(`a popover resolves at a brush's pace, and no slower (${path})`, async ({
+            page,
+        }) => {
+            await page.goto(path);
+            await page
+                .locator(".link-wrapper:has(.link-popover) a")
+                .first()
+                .hover();
+
+            const popover = (await running(page)).filter(
+                ({ where }) =>
+                    where.startsWith("link-popover") &&
+                    where.includes("resolve"),
+            );
+            expect(
+                popover.filter(({ ms }) => ms > LIMIT_MS).length,
+                "what is on the glass resolves",
+            ).toBeGreaterThan(0);
+            expect(popover.filter(({ ms }) => ms > GROW_LIMIT_MS)).toEqual([]);
+        });
+
+        test(`nothing on a popover that resolves is skipped while it is down (${path})`, async ({
+            page,
+        }) => {
+            // Skipped contents have no style, so an animation in them is made
+            // whenever the browser gets round to styling them, and only then
+            // starts waiting out its standoff: the blocks would come a
+            // standoff after the glass. When that is depends on the browser
+            // and on what else has asked for style, so it is the arrangement
+            // that is checked rather than the clock.
+            await page.goto(path);
+            const skipped = await page.evaluate(() => {
+                const animates = (element: Element, pseudo: string | null) =>
+                    /resolve/.test(
+                        getComputedStyle(element, pseudo).animationName,
+                    );
+                const hidden = (element: Element) =>
+                    getComputedStyle(element).contentVisibility === "hidden";
+                const hiddenAbove = (element: Element) => {
+                    for (
+                        let up = element.parentElement;
+                        up && !up.matches(".link-wrapper");
+                        up = up.parentElement
+                    )
+                        if (hidden(up)) return true;
+                    return false;
+                };
+                return [...document.querySelectorAll(".link-popover *")]
+                    .filter(
+                        (element) =>
+                            (animates(element, null) && hiddenAbove(element)) ||
+                            (animates(element, "::after") &&
+                                (hidden(element) || hiddenAbove(element))),
+                    )
+                    .map((element) => element.className || element.tagName);
+            });
+            expect(skipped).toEqual([]);
         });
 
         test(`a reader who asked for less motion gets none (${path})`, async ({

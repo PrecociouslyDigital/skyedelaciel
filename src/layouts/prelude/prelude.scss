@@ -29,6 +29,9 @@
     initial-value: 0;
 }
 
+/// Its length where the article is framed.
+$tick-reach: 0.8rem;
+
 :root {
     @include typography.tokens;
     @include resolve.strips;
@@ -67,10 +70,6 @@ a {
     text-decoration-color: var(--color-attention);
     text-decoration-thickness: 1px;
     text-underline-offset: 0.15em;
-
-    &:visited {
-        color: inherit;
-    }
 }
 
 /* Content links: semi-bold, inherit color, no underline */
@@ -99,12 +98,12 @@ article {
 .front-matter {
     margin-bottom: 2.5rem;
 
-    /* The vine that closes the title block: the first ornament a reader
-       meets, before the text. */
+    /* The vine that closes the title block, centred under it: the first
+       ornament a reader meets, before the text. */
     &::after {
         @include ornaments.vine-rule("title");
         content: "";
-        margin-top: 1.25rem;
+        margin: 1.25rem auto 0;
     }
 }
 
@@ -183,11 +182,16 @@ h6 {
     letter-spacing: 0.04em;
 }
 
-/* A short vine under each part heading. */
-h1.heading::after {
-    @include ornaments.vine-rule("heading");
-    content: "";
-    margin-top: 0.4rem;
+/* A vine under each part heading. It closes the heading off by itself, so
+   the text that follows comes in close under it. */
+h1.heading {
+    margin-bottom: 0.2rem;
+
+    &::after {
+        @include ornaments.vine-rule("heading");
+        content: "";
+        margin-top: 0.4rem;
+    }
 }
 
 /* — Prose blocks — */
@@ -246,16 +250,16 @@ ul:not([class]) {
     > li::before {
         content: "";
         position: absolute;
-        left: -1.15em;
-        top: 0.5em;
-        width: 0.42em;
-        height: 0.5em;
+        left: -0.95em;
+        top: 0.53em;
+        width: 0.44em;
+        height: 0.44em;
         background-color: var(--color-accent);
         mask: ornaments.brush-mark("dot") 0 0 / 100% 100% no-repeat;
     }
 
     ul:not([class]) > li::before {
-        left: -1.3em;
+        left: -1.15em;
         top: 0.75em;
         width: 0.75em;
         height: 0.16em;
@@ -264,10 +268,10 @@ ul:not([class]) {
     }
 
     ul:not([class]) ul:not([class]) > li::before {
-        left: -1.05em;
-        top: 0.6em;
-        width: 0.3em;
-        height: 0.36em;
+        left: -0.85em;
+        top: 0.62em;
+        width: 0.32em;
+        height: 0.32em;
         mask-image: ornaments.brush-mark("dot");
     }
 }
@@ -306,16 +310,35 @@ ul:not([class]) {
     }
 }
 
-dl {
+/* A definition, and a lemma or theorem set as one: what is named, in
+   semi-bold and closed by its address, and what is said of it set in under
+   it. The box is drawn tight round the name and the address, as a heading's
+   is, so the machine's ticks are. */
+dl,
+.statement {
     margin: 1.25em 0;
 }
 
-dt {
+dt,
+.statement-head {
     font-weight: 600;
 }
 
-dd {
+.statement-head {
+    margin: 0;
+}
+
+.address-box {
+    display: inline-block;
+}
+
+dd,
+.statement-body {
     margin: 0 0 0.6em 2ch;
+
+    > :last-child {
+        margin-bottom: 0;
+    }
 }
 
 ol {
@@ -338,10 +361,12 @@ code {
 /* — Inline — */
 
 /* The swipe is drawn per scheme in colors.scss; cloned, so that a highlight
-   broken across lines is swiped on each. */
+   broken across lines is swiped on each. It is centred on the letters, which
+   sit a little below the middle of their box, since it reaches further above
+   the baseline than below. */
 mark {
     color: inherit;
-    background: var(--swipe) 0 88% / 100% 0.7em no-repeat;
+    background: var(--swipe) 0 60% / 100% 0.7em no-repeat;
     box-decoration-break: clone;
     padding-inline: 0.1em;
 }
@@ -422,7 +447,7 @@ pre {
     }
 }
 
-/* Token colours for listings; see src/plugins/herbarium.ts. Code is not
+/* Token colours for code; see src/plugins/herbarium.ts. Code is not
    running text, so the chromas may colour it. */
 .tok-keyword,
 .tok-variable {
@@ -562,8 +587,9 @@ figcaption {
     display: none;
 }
 
-/* Portrait TOC - collapsible checkbox hack. Its contents grow open and fold
-   away as a section of them does. */
+/* Portrait TOC - collapsible checkbox hack. Its contents drop open, quicker
+   than a section of them grows, and its top-level entries resolve in as
+   they arrive. */
 .toc-portrait {
     margin-top: 1.25rem;
 
@@ -587,13 +613,17 @@ figcaption {
     }
 
     > .toc-list {
-        @include motion.grow((block-size, visibility), toc.$fold);
+        @include motion.grow((block-size, visibility), toc.$lift);
         interpolate-size: allow-keywords;
         block-size: 0;
         visibility: hidden;
         overflow-y: clip;
         // Room above the first entry for the ring its section hangs from.
         overflow-clip-margin: 0.5rem;
+
+        > li > a {
+            @include toc.resolvable;
+        }
     }
 
     &:has(#toc-toggle:checked) {
@@ -602,9 +632,16 @@ figcaption {
         }
 
         > .toc-list {
-            @include motion.grow((block-size, visibility), toc.$unfold);
+            @include motion.grow((block-size, visibility), toc.$drop);
             block-size: auto;
             visibility: visible;
+
+            > li > a {
+                @include toc.resolving(
+                    toc.$drop * 0.56,
+                    min(var(--i) * #{toc.$drop-step}, #{toc.$drop * 0.75})
+                );
+            }
         }
     }
 }
@@ -625,7 +662,7 @@ figcaption {
 
         display: grid;
         grid-template-columns: var(--left-col) var(--content-width) 1fr;
-        gap: 2rem;
+        column-gap: 2rem;
         padding: 2rem;
     }
 
@@ -634,9 +671,13 @@ figcaption {
         margin: 0; // Grid handles centering
     }
 
-    // Sidebar hidden below wide-sidebar threshold
+    // Too narrow yet for a column of its own, the sidebar runs across the top
+    // of the article's, as on a narrow page. Its contents stay with the
+    // article's own, in the front matter. It stands only as far off as the
+    // article's corner ticks reach, where a narrow page's frame has none.
     .sidebar {
-        display: none;
+        grid-column: 2;
+        margin-bottom: $tick-reach;
     }
 }
 
@@ -646,7 +687,7 @@ figcaption {
         // 3px of that is the frame itself, so the text clears its inner rule
         // by about 2ch either side.
         --frame-inset: calc(2ch + 3px);
-        --tick-reach: 0.8rem;
+        --tick-reach: #{$tick-reach};
         padding: 2.5rem var(--frame-inset) 2rem;
         // Only inside the frame: unframed, a textured block has no edge to
         // stop at and reads as a mistake.
@@ -667,14 +708,20 @@ figcaption {
 }
 
 @include breakpoints.stamped {
+    /* How far past the corner ticks the margin begins: where the rail slug
+       stands, and where a sidenote begins. */
+    article {
+        --margin-gap: 0.2rem;
+    }
+
     /* 書口, carrying what identifies this copy to a machine rather than a
        title and fascicle number — see design.mdx, Annotation.
 
-       It stands just outside the article's right edge. On screen that is the
-       band between the corner ticks and where a sidenote is allowed to begin;
-       on paper it is the strip between the left-aligned text block and the
-       edge of the sheet. Both are measured from the same edge, and on paper
-       the ticks reach nothing, so one offset serves both.
+       It stands just outside the article's right edge. On screen that is past
+       the corner ticks, in the column the sidenotes begin in; on paper it is
+       the strip between the left-aligned text block and the edge of the
+       sheet. Both are measured from the same edge, and on paper the ticks
+       reach nothing, so one offset serves both.
 
        The empty alternative text after the slash keeps it out of the
        accessibility tree: it is a stamp, not a sentence to be read aloud. */
@@ -682,7 +729,7 @@ figcaption {
         content: attr(data-rail) / "";
         position: absolute;
         top: 0;
-        left: calc(100% + var(--tick-reach) + 0.5rem);
+        left: calc(100% + var(--tick-reach) + var(--margin-gap));
         /* The column runs downward, but each character stands up in it, the
            way a seal's characters do — the line is vertical, the glyphs are
            not turned on their side. */
@@ -692,9 +739,6 @@ figcaption {
         pointer-events: none;
         font-family: var(--font-mono);
         font-size: 0.6rem;
-        /* Set sideways, the line box is the slug's width. Screen is the
-           tighter of the two fits: 1.5rem between the ticks and the sidenote
-           column, where paper leaves the rest of the sheet. */
         line-height: 1;
         /* Upright, this is the gap between stacked characters rather than
            between letters of a word, so it is set much tighter than it would

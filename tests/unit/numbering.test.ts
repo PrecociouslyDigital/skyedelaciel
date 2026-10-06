@@ -110,27 +110,39 @@ describe("an outline that skips a level", () => {
     });
 });
 
-describe("figures and tables, for every page of them", () => {
+describe("figures and statements, for every page of them", () => {
     const KIND_LIST = Object.keys(KINDS) as Kind[];
 
-    /** Things set apart, each with a name no other has. */
+    /**
+     * Things set apart, each with a name no other has, in sections that only
+     * ever go forward; some stand before the first section.
+     */
     const page = (seed: number): Apparatus[] => {
         const r = chance(`apparatus ${seed}`);
-        return Array.from({ length: r.integer(12) }, (_, i) => ({
-            kind: KIND_LIST[r.integer(KIND_LIST.length)]!,
-            name: `thing ${i}`,
-        }));
+        let section = 0;
+        return Array.from({ length: r.integer(16) }, (_, i) => {
+            if (r.integer(4) === 0) section += 1;
+            return {
+                kind: KIND_LIST[r.integer(KIND_LIST.length)]!,
+                name: `thing ${i}`,
+                ...(section > 0 && { section: `${section}` }),
+            };
+        });
     };
 
-    test("each kind is numbered 1 to n, in order", () => {
+    test("each track is numbered 1 to n within each section, after the section", () => {
         for (const seed of SEEDS) {
             const numbered = numberApparatus(page(seed));
-            for (const kind of KIND_LIST) {
-                const numbers = numbered
-                    .filter((thing) => thing.kind === kind)
-                    .map((thing) => thing.number);
-                expect(numbers).toEqual(numbers.map((_, i) => i + 1));
-            }
+            const runs = Map.groupBy(
+                numbered,
+                ({ kind, section }) => `${KINDS[kind].track} ${section ?? ""}`,
+            );
+            for (const run of runs.values())
+                expect(run.map(({ number }) => number)).toEqual(
+                    run.map(({ section }, i) =>
+                        section ? `${section}.${i + 1}` : `${i + 1}`,
+                    ),
+                );
         }
     });
 
@@ -142,6 +154,25 @@ describe("figures and tables, for every page of them", () => {
             );
             for (const { id, kind } of numbered)
                 expect(id.startsWith(`${KINDS[kind].prefix}-`)).toBe(true);
+        }
+    });
+
+    test("an unnamed thing's id is its number, and it cannot be cited", () => {
+        for (const seed of SEEDS) {
+            const things = page(seed).map((thing) =>
+                thing.kind === "table" || thing.kind === "definition"
+                    ? thing
+                    : { ...thing, name: undefined },
+            );
+            const numbered = numberApparatus(things);
+            for (const thing of numbered.filter(({ name }) => !name)) {
+                expect(thing.id).toBe(
+                    `${KINDS[thing.kind].prefix}-${thing.number.replaceAll(".", "-")}`,
+                );
+                expect(() => referenceText(numbered, `#${thing.id}`)).toThrow(
+                    DanglingReference,
+                );
+            }
         }
     });
 

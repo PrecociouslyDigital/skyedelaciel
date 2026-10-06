@@ -1,0 +1,26 @@
+---
+import CopyLink from "./copy/CopyLink.svelte";
+
+/**
+ * A lemma or a theorem, set as a definition is: its name, if it has one,
+ * closed by its address (`Theorem 3.2`), and what it states set in under
+ * them. Written by remark-figures, from `<Theorem>` or `<Lemma>`.
+ */
+interface Props {
+    id: `${"lem" | "thm"}-${string}`;
+    label: string;
+    name?: string;
+}
+
+const { id, label, name } = Astro.props;
+---
+
+<div id={id} class="statement">
+    <p class="statement-head">
+        <span class="address-box receipt-box"
+            >{name}
+            <CopyLink href={`#${id}`} label={label} client:visible /></span
+        >
+    </p>
+    <div class="statement-body"><slot /></div>
+</div>

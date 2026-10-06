@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SPEC = join(here, "../../src/content/design.mdx");
+const SPEC = join(here, "../../src/content/fixtures/design.mdx");
 
 /** The `##` headings — one level down from the spec's structural `#` parts. */
 function specSections(): string[] {

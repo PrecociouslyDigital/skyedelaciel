@@ -36,7 +36,7 @@ export const repoRoot = resolve(here, "../..");
  *
  * The widths straddle the two breakpoints in
  * src/layouts/prelude/_breakpoints.scss: `wide` is 60rem (960px) and
- * `wide-sidebar` is 72rem (1152px).
+ * `wide-sidebar` is 80rem (1280px).
  *
  * @satisfies {Record<string, Profile>}
  */

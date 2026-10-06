@@ -41,3 +41,31 @@ are `resolve`, `unresolve`, `resolve-blocks` and `unresolve-blocks`, written
 once by prelude.scss. The entry's own patch (`::after`, its inset and its
 offset per `--i`) stays here, because it is measured against the contents'
 pitch.
+
+## 2026-10-06 — levels set apart
+
+The first level is 1.15em and the second is set in from the vine side (1.5ch since a later request; 0.45rem at first),
+because h1 and h2 entries read as one list. Everything in the trellis scales
+by `$toc-scale` (1.1) in _ornaments.scss, both sidebar and inline, since the
+spec calls the inline contents the same trellis mirrored. The 1.15em depth-1
+type at 1.35 line height still fits inside the pitch; at around 1.3em the
+padding that holds rows to the pitch would go negative.
+
+Later the same day: at 1.15em the first level looked oversized, so it is set
+in semi-bold at the shared size instead. This doesn't go against "coloured
+rather than bolded" in toc.scss. That rule is about the current entry, whose
+weight would change as the reader scrolls. This weight never changes.
+
+Later still: the 1.5ch indent looked wrong and was removed, and the second
+level lines up with the first again. A top-level entry gets its emphasis from
+a rail instead: the `toc-rail` vine (a one-way `rule`, `blooms: false`) on
+its `a::after`. It starts in the stem below the ring and runs out under the
+words at a fixed length, as the article's heading vine does. Clipping it to
+the words' width would cut off the curl at its tip. It grows with `clip-path`
+on the section's unfold and fold timings, so a folded section and an entry
+with no section show no rail.
+
+Then the rail was removed too. It looked fine but felt wrong, so the first
+level is now told apart by weight alone, at full bold (700).
+
+Full bold read as too heavy, so the first level went back to semi-bold (600).

@@ -207,6 +207,47 @@ section("Headings", () => {
         });
     });
 
+    section("Wide viewports", () => {
+        onlyIn(...WIDE);
+
+        /**
+         * A top-level heading's vine runs flush left for about a third of
+         * the measure, and the text after it comes in closer than it does
+         * under any other heading.
+         */
+        test("a top-level heading is underscored by a vine a third of the measure", async ({
+            page,
+        }) => {
+            const measured = await page.evaluate(() => {
+                const gapAfter = (heading: Element) =>
+                    heading.nextElementSibling!.getBoundingClientRect().top -
+                    heading.getBoundingClientRect().bottom;
+                const h1 = document.querySelector(
+                    "article h1.heading:has(+ p)",
+                )!;
+                const vine = getComputedStyle(h1, "::after");
+                return {
+                    image: vine.backgroundImage,
+                    share:
+                        parseFloat(vine.width) /
+                        h1.getBoundingClientRect().width,
+                    indent: parseFloat(vine.marginLeft),
+                    gap: gapAfter(h1),
+                    others: [
+                        ...document.querySelectorAll(
+                            "article :is(h2, h3).heading:has(+ p)",
+                        ),
+                    ].map(gapAfter),
+                };
+            });
+            expect(measured.image).toMatch(/^url\(/);
+            expect(measured.share).toBeGreaterThan(0.25);
+            expect(measured.share).toBeLessThan(0.4);
+            expect(measured.indent).toBe(0);
+            expect(measured.gap).toBeLessThan(Math.min(...measured.others));
+        });
+    });
+
     section("Print", () => {
         onlyIn("print");
 

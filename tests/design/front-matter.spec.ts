@@ -37,6 +37,20 @@ section("Front Matter", () => {
         expect(separated).toBe(true);
     });
 
+    test("it is closed off by a vine centred under it", async ({ page }) => {
+        const vine = await page
+            .locator(".front-matter")
+            .evaluate((el) => getComputedStyle(el, "::after"))
+            .then(({ backgroundImage, marginLeft, marginRight }) => ({
+                image: backgroundImage,
+                left: parseFloat(marginLeft),
+                right: parseFloat(marginRight),
+            }));
+        expect(vine.image).toMatch(/^url\(/);
+        expect(vine.left).toBeGreaterThan(0);
+        expect(vine.left).toBeCloseTo(vine.right, 0);
+    });
+
     test("the title comes first and outweighs everything else", async ({
         page,
     }) => {

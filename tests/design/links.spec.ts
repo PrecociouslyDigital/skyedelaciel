@@ -29,7 +29,7 @@ const STYLES = {
         href: "https://diff.wikimedia.org/2026/10/02/capturing-essences-with-bolivian-wikimedians/",
         meta: { min: 1, max: 3 },
     },
-    "Internal Pages": { href: "/design", meta: { min: 1, max: 1 } },
+    "Internal Pages": { href: "/fixtures/design", meta: { min: 1, max: 1 } },
     DOIs: {
         href: "https://doi.org/10.1038/s40494-025-02005-1",
         meta: { min: 1, max: 3 },
@@ -191,7 +191,7 @@ section("Links", () => {
 
             const wrapper = page
                 .locator(".link-wrapper")
-                .filter({ hasText: "ordinary external link" })
+                .filter({ hasText: "OpenGraph Link" })
                 .first();
             await wrapper.locator("a.content-link").hover();
 
@@ -230,12 +230,41 @@ section("Links", () => {
             expect([...widths]).toHaveLength(1);
         });
 
+        test("no popover runs past the edge of the screen", async ({
+            page,
+        }) => {
+            // Every popover on the page, read where it would open. A hidden
+            // pane is still laid out, so none needs hovering to be measured;
+            // one inside something collapsed has no box, and is skipped.
+            const overflowing = await page.evaluate(() =>
+                [...document.querySelectorAll(".link-popover")]
+                    .map((pane) => ({
+                        link: pane
+                            .closest(".link-wrapper")!
+                            .querySelector("a")!
+                            .textContent!.trim(),
+                        box: pane.getBoundingClientRect(),
+                    }))
+                    .filter(
+                        ({ box }) =>
+                            box.width > 0 &&
+                            (box.left < 0 || box.right > innerWidth),
+                    )
+                    .map(({ link, box }) => ({
+                        link,
+                        left: box.left,
+                        right: box.right,
+                    })),
+            );
+            expect(overflowing).toEqual([]);
+        });
+
         test("title first, metadata second, then the body", async ({
             page,
         }) => {
             const wrapper = page
                 .locator(".link-wrapper")
-                .filter({ hasText: "ordinary external link" })
+                .filter({ hasText: "OpenGraph Link" })
                 .first();
             await wrapper.locator("a.content-link").hover();
 

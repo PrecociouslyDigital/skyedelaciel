@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import remarkGfm from "remark-gfm";
 import { describe, expect, test } from "vitest";
 import remarkFigures, { drawnSize } from "../../src/plugins/remark-figures";
+import remarkSections from "../../src/plugins/remark-sections";
 import { chance } from "../../src/layouts/prelude/chance.mjs";
 
 const root = new URL("../../", import.meta.url);
@@ -19,11 +20,18 @@ const TABLE = "| a | b |\n| - | - |\n| 1 | 2 |";
 const build = (value: string) =>
     compile(
         { value, path: PAGE },
-        { remarkPlugins: [remarkGfm, [remarkFigures, { root }]] },
+        // In the order astro.config.mjs runs them: sections number first.
+        {
+            remarkPlugins: [
+                remarkGfm,
+                remarkSections,
+                [remarkFigures, { root }],
+            ],
+        },
     ).then(String);
 
 describe("a page of figures", () => {
-    test("each figure and table is numbered, and a reference fills itself in", async () => {
+    test("figures and tables are numbered together, and a reference fills itself in", async () => {
         const out = await build(
             [
                 "See [](#fig-mount-fuji) and [](#tab-pairs).",
@@ -34,7 +42,7 @@ describe("a page of figures", () => {
             ].join("\n\n"),
         );
         expect(out).toContain('"Figure 1"');
-        expect(out).toContain('"Table 1"');
+        expect(out).toContain('"Table 2"');
         expect(out).toContain('id: "fig-mount-fuji"');
         expect(out).toContain('label: "Fig. 1"');
         expect(out).toContain('id: "tab-pairs"');
@@ -52,6 +60,31 @@ describe("a page of figures", () => {
     });
 });
 
+describe("a page in sections", () => {
+    test("each track is numbered within its top-level section", async () => {
+        const out = await build(
+            [
+                "# One",
+                "See [](#tab-pairs) and [](#thm-big).",
+                '<Theorem name="Big">It is so.</Theorem>',
+                "# Two",
+                "## Two and a half",
+                FUJI,
+                "Table: Pairs.",
+                TABLE,
+                "<dl><dt>Term</dt><dd>What it means.</dd></dl>",
+                "<Lemma>It follows.</Lemma>",
+            ].join("\n\n"),
+        );
+        expect(out).toContain('label: "Theorem 1.1"');
+        expect(out).toContain('label: "Fig. 2.1"');
+        expect(out).toContain('label: "Table 2.2"');
+        expect(out).toContain('label: "Def. 2.1"');
+        expect(out).toContain('id: "lem-2-2"');
+        expect(out).toContain('"Table 2.2"');
+        expect(out).toContain('"Theorem 1.1"');
+    });
+});
 describe("a page that cannot be cited fails", () => {
     const fails = (name: string, value: string, reason: RegExp) =>
         test(name, async () => {
@@ -98,6 +131,21 @@ describe("a page that cannot be cited fails", () => {
         "a reference to a figure that is not there",
         "See [](#fig-elsewhere).",
         /names nothing/,
+    );
+    fails(
+        "a reference to an unnamed lemma",
+        "See [](#lem-1).\n\n<Lemma>It follows.</Lemma>",
+        /has no name/,
+    );
+    fails(
+        "a theorem that says more than its name",
+        '<Theorem name="Big" title="Bigger">It is so.</Theorem>',
+        /takes a name/,
+    );
+    fails(
+        "two terms with one id",
+        "<dl><dt>Term</dt><dd>One.</dd><dt>Term</dt><dd>Two.</dd></dl>",
+        /#def-term/,
     );
 });
 

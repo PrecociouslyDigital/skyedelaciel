@@ -194,3 +194,17 @@ The 點 and 橫 are hand-kept paths from the specimen, not drawn by brush.mjs:
 at bullet size the generated stroke's grain is lost, and these read better.
 `brush-mark()` inlines them as data URLs, about 300 bytes each. A fill colour
 is written as `rgba()` with commas, because a hex `#` would end the data URL.
+
+## 2026-10-06 — heading and title vines
+
+The title vine is now `centred` and centred under the front matter. The
+heading vine is 13.5rem, about a third of a wide article's 80ch measure
+(≈653px at 16px root), at ratio 10 so it stays about as tall as the old 5.5rem
+one. It is a fixed length and not a percentage: a percentage would thin it to
+a hairline on narrow screens, and the spec gives each place's vine a fixed
+size. A vined h1 has a 0.2rem bottom margin (other headings have 0.6rem), since
+the vine already closes it off.
+
+The title vine then took a horizontal rule's size (13rem, ratio 8), keeping
+seed 1 so it is still its own drawing. In `$vines`, write comments inside an
+entry: Prettier mis-indents an entry that has a comment above it.

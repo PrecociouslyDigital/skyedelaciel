@@ -201,3 +201,46 @@ so it couldn't see this. It was found by screenshotting in Playwright's
 Firefox. Headless Firefox also draws no `backdrop-filter` at all, even on a
 bare test page, so a pane with no blur in a Firefox screenshot is the test
 browser, not the site.
+
+## 2026-10-06 — the image sits in a frame
+
+`.link-popover-figure` exists because the image needs two animations at once:
+the resolve's blur (on every child of the pane) and the banner's
+scroll-timeline `height`. One element can't take both without the hover rule
+overriding the banner's `animation`. The frame owns the grid placement and the
+glass-gap margins; the img keeps its size and the give-way. When screenshotting
+the resolve with paused animations, wait a frame after setting `currentTime`,
+and force `:hover` over CDP; otherwise captures lag a stage or lose the hover.
+
+## 2026-10-06 — kept on screen by anchor positioning
+
+At 420px the pane (26rem = 416px) hung off either edge for any link not
+centred on the screen. Now `position: fixed` + `position-area: top`, with
+`anchor-scope` on the wrapper so each pane finds its own link. Chromium
+pushes an overflowing area-placed box back inside its containing block (the
+viewport, once fixed), and `margin-inline` keeps a 1rem gutter. Verified at
+360/420px, and the suite now measures every popover's box. Without
+anchor positioning the old absolute centring is the fallback. Width is
+capped at `100vw - 2rem`.
+
+The text parts gained inner spans, and the ledger a `rowgroup`, so each part
+has a frame for the resolve blocks separate from the blurred picture (see
+_resolve.scss.md). The banner's scroll give-way moved from the img to its
+frame, since the img now plays the resolve animation.
+
+## 2026-10-06 — only the image is skipped while the popover is down
+
+`content-visibility: hidden` used to be on the whole pane, revealed after the
+standoff. Skipped contents have no style, so in Chrome the parts' resolve
+animations were often created only on reveal, and then waited out their own
+300ms standoff. Measured on a real build: glass begins 350ms after hover,
+blocks 667ms. The user saw it as the glass sitting empty before the quilt
+began, and it is probably what read as "mistimed" originally.
+
+Whether skipped content gets styled early depends on Chrome internals. The
+Playwright harness's `emulateMedia` forces it, which hid the bug from a timing
+test. So `content-visibility` is now on `.link-popover-picture`, a holder
+around the img alone, which has no animation. It still keeps lazy images from
+being fetched with the page. motion.spec checks the arrangement (nothing that
+resolves sits in skipped content), not the clock. That check fails 4/4 on the
+old arrangement.

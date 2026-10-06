@@ -949,18 +949,21 @@ const HANGING_SHOOTS = [
  *
  * @param {object} hanging
  * @param {number} hanging.seed The seed of the section vine it hangs into.
+ * @param {number} hanging.rise How far above the top of the section's vine
+ *   the ring is hung, in widths of the vine: where it reads as level with its
+ *   heading's line.
  * @param {string} hanging.leaf The colour of stem and leaf.
  * @param {string} hanging.iron The colour of the ring and bolt.
  * @param {string} hanging.pot The colour of the plate.
  * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number }, frames: number }}
  */
-export function hanging({ seed, leaf, iron, pot }) {
+export function hanging({ seed, rise, leaf, iron, pot }) {
     const base = [vineStart(seed) + COIL.x, COIL.h + 0.5];
     /* How far round the ring the shoot passes as it comes over it. */
     const R = 6.4;
-    /* Level with the top of the heading, with the vine's column on its far
-       side, so the shoot drops from it straight down that column. */
-    const centre = [base[0] - R, 24];
+    /* Level with the heading's line, with the vine's column on its far side,
+       so the shoot drops from it straight down that column. */
+    const centre = [base[0] - R, COIL.h - rise * H];
 
     /* The ring, the same in every frame. */
     const radius = 4.8;
@@ -1083,7 +1086,7 @@ export function hanging({ seed, leaf, iron, pot }) {
         }
         marks.push(...moved([...held, ...frame], [k * COIL.w, 0]));
     }
-    const id = `hanging-${hash([seed, leaf, iron, pot].join())}`;
+    const id = `hanging-${hash([seed, rise, leaf, iron, pot].join())}`;
     const svg = picture(
         marks,
         [0, 0, COIL.w * COIL.frames, COIL.h],

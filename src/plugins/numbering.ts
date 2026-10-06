@@ -41,37 +41,64 @@ export function sectionNumbers(depths: readonly number[]): string[] {
 }
 
 /**
- * What a page sets apart from its running text, each numbered in its own
- * sequence and anchored by its own prefix: "Figure 2" is `#fig-fuji`.
+ * What a page sets apart from its running text, each anchored by its own
+ * prefix: "Figure 3.2" is `#fig-fuji`. They are numbered on two tracks,
+ * figures and statements, so that no number names two things on one track.
  */
-export type Kind = "figure" | "table" | "listing";
+export type Kind = "figure" | "table" | "definition" | "lemma" | "theorem";
+
+export type Track = "figures" | "statements";
 
 export const KINDS: Record<
     Kind,
     {
+        /** Which sequence it is numbered in. */
+        track: Track;
         /** What an id starts with, before the hyphen. */
         prefix: string;
-        /** How the text names one: "Figure 2". */
+        /** How the text names one: "Figure 3.2". */
         label: string;
-        /** How its own caption names it: "Fig. 2". */
+        /** How its own caption or heading names it: "Fig. 3.2". */
         short: string;
     }
 > = {
-    figure: { prefix: "fig", label: "Figure", short: "Fig." },
-    table: { prefix: "tab", label: "Table", short: "Table" },
-    listing: { prefix: "lst", label: "Listing", short: "Listing" },
+    figure: { track: "figures", prefix: "fig", label: "Figure", short: "Fig." },
+    table: { track: "figures", prefix: "tab", label: "Table", short: "Table" },
+    definition: {
+        track: "statements",
+        prefix: "def",
+        label: "Definition",
+        short: "Def.",
+    },
+    lemma: {
+        track: "statements",
+        prefix: "lem",
+        label: "Lemma",
+        short: "Lemma",
+    },
+    theorem: {
+        track: "statements",
+        prefix: "thm",
+        label: "Theorem",
+        short: "Theorem",
+    },
 };
 
 /**
- * A thing set apart, named for its id: a figure by its file, a table or a
- * listing by its caption. Only a listing may lack a name; it is then known
- * by its number alone and cannot be cited.
+ * A thing set apart, named for its id: an image by its file, a block of code
+ * or a table by its caption, a definition by its term, a lemma or theorem by
+ * the name it is given. A block of code, a lemma and a theorem may go
+ * without; one is then known by its number alone and cannot be cited.
+ *
+ * `section` is the number of the top-level section it stands in, if it
+ * stands in one.
  */
-export type Apparatus =
-    | { kind: Exclude<Kind, "listing">; name: string }
-    | { kind: "listing"; name?: string };
+export type Apparatus = (
+    | { kind: "figure" | "lemma" | "theorem"; name?: string }
+    | { kind: "table" | "definition"; name: string }
+) & { section?: string };
 
-export type Numbered = Apparatus & { id: string; number: number };
+export type Numbered = Apparatus & { id: string; number: string };
 
 /** Two things on one page whose names come to the same id. */
 export class DuplicateId extends Error {
@@ -86,7 +113,7 @@ export class DuplicateId extends Error {
     }
 }
 
-/** A link to a figure, table or listing the page does not have, or cannot cite. */
+/** A link to apparatus the page does not have, or cannot cite. */
 export class DanglingReference extends Error {
     constructor(
         readonly href: string,
@@ -97,18 +124,23 @@ export class DanglingReference extends Error {
 }
 
 /**
- * Each thing's id and number: numbered from 1 in document order, each kind
- * on its own, and identified by its kind's prefix and the slug of its name,
- * or its number if it has none. Throws `DuplicateId` where two would share
- * an id.
+ * Each thing's id and number. Each track is numbered from 1 within each
+ * top-level section, after the section's own number: "3.1", "3.2", then
+ * "4.1". Anything before the first section is numbered plainly, "1", "2".
+ *
+ * A thing is identified by its kind's prefix and the slug of its name, or of
+ * its number if it has none. Throws `DuplicateId` where two would share an id.
  */
 export function numberApparatus(items: readonly Apparatus[]): Numbered[] {
-    const counts = new Map<Kind, number>();
+    const counts = new Map<string, number>();
     const ids = new Set<string>();
     return items.map((item, index) => {
-        const number = (counts.get(item.kind) ?? 0) + 1;
-        counts.set(item.kind, number);
-        const id = `${KINDS[item.kind].prefix}-${item.name ? slug(item.name) : number}`;
+        const { track, prefix } = KINDS[item.kind];
+        const counter = `${track} ${item.section ?? ""}`;
+        const n = (counts.get(counter) ?? 0) + 1;
+        counts.set(counter, n);
+        const number = item.section ? `${item.section}.${n}` : `${n}`;
+        const id = `${prefix}-${slug(item.name ?? number.replaceAll(".", "-"))}`;
         if (ids.has(id)) throw new DuplicateId(index, id);
         ids.add(id);
         return { ...item, id, number };
@@ -119,19 +151,19 @@ export function numberApparatus(items: readonly Apparatus[]): Numbered[] {
 export const namesApparatus = (href: string) =>
     Object.values(KINDS).some(({ prefix }) => href.startsWith(`#${prefix}-`));
 
-/** What a link to `href` reads as: "Figure 2". */
+/** What a link to `href` reads as: "Figure 3.2". */
 export function referenceText(numbered: readonly Numbered[], href: string) {
     const target = numbered.find(({ id }) => `#${id}` === href);
     if (!target) throw new DanglingReference(href);
-    // An untitled listing's id is its number, so adding a listing above it changes the id.
+    // An unnamed thing's id is its number, so adding one above it changes the id.
     if (!target.name)
         throw new DanglingReference(
             href,
-            "is an untitled listing, which cannot be cited; give its fence a title",
+            "has no name, so it cannot be cited; give its fence a title, or the lemma or theorem a name",
         );
     return `${KINDS[target.kind].label} ${target.number}`;
 }
 
-/** What a thing's own caption calls it: "Fig. 2". */
+/** What a thing's own caption or heading calls it: "Fig. 3.2". */
 export const captionLabel = ({ kind, number }: Numbered) =>
     `${KINDS[kind].short} ${number}`;

@@ -33,3 +33,26 @@ it from vine.mjs would have tied the brush to the vines. It was moved
 unchanged, so every seed draws what it drew before, and the vine.test.ts
 hash pins prove it. The tests that used `chance` for property inputs now
 import it from chance.mjs.
+
+## 2026-10-06 — the ring is hung level with its line
+
+`hanging` takes a required `rise`: how far above the top of the section's vine
+the middle of the heading's line is, in vine widths. _ornaments.scss passes
+half the TOC pitch, and the ring's centre is drawn there. It used to be
+hard-coded at 24 units, near the top of the words, which made a top-level
+entry harder to pick out by eye. The anchor point and the frame are unchanged,
+so the stem still meets the section vine where it did. Changes here reach the
+dev server only after a restart, because the Astro config imports this file
+once.
+
+Hung exactly at the middle of the cap height, the ring still read as high, so
+`$toc-ring-drop` in _ornaments.scss hangs it 2px (0.125rem, scaled) lower. The
+`rise` passed to `hanging` is half the pitch minus that drop.
+
+The drop reads right only when the section is open. Folded, with just the
+curl under it, the ring looked low, so toc.scss lifts a folded ring's
+`summary::before` back by `$toc-ring-drop` with `translate`. It settles as the
+section opens, on the same transition as the unrolling frames. The drawing
+stays at the open height, because that is where its stem meets the vine.
+`translate` composes with the sidebar's mirroring `transform`, so the two
+don't conflict.

@@ -4,28 +4,68 @@
 /// mask on a patch of the words' own ink, swapped three times; nothing filters
 /// the words but the blur, which is cheap for the compositor.
 ///
+/// A pane resolves part by part, each part as a picture rather than a line: a
+/// quilt of large blocks laid down patch by patch, then finer blocks over the
+/// part's picture out of focus, then finer still, then the picture sharpening.
+/// It is unpicked in another order than it was laid down in, so that leaving
+/// is not arriving played backwards.
+///
 /// Mixins only. prelude.scss sets the strips on `:root` and writes the
 /// keyframes once; whatever resolves names them.
 
+@use "sass:math";
+@use "motion";
 @use "ornaments";
+
+/// Where each resolution gives way to the next, and the words to their blur.
+$-coarse-until: 30%;
+$-medium-until: 50%;
+$-fine-until: 66%;
+$-shown-from: 66.1%;
+
+/// The quilt a part of a pane arrives as: a tile of cells, each about a line
+/// of the pane's text tall, pieced into patches of up to three cells.
+$-quilt-cols: 16;
+$-quilt-rows: 12;
+$-quilt-cell: 1.75rem;
+$-quilt-frames: 6;
+
+/// How strongly a part's blocks are inked, at their strongest.
+$-part-ink: 0.5;
 
 /// The squares words resolve through, about a letter wide, then half that, then
 /// a quarter: each a strip 8em wide and a line of type tall. They have no
 /// colour of their own; a patch paints them in its ink.
+///
+/// A pane's quilt is laid down in one order and unpicked in another, a frame
+/// at a time; its last frame, the whole quilt, is the same either way.
 @mixin strips {
     --blocks-coarse: #{ornaments.blocks-of(16, 2, 101)};
     --blocks-medium: #{ornaments.blocks-of(32, 4, 102)};
     --blocks-fine: #{ornaments.blocks-of(64, 8, 103)};
+
+    @each $direction, $order in ("resolve": 1, "unresolve": 2) {
+        @for $frame from 1 through $-quilt-frames {
+            --quilt-#{$direction}-#{$frame}: #{ornaments.patchwork-of(
+                    $-quilt-cols,
+                    $-quilt-rows,
+                    105,
+                    $order,
+                    $frame,
+                    $-quilt-frames
+                )};
+        }
+    }
 }
 
 @mixin -words {
     0%,
-    66% {
+    #{$-fine-until} {
         -webkit-text-fill-color: transparent;
         filter: none;
     }
 
-    66.1% {
+    #{$-shown-from} {
         -webkit-text-fill-color: transparent;
         filter: blur(1.6px);
     }
@@ -43,48 +83,171 @@
     }
 
     4%,
-    30% {
+    #{$-coarse-until} {
         mask-image: var(--blocks-coarse);
         opacity: 0.8;
     }
 
-    30.1%,
-    50% {
+    #{$-coarse-until + 0.1%},
+    #{$-medium-until} {
         mask-image: var(--blocks-medium);
         opacity: 0.8;
     }
 
-    50.1%,
-    66% {
+    #{$-medium-until + 0.1%},
+    #{$-fine-until} {
         mask-image: var(--blocks-fine);
         opacity: 0.8;
     }
 
-    66.1%,
+    #{$-shown-from},
     100% {
         mask-image: var(--blocks-fine);
         opacity: 0;
     }
 }
 
+/// A part's sequence, in ticks: nothing, then the quilt laid down a frame a
+/// tick, then each finer resolution over the picture, then the picture coming
+/// into focus. The quilt takes longest; every resolution after it is quicker.
+$-part-ticks: 15;
+$-part-medium: $-quilt-frames + 1;
+$-part-fine: $-part-medium + 2;
+$-part-focus: $-part-fine + 2;
+
+@function -tick($tick) {
+    @return math.percentage(math.div($tick, $-part-ticks));
+}
+
+/// The keyframes that hold a stage from tick `$from` until `$to`.
+@function -held($from, $to) {
+    @return "#{-tick($from)}, #{-tick($to) - 0.1%}";
+}
+
+/// Frame `$frame` of the quilt, in `$direction`'s order, pieced at `$scale`
+/// of its size, held from tick `$from` until `$to`.
+@mixin -quilt($from, $to, $direction, $frame, $scale: 1) {
+    #{-held($from, $to)} {
+        mask-image: var(--quilt-#{$direction}-#{$frame});
+        mask-size: ($-quilt-cols * $-quilt-cell * $scale)
+            ($-quilt-rows * $-quilt-cell * $scale);
+        opacity: $-part-ink;
+    }
+}
+
+/// The blocks over a part: its quilt, laid down in `$direction`'s order, then
+/// the whole quilt pieced at half its size, then at a quarter.
+@mixin -part($direction) {
+    #{-held(0, 1)} {
+        opacity: 0;
+    }
+
+    @for $frame from 1 through $-quilt-frames {
+        @include -quilt($frame, $frame + 1, $direction, $frame);
+    }
+
+    $whole: $-quilt-frames;
+    @include -quilt($-part-medium, $-part-fine, $direction, $whole, 0.5);
+    @include -quilt($-part-fine, $-part-focus, $direction, $whole, 0.25);
+
+    #{-tick($-part-focus)},
+    100% {
+        opacity: 0;
+    }
+}
+
+/// A part's picture: hidden under its quilt, then out of focus under the finer
+/// blocks, then sharpening.
+@mixin -picture {
+    #{-held(0, $-part-medium)} {
+        opacity: 0;
+    }
+
+    #{-held($-part-medium, $-part-fine)} {
+        opacity: 1;
+        filter: blur(5px);
+    }
+
+    #{-held($-part-fine, $-part-focus)} {
+        filter: blur(2.5px);
+    }
+
+    #{-tick($-part-focus)} {
+        filter: blur(1.2px);
+    }
+
+    100% {
+        filter: none;
+    }
+}
+
 /// `resolve` and `unresolve` for the words, `resolve-blocks` and
-/// `unresolve-blocks` for their patch. Arriving and leaving are one sequence
-/// played either way, under two names, because only a change of name starts
-/// it over.
+/// `unresolve-blocks` for their patch, and `-part` and `-picture` likewise for
+/// a part of a pane. Arriving and leaving are one sequence played either way,
+/// under two names, because only a change of name starts it over; a part's
+/// quilt is the exception, laid down in a different order under each name.
 @mixin keyframes {
-    @keyframes resolve {
-        @include -words;
+    @each $direction in "resolve", "unresolve" {
+        @keyframes #{$direction} {
+            @include -words;
+        }
+
+        @keyframes #{$direction}-blocks {
+            @include -blocks;
+        }
+
+        @keyframes #{$direction}-part {
+            @include -part($direction);
+        }
+
+        @keyframes #{$direction}-picture {
+            @include -picture;
+        }
+    }
+}
+
+/// A part of a pane: its blocks, an ::after laid over it, and its picture,
+/// every child, both at rest until `part-played` plays them. `--part` offsets
+/// the quilt, so that parts set one under another do not show the same row.
+@mixin part {
+    position: relative;
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: currentcolor;
+        mask-position: calc(var(--part, 0) * -5 * #{$-quilt-cell})
+            calc(var(--part, 0) * -3 * #{$-quilt-cell});
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+/// A `part` resolving in, or, `$leaving`, out: its blocks, and its picture.
+@mixin part-played($duration, $delay: 0s, $leaving: false) {
+    $direction: "resolve";
+    @if $leaving {
+        $direction: "unresolve";
     }
 
-    @keyframes unresolve {
-        @include -words;
+    &::after {
+        @include motion.grown(
+            #{$direction}-part,
+            $duration,
+            $delay,
+            linear,
+            $leaving: $leaving
+        );
     }
 
-    @keyframes resolve-blocks {
-        @include -blocks;
-    }
-
-    @keyframes unresolve-blocks {
-        @include -blocks;
+    > * {
+        @include motion.grown(
+            #{$direction}-picture,
+            $duration,
+            $delay,
+            linear,
+            $leaving: $leaving
+        );
     }
 }

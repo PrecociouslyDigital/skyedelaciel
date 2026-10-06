@@ -64,50 +64,61 @@ const resolved = isResolved(href, entry);
                     style={paneStyle}
                 >
                     <span class="link-popover-text">
-                        <span class="link-popover-title">{preview.title}</span>
+                        <span class="link-popover-title">
+                            <span>{preview.title}</span>
+                        </span>
                         {preview.meta.length > 0 && (
                             <span class="link-popover-meta">
-                                {preview.meta.join(" · ")}
+                                <span>{preview.meta.join(" · ")}</span>
                             </span>
                         )}
-                        {preview.body &&
-                            (preview.body.type === "html" ? (
-                                <span
-                                    class="link-popover-description"
-                                    set:html={preview.body.content}
-                                />
-                            ) : (
-                                <span
-                                    class="link-popover-description"
-                                    set:text={preview.body.content}
-                                />
-                            ))}
+                        {preview.body && (
+                            <span class="link-popover-description">
+                                {preview.body.type === "html" ? (
+                                    <span set:html={preview.body.content} />
+                                ) : (
+                                    <span set:text={preview.body.content} />
+                                )}
+                            </span>
+                        )}
                         {preview.fields.length > 0 && (
                             <span class="link-popover-ledger" role="table">
-                                {preview.fields.map(({ label, value }) => (
-                                    <span class="link-popover-row" role="row">
+                                <span class="link-popover-rows" role="rowgroup">
+                                    {preview.fields.map(({ label, value }) => (
                                         <span
-                                            class="link-popover-key"
-                                            role="rowheader"
+                                            class="link-popover-row"
+                                            role="row"
                                         >
-                                            {label}
+                                            <span
+                                                class="link-popover-key"
+                                                role="rowheader"
+                                            >
+                                                {label}
+                                            </span>
+                                            <span
+                                                role="cell"
+                                                set:html={value}
+                                            />
                                         </span>
-                                        <span role="cell" set:html={value} />
-                                    </span>
-                                ))}
+                                    ))}
+                                </span>
                             </span>
                         )}
                     </span>
                     {image && (
-                        <img
-                            class="link-popover-image"
-                            src={image.src}
-                            width={image.width}
-                            height={image.height}
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                        />
+                        <span class="link-popover-figure">
+                            <span class="link-popover-picture">
+                                <img
+                                    class="link-popover-image"
+                                    src={image.src}
+                                    width={image.width}
+                                    height={image.height}
+                                    alt=""
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            </span>
+                        </span>
                     )}
                 </span>
             </span>
@@ -118,11 +129,42 @@ const resolved = isResolved(href, entry);
 <style lang="scss">
     @use "../../../layouts/prelude/motion";
     @use "../../../layouts/prelude/ornaments";
+    @use "../../../layouts/prelude/resolve";
     @use "../../../layouts/prelude/typography";
 
+    /* How long a pointer must rest on the link before the popover answers,
+       how long the glass then takes to fade in, and how long each part of what
+       is on it takes to resolve and to unresolve, a beat after the part above
+       it. Arriving, the last part is done about 300ms after the first began. */
+    $standoff: 0.3s;
+    $fade: 120ms;
+    $resolve: 180ms;
+    $resolve-beat: 35ms;
+    $unresolve: 120ms;
+    $unresolve-beat: 15ms;
+
+    /* The parts of the text: its title, meta, summary and ledger. One past
+       the last would resolve with the last. The image is a part too, and
+       resolves with the first. */
+    $parts: 4;
+
+    /* Leaving, the glass fades out as the last part unresolves, rather than
+       taking the parts below with it before they have had their turn. */
+    $lag: ($parts - 1) * $unresolve-beat;
+
+    /* How far a popover keeps from the edge of the screen. */
+    $edge: 1rem;
+
+    /* The link is what the popover is anchored to. The name is scoped to the
+       wrapper, so each popover finds its own link rather than the page's last. */
     .link-wrapper {
         position: relative;
         display: inline;
+        anchor-scope: --link;
+    }
+
+    .content-link {
+        anchor-name: --link;
     }
 
     /* Screens have the link itself; only paper needs it spelled out. */
@@ -159,6 +201,20 @@ const resolved = isResolved(href, entry);
         transform: translateX(-50%);
         z-index: 10;
 
+        /* Centred over its link, unless that would carry it past the edge of
+           the screen: placed by area against the viewport, a box that
+           overflows is pushed back inside, and its margin keeps it a gutter
+           clear of the edge. A browser that cannot anchor centres it over
+           the wrapper, as above, edges or not. */
+        @supports (position-area: top) {
+            position: fixed;
+            position-anchor: --link;
+            position-area: top;
+            inset: auto;
+            margin-inline: $edge;
+            transform: none;
+        }
+
         /* The delay is the standoff in time that the padding above is in
            space: long enough that a pointer crossing a link on its way
            somewhere else never summons one.
@@ -175,22 +231,37 @@ const resolved = isResolved(href, entry);
            an ancestor carrying a composited opacity is a backdrop root,
            and a backdrop root above the pane leaves its `backdrop-filter`
            with nothing behind it to blur. */
-        @include motion.snap(visibility, 120ms, 0.3s);
+        @include motion.snap(visibility, $fade, $standoff + $lag);
         visibility: hidden;
     }
 
     /* Hovering the popover is hovering the wrapper it hangs from, so holding
        the link open and holding the popover open are the same rule. */
-    .link-wrapper:hover .link-popover-anchor,
-    .link-wrapper:focus-within .link-popover-anchor {
-        visibility: visible;
-    }
+    .link-wrapper:hover,
+    .link-wrapper:focus-within {
+        .link-popover-anchor {
+            @include motion.snap(visibility, $fade, $standoff);
+            visibility: visible;
+        }
 
-    .link-wrapper:hover .link-popover,
-    .link-wrapper:focus-within .link-popover {
-        opacity: 1;
-        translate: 0 0;
-        content-visibility: visible;
+        .link-popover {
+            @include motion.snap((opacity, translate), $fade, $standoff);
+            opacity: 1;
+            translate: 0 0;
+        }
+
+        .link-popover-picture {
+            @include motion.snap(content-visibility, $fade, $standoff);
+            content-visibility: visible;
+        }
+
+        .link-popover-text > *,
+        .link-popover-figure {
+            @include resolve.part-played(
+                $resolve,
+                calc(#{$standoff} + var(--part, 0) * #{$resolve-beat})
+            );
+        }
     }
 
     /* A pane of the machine's glass held over the page, since what is on it is
@@ -205,22 +276,10 @@ const resolved = isResolved(href, entry);
         @include ornaments.glass;
 
         /* The pane rises the last few pixels into place as it takes colour,
-           and sinks back as it loses it, on the same standoff the anchor
-           above waits out.
-
-           Its contents are skipped while it is down. `visibility` alone
-           still lays them out, and a lazy image that is laid out is fetched
-           with the page rather than on hover. `content-visibility` flips
-           with the same timing as `visibility`, so the fade survives it. */
-        @include motion.snap(
-            (opacity, translate, content-visibility),
-            120ms,
-            0.3s
-        );
-        transition-behavior: allow-discrete;
+           and sinks back as it loses it, in step with the anchor above. */
+        @include motion.snap((opacity, translate), $fade, $standoff + $lag);
         opacity: 0;
         translate: 0 0.35rem;
-        content-visibility: hidden;
 
         /* A flexible row under a capped height shrinks to fit the cap, and
            the text in it scrolls. Longhands, because each placement below
@@ -230,7 +289,7 @@ const resolved = isResolved(href, entry);
         grid-template-areas: "text";
         grid-template-rows: minmax(0, 1fr);
         grid-template-columns: minmax(0, 1fr);
-        width: var(--pane-width);
+        width: min(var(--pane-width), 100vw - #{2 * $edge});
         max-height: var(--max-height);
         color: var(--color-text);
         font-size: var(--text-small);
@@ -275,40 +334,59 @@ const resolved = isResolved(href, entry);
         }
     }
 
+    /* What is on the glass resolves part by part, as pictures load: each part
+       of the text, and the image, is a frame for the blocks to be laid over
+       and a picture inside it to come into focus. They come in from the top,
+       a beat apart, and go from the top too, so that leaving is not arriving
+       played backwards; see _resolve.scss. */
+    .link-popover-text > *,
+    .link-popover-figure {
+        @include resolve.part;
+        @include resolve.part-played(
+            $unresolve,
+            calc(#{$standoff} + var(--part, 0) * #{$unresolve-beat}),
+            $leaving: true
+        );
+    }
+
+    @for $n from 2 through $parts {
+        $nth: $n;
+        @if $n == $parts {
+            $nth: "n + #{$n}";
+        }
+
+        .link-popover-text > :nth-child(#{$nth}) {
+            --part: #{$n - 1};
+        }
+    }
+
     /* Inset by the glass's own gap, so the image runs to the edge of the
        glass and stops where it does, clear of the ticks. */
-    .link-popover-image {
+    .link-popover-figure {
         grid-area: image;
         min-width: 0;
         min-height: 0;
 
-        /* Shown whole, at the size `placeImage` drew it at, which has the
-           image's own proportions. Being given rather than measured, it sizes
-           the pane before the image has loaded. */
         [data-image="column"] > & {
             place-self: start end;
-            width: var(--image-width);
-            height: var(--image-height);
             margin: ornaments.$glass-gap ornaments.$glass-gap
                 ornaments.$glass-gap 0;
         }
 
-        /* Cropped to fill the pane's width. */
+        /* As the text scrolls up, the banner gives way to it, partly: it
+           moves exactly as far as the reader scrolls, and only for the first
+           stretch of it. Under reduced motion it stays put, because this is
+           motion set off by scrolling. It is the frame that gives way, since
+           the image inside it has resolving of its own to do.
+
+           A browser without scroll timelines would play this as an ordinary
+           animation of no length, and hold its end: a banner already shrunk
+           before anything was scrolled. */
         [data-image="banner"] > & {
             place-self: stretch;
-            width: auto;
-            height: var(--banner-height);
             margin: ornaments.$glass-gap ornaments.$glass-gap 0;
-            object-fit: cover;
+            height: var(--banner-height);
 
-            /* As the text scrolls up, the banner gives way to it, partly: it
-               moves exactly as far as the reader scrolls, and only for the
-               first stretch of it. Under reduced motion it stays put,
-               because this is motion set off by scrolling.
-
-               A browser without scroll timelines would play this as an
-               ordinary animation of no length, and hold its end: a banner
-               already shrunk before anything was scrolled. */
             @media (prefers-reduced-motion: no-preference) {
                 @supports (animation-timeline: scroll()) {
                     animation: link-popover-banner-gives-way linear both;
@@ -317,6 +395,51 @@ const resolved = isResolved(href, entry);
                         calc(var(--banner-height) - var(--banner-min-height));
                 }
             }
+        }
+    }
+
+    /* What holds the image back until the popover opens. `visibility` alone
+       still lays an image out, and a lazy image that is laid out is fetched
+       with the page rather than on hover, so the holder's contents are
+       skipped while the popover is down. It flips with the same timing as
+       `visibility`, so the fade survives it.
+
+       Only the image is skipped. Skipped contents have no style, so anything
+       in them with a standoff to wait out would only start waiting once
+       revealed, a standoff after the glass. Being skipped, the image sizes
+       nothing either, so the holder takes its size from the pane. */
+    .link-popover-picture {
+        display: block;
+        @include motion.snap(content-visibility, $fade, $standoff + $lag);
+        transition-behavior: allow-discrete;
+        content-visibility: hidden;
+
+        [data-image="column"] & {
+            width: var(--image-width);
+            height: var(--image-height);
+        }
+
+        [data-image="banner"] & {
+            height: 100%;
+        }
+    }
+
+    .link-popover-image {
+        display: block;
+
+        /* Shown whole, at the size `placeImage` drew it at, which has the
+           image's own proportions. Being given rather than measured, it sizes
+           the pane before the image has loaded. */
+        [data-image="column"] & {
+            width: var(--image-width);
+            height: var(--image-height);
+        }
+
+        /* Cropped to fill its frame, which runs the pane's width. */
+        [data-image="banner"] & {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
     }
 
@@ -350,12 +473,16 @@ const resolved = isResolved(href, entry);
     /* The facts below the summary, ruled as the site's tables are: ink over
        the first row, a hairline under each. It is spans with table roles
        rather than a <table>, because a <table> would close the paragraph
-       the link sits in. */
+       the link sits in. The ruling is on the row group rather than the
+       table, so that it is part of the picture that resolves. */
     .link-popover-ledger {
+        margin-top: 0.5rem;
+    }
+
+    .link-popover-rows {
         display: grid;
         grid-template-columns: max-content minmax(0, 1fr);
         column-gap: 0.8rem;
-        margin-top: 0.5rem;
         border-top: 1.5px solid var(--color-text);
         line-height: 1.35;
         font-variant-numeric: lining-nums tabular-nums;

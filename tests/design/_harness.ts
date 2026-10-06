@@ -7,11 +7,11 @@ export { expect };
 /**
  * The two pages the suite reads.
  *
- * `/design` is the spec rendering itself, which is the most honest thing to
+ * The spec page is the spec rendering itself, which is the most honest thing to
  * check it against. The fixture covers what that page happens not to exercise —
  * a bibliography, all four popover styles, crowded sidenotes.
  */
-export const SPEC_PAGE = "/design/";
+export const SPEC_PAGE = "/fixtures/design/";
 export const FIXTURE_PAGE = "/fixtures/kitchen-sink/";
 
 /**
@@ -155,4 +155,45 @@ export const token = (page: Page, name: string) =>
                 .getPropertyValue(property)
                 .trim(),
         `--color-${name}`,
+    );
+
+/** Everything numbered on the figures' track, and on the statements'. */
+export const FIGURES = "article figure:is([id^='fig-'], [id^='tab-'])";
+export const STATEMENTS =
+    "article :is([id^='def-'], [id^='lem-'], [id^='thm-'])";
+
+/**
+ * The numbers one track's addresses carry, in document order, beside the
+ * numbers the spec gives them: counted from 1 within each top-level section,
+ * after its number, and plainly before the first.
+ */
+export const numbering = (page: Page, track: string) =>
+    page.evaluate(
+        ({ track, headings }) => {
+            const carried: string[] = [];
+            const counted: string[] = [];
+            const counts = new Map<string, number>();
+            let section = "";
+            for (const element of document.querySelectorAll(
+                `${headings}, ${track}`,
+            )) {
+                if (element.matches(headings)) {
+                    section = (element as HTMLElement).dataset.section!.split(
+                        ".",
+                    )[0]!;
+                    continue;
+                }
+                const n = (counts.get(section) ?? 0) + 1;
+                counts.set(section, n);
+                counted.push(section ? `${section}.${n}` : `${n}`);
+                carried.push(
+                    element
+                        .querySelector(".copy-link")!
+                        .textContent!.split(" ")
+                        .at(-1)!,
+                );
+            }
+            return { carried, counted };
+        },
+        { track, headings: `${CONTENT_HEADINGS}[data-section]` },
     );

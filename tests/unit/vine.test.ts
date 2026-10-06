@@ -93,6 +93,9 @@ describe("the rules are the drawings they always were", () => {
     });
 });
 
+/** Half a row of the contents, in widths of its vine; see _ornaments.scss. */
+const RISE = 0.8 / 1.3;
+
 const TOC_INKS = {
     ...INKS,
     iron: "#0e100f",
@@ -107,7 +110,8 @@ const PIECES = {
     "a shoot": (seed: number) =>
         shoot({ reach: 1.4, radius: 0.4, seed, ...TOC_INKS }).svg,
     "a blossom": (seed: number) => blossom({ seed, ...TOC_INKS }).svg,
-    "a hanging shoot": (seed: number) => hanging({ seed, ...TOC_INKS }).svg,
+    "a hanging shoot": (seed: number) =>
+        hanging({ seed, rise: RISE, ...TOC_INKS }).svg,
 };
 
 describe("a piece of the contents is its arguments", () => {
@@ -170,7 +174,8 @@ describe("a piece's box is where its drawing is", () => {
         "a shoot": (seed: number) =>
             shoot({ reach: 1.4, radius: 0.4, seed, ...TOC_INKS }),
         "a blossom": (seed: number) => blossom({ seed, ...TOC_INKS }),
-        "a hanging shoot": (seed: number) => hanging({ seed, ...TOC_INKS }),
+        "a hanging shoot": (seed: number) =>
+            hanging({ seed, rise: RISE, ...TOC_INKS }),
     };
     for (const [name, draw] of Object.entries(placed)) {
         test(`${name}'s box is its drawing's viewBox, a frame at a time`, () => {

@@ -73,12 +73,14 @@ const placed = nodes.map((node, k) => ({
 {
     nodes.length > 0 && (
         <TocList depth={depth}>
-            {placed.map(({ node, index }) => {
+            {placed.map(({ node, index }, k) => {
                 const entry = {
                     href: `#${node.slug}`,
                     text: node.text,
                     depth,
-                    ...(depth === 1 ? { entries: size(node) } : { index }),
+                    ...(depth === 1
+                        ? { entries: size(node), index: k }
+                        : { index }),
                 };
                 return node.children.length > 0 ? (
                     <TocEntry {...entry}>

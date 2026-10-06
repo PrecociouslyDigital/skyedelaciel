@@ -2,6 +2,7 @@ import type { AstroIntegration } from "astro";
 import * as sass from "sass";
 import { strokePiece } from "../layouts/prelude/brush.mjs";
 import { chance } from "../layouts/prelude/chance.mjs";
+import { laidDown, patchesSvg } from "../layouts/prelude/patchwork.mjs";
 import {
     blossom,
     hanging,
@@ -56,9 +57,9 @@ const kinds: Record<string, (args: Args) => Drawn> = {
  *
  * The files are kept by `store`, in drawn.ts.
  *
- * A third function, `blocks($cols, $rows, $seed)`, is the pattern the table
- * of contents resolves its entries through, inline: it has no colour of its
- * own, and is the same in every scheme.
+ * Two more, `blocks($cols, $rows, $seed)` and `patchwork($cols, $rows, $seed,
+ * $order, $frame, $frames)`, are the patterns things resolve through, inline:
+ * they have no colour of their own, and are the same in every scheme.
  */
 export default function vines(): AstroIntegration {
     return {
@@ -121,6 +122,8 @@ export default function vines(): AstroIntegration {
                                         ) => file(draw(args).svg),
                                         "vine-box($kind, $args)": box,
                                         "blocks($cols, $rows, $seed)": blocks,
+                                        "patchwork($cols, $rows, $seed, $order, $frame, $frames)":
+                                            patchwork,
                                     },
                                 },
                             },
@@ -163,28 +166,50 @@ function hex(color: sass.SassColor): string {
  * an inline `url()` to be used as a mask: the blocks an entry of the contents
  * shows before its words. They are not made from the letters, only cut to
  * about their size, which is all the eye takes in at that speed.
- *
- * Inline, it is in the stylesheet every page waits on, so it is written small:
- * one path for each strength, and only the characters a data URL cannot
- * carry are escaped.
  */
-function blocks([cols, rows, seed]: sass.Value[]) {
-    const [across, down] = [cols!, rows!].map((n) =>
-        n.assertNumber().assertInt(),
-    ) as [number, number];
-    const r = chance(seed!.assertNumber("seed").assertInt("seed"));
+function blocks(args: sass.Value[]) {
+    const [cols, rows, seed] = integers(args) as [number, number, number];
+    const r = chance(seed);
     const strengths = [0, 0, 0.35, 0.55, 0.8, 1];
-    const squares = new Map<number, string>();
-    for (let y = 0; y < down; y++) {
-        for (let x = 0; x < across; x++) {
-            const a = strengths[r.integer(strengths.length)]!;
-            if (a) squares.set(a, `${squares.get(a) ?? ""}M${x} ${y}h1v1h-1z`);
-        }
-    }
-    const paths = [...squares]
-        .map(([a, d]) => `<path fill-opacity='${a}' d='${d}'/>`)
-        .join("");
-    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${across} ${down}' preserveAspectRatio='none' shape-rendering='crispEdges'>${paths}</svg>`;
+    const squares = Array.from({ length: rows * cols }, (_, i) => ({
+        x: i % cols,
+        y: Math.floor(i / cols),
+        w: 1,
+        h: 1,
+        strength: strengths[r.integer(strengths.length)]!,
+    }));
+    return mask(patchesSvg(squares, cols, rows));
+}
+
+/**
+ * Frame `$frame` of `$frames` in which a quilt of blocks is laid down, in the
+ * order `$order` draws: the coarse blocks a popover's pane arrives as. See
+ * patchwork.mjs.
+ */
+function patchwork(args: sass.Value[]) {
+    const [cols, rows, seed, order, frame, frames] = integers(args) as [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+    ];
+    const patches = laidDown({ cols, rows, seed, order, frames })[frame - 1];
+    if (!patches) throw new Error(`there is no frame ${frame} of ${frames}.`);
+    return mask(patchesSvg(patches, cols, rows));
+}
+
+/** The integers a Sass function was called with. */
+const integers = (args: sass.Value[]) =>
+    args.map((arg) => arg.assertNumber().assertInt());
+
+/**
+ * An SVG as an inline `url()` for a mask. Inline, it is in the stylesheet
+ * every page waits on, so it is written small: only the characters a data URL
+ * cannot carry are escaped.
+ */
+function mask(svg: string) {
     const escaped = svg.replace(/[%#<>]/g, encodeURIComponent);
     return new sass.SassString(`url("data:image/svg+xml,${escaped}")`, {
         quotes: false,

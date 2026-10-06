@@ -109,3 +109,14 @@ export const inline = (
         props,
         children as RootContent[] as MdxJsxFlowElement["children"],
     );
+
+/**
+ * `node` as `<name {...props}>`, keeping what it holds and whether it stands
+ * as a block or runs in a line of text, as an element written on one line
+ * (`<dl><dt>…</dt></dl>`) does.
+ */
+export const recast = <Element extends MdxJsxFlowElement | MdxJsxTextElement>(
+    node: Element,
+    name: string,
+    props: Record<string, Prop | undefined>,
+): Element => ({ ...node, name, attributes: attributes(props) });

@@ -1,6 +1,6 @@
 <script lang="ts">
     /**
-     * Copies the code of its listing exactly as written; the stylesheet draws
+     * Copies the code of its figure exactly as written; the stylesheet draws
      * the line numbers, so they are not in the text. It renders only once its
      * script has loaded, since it does nothing without one.
      */
@@ -17,7 +17,9 @@
     });
 
     async function copy() {
-        const code = button!.closest(".listing")!.querySelector("pre code")!;
+        const code = button!
+            .closest(".code-figure")!
+            .querySelector("pre code")!;
         await navigator.clipboard.writeText(code.textContent ?? "");
         clearTimeout(hold);
         copied = true;

@@ -331,5 +331,36 @@ section("Content", () => {
             });
             expect(dd).toBeGreaterThan(0);
         });
+
+        test("each term, lemma and theorem is closed by its address, which names its kind", async ({
+            page,
+        }) => {
+            const statements = await page.evaluate(() =>
+                [
+                    ...document.querySelectorAll("article :is(dt, .statement)"),
+                ].map((statement) => {
+                    const box = statement.querySelector(".address-box")!;
+                    const address = box.querySelector(".copy-link")!;
+                    return {
+                        id: statement.id,
+                        href: address.getAttribute("href"),
+                        kind: address.textContent!.split(" ")[0],
+                        last: box
+                            .textContent!.trim()
+                            .endsWith(address.textContent!),
+                    };
+                }),
+            );
+            const KIND = { def: "Def.", lem: "Lemma", thm: "Theorem" };
+            expect(statements.length).toBeGreaterThanOrEqual(4);
+            expect(statements).toEqual(
+                statements.map(({ id }) => ({
+                    id,
+                    href: `#${id}`,
+                    kind: KIND[id.split("-")[0] as keyof typeof KIND],
+                    last: true,
+                })),
+            );
+        });
     });
 });

@@ -9,8 +9,10 @@ import H5 from "./heading/H5.astro";
 import H6 from "./heading/H6.astro";
 import Link from "./links/Link.astro";
 import Sidenote from "./Sidenote.astro";
+import Term from "./Term.astro";
+import Statement from "./Statement.astro";
 import Figure from "./figures/Figure.astro";
-import Listing from "./figures/Listing.astro";
+import CodeFigure from "./figures/CodeFigure.astro";
 import TableFigure from "./figures/TableFigure.astro";
 
 /** Global MDX component overrides, passed to <Content /> in the dynamic route. */
@@ -25,5 +27,7 @@ export const mdxComponents: Record<string, AstroComponentFactory> = {
     Sidenote,
     Figure,
     TableFigure,
-    Listing,
+    CodeFigure,
+    Term,
+    Statement,
 };

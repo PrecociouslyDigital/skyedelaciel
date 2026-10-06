@@ -67,3 +67,28 @@ self-hosted Source Serif sets ~3% wider than the prototype's Google copy, so
 the spacing was tightened until three links fit on one line at 375px. The
 toggle's 44px hit area is clipped by `overflow-x: clip` on the band, so it
 can't widen the page at the screen's edge.
+
+## 2026-10-06 — the seal loses its box
+
+The border came off, and the mark now fills what the box took up (4rem, or
+15cqi on narrow screens), so the narrow band keeps its height. In the sidebar
+the mark is 4.5rem, the links are 1.3rem and the toggle is 1.5rem. 5.5rem was
+tried and looked like twice the old mark.
+
+## 2026-10-06 — leaving the logo retraces the rewrite
+
+The script is gone: the rewrite is a `:hover` transition on
+`stroke-dashoffset`, 0 → -2 over a `1 1` dash, and a transition interrupted by
+leaving turns back from its current value. That needed dropping the wait
+between lift and lay (the old `1 3` dash and its hold could only be keyframed),
+which the user accepted. Lift and lay now share one `$brush` curve rather than
+one each, so the lift is quick and the lay settles.
+
+The stagger delay is set only in the `:hover` rule. Transitions take their
+timing from the style being moved to, so arriving waits for `--i` and leaving
+does not; with the delay on the base rule, each stroke would wait its turn
+again before turning back.
+
+Leaving after the rewrite has finished unwrites the whole thing, since -2 is a
+held state. The stroke duration is now `motion.$grow-limit` (600ms) through
+`motion.grow`; the old keyframed one ran 1.6s, outside the spec's limit.

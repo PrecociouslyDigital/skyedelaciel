@@ -1,0 +1,22 @@
+---
+import CopyLink from "./copy/CopyLink.svelte";
+
+/**
+ * A term a definition list defines, closed by its address as a heading is:
+ * `Def. 3.2`, which copies the address as a heading's number does. Written
+ * by remark-figures, from a `<dt>`.
+ */
+interface Props {
+    id: `def-${string}`;
+    label: string;
+}
+
+const { id, label } = Astro.props;
+---
+
+<dt id={id} class="term">
+    <span class="address-box receipt-box"
+        ><slot />
+        <CopyLink href={`#${id}`} label={label} client:visible /></span
+    >
+</dt>
