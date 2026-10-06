@@ -39,3 +39,8 @@ Waits for `astro-island:not([ssr])` before handing back a copy link. Clicking
 a `client:visible` island too early follows the plain link. The motion spec
 hit this on /design/, where the page is heavy enough for the race to show.
 The nojs test deliberately clicks the raw locator.
+
+## 2026-10-06 — `token()`
+
+Moved here from annotation.spec and content.spec, which each had a copy,
+once figures.spec needed a third.

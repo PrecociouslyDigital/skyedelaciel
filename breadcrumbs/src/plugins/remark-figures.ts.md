@@ -29,3 +29,14 @@
 `drawnSize` clamps the height after rounding. Rounding the width of a very
 tall sliver up by half a pixel could push its height past 720, and the
 property test in figures.test.ts found exactly that.
+
+## 2026-10-06 — listings
+
+Every fenced block becomes `<Listing>`. The fence's meta may be exactly
+`title="…"` and nothing else; anything more fails, so a typo in an attribute
+can't vanish silently. An untitled listing's id is `lst-N`, and
+`referenceText` refuses to cite it, because N shifts when a listing is
+added above it. The line count is taken from the raw text, which is the
+same count Shiki's `.line` spans give (figures.spec checks they agree).
+Shiki runs at the rehype stage, after this plugin, and still finds the
+`<pre>` inside the JSX element's children.

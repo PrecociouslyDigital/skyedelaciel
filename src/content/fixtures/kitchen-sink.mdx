@@ -108,15 +108,23 @@ caps. ~~This was struck out~~ and <ins>this was put in</ins> in its place.
 
 ## Code
 
-Inline `--color-accent` sits on a faintly tinted ground, and a block of it sits
-on the raised surface inside a single hairline:
+Inline `--color-accent` sits on a faintly tinted ground, and a block of code is
+a listing, in the frame it draws, as [](#lst-the-woodblock-frame) shows. A block
+with no title is numbered all the same:
 
-```scss
+```scss title="The woodblock frame"
 @mixin frame-heavy {
     border: 3px solid var(--color-text);
     box-shadow:
         inset 0 0 0 3px var(--color-background),
         inset 0 0 0 4px var(--color-text);
+}
+```
+
+```ts
+// Every kind of token Herbarium inks, in one place.
+export function frame(rule: string, width = 3): string {
+    return `${width}px solid ${rule}` ?? null;
 }
 ```
 

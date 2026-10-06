@@ -10,6 +10,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import rehypeSlug from "rehype-slug";
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
+import type { PluggableList } from "unified";
 
 import { definitions } from "mdast-util-definitions";
 import { visit } from "unist-util-visit";
@@ -19,6 +20,7 @@ import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
 import remarkSections from "./src/plugins/remark-sections";
 import remarkFigures from "./src/plugins/remark-figures";
+import { herbarium, tokenClasses } from "./src/plugins/herbarium";
 import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
 import rehypeTaskLists from "./src/plugins/rehype-task-lists";
 import tumblrTheme, {
@@ -82,7 +84,7 @@ const rehypePlugins = [rehypeSlug, rehypeCodeBlocks, rehypeTaskLists];
  * `remarkPlugins`, MDX drops Markdown's rather than extending them, so the
  * shared ones are restated.
  */
-const mdxRemarkPlugins = [
+const mdxRemarkPlugins: PluggableList = [
     ...remarkPlugins,
     remarkSidenotes,
     remarkSections,
@@ -127,10 +129,11 @@ export default defineConfig({
         },
     },
     markdown: {
-        // Shiki would stamp its own theme's colours and background inline on
-        // every code block, which no stylesheet can then re-ink for the reader's
-        // scheme. Code is set in ink on paper like the rest of the page.
-        syntaxHighlight: false,
+        // The theme names each token's kind instead of colouring it; the
+        // transformer turns the names into classes for the stylesheet to ink.
+        // See src/plugins/herbarium.ts.
+        syntaxHighlight: "shiki",
+        shikiConfig: { theme: herbarium, transformers: [tokenClasses] },
         remarkPlugins,
         rehypePlugins,
     },

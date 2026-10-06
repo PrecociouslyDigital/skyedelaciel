@@ -146,3 +146,13 @@ export async function copyLink(page: Page, scope: string) {
     ).toBeAttached();
     return link;
 }
+
+/** A colour token's value, as the page resolved it. */
+export const token = (page: Page, name: string) =>
+    page.evaluate(
+        (property) =>
+            getComputedStyle(document.documentElement)
+                .getPropertyValue(property)
+                .trim(),
+        `--color-${name}`,
+    );

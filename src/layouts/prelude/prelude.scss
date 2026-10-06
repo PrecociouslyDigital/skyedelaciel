@@ -381,15 +381,22 @@ ins {
     text-underline-offset: 0.2em;
 }
 
-/* Painted on the block itself rather than on a pseudo-element outside it: a
-   code block scrolls sideways, and `overflow-x: auto` would clip anything
-   drawn beyond its edge. A background stays with the border box while the
-   contents move under it, so the ticks hold still. */
+/* A code block is framed thick-outside, thin-inside, on a raised ground. The
+   frame is inset shadows on the block itself, so it holds still while the
+   code scrolls sideways. */
 pre {
-    @include ornaments.corner-ticks(var(--color-signal), 0.6rem, 1px);
+    $frame: 4px;
+
+    @include ornaments.frame(
+        var(--color-text),
+        var(--color-raised),
+        3px,
+        3px,
+        1px
+    );
     background-color: var(--color-raised);
-    border: 1px solid var(--color-border);
-    padding: 0.9rem 1.2rem;
+    padding: calc(0.9rem + #{$frame}) calc(1.2rem + #{$frame})
+        calc(0.9rem + #{$frame}) calc(0.8rem + #{$frame});
     overflow-x: auto;
     font-size: 0.86rem;
     line-height: 1.5;
@@ -398,7 +405,56 @@ pre {
         background: none;
         padding: 0;
         font-size: inherit;
+        counter-reset: line;
     }
+
+    // Line numbers are generated content in a muted gutter, so selecting or
+    // copying the code does not take them.
+    .line::before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        width: 2ch;
+        margin-right: 1.6ch;
+        text-align: right;
+        color: var(--color-muted);
+        user-select: none;
+    }
+}
+
+/* Token colours for listings; see src/plugins/herbarium.ts. Code is not
+   running text, so the chromas may colour it. */
+.tok-keyword,
+.tok-variable {
+    color: var(--color-accent);
+}
+
+.tok-keyword,
+.tok-function {
+    font-weight: 600;
+}
+
+.tok-literal {
+    color: var(--color-signal);
+}
+
+.tok-builtin {
+    color: var(--color-attention);
+}
+
+.tok-comment {
+    font-style: italic;
+    color: var(--color-muted);
+}
+
+/* Visually hidden; read aloud by screen readers. */
+.said {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 table {
@@ -760,15 +816,6 @@ $toc-fade: 2rem;
 
     article {
         margin: 0; // left-align instead of centering
-    }
-
-    /* Of what the machine drew, only the stamp survives the press — it is a
-       dateline, and `stamped` hands it to paper deliberately. The boxes do
-       not: the article's own ticks are already gone, being declared inside a
-       `screen` query, but a code block's are painted on the block itself, so
-       they have to be taken off by hand. */
-    pre {
-        background-image: none;
     }
 
     .sidebar {

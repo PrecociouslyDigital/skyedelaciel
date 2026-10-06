@@ -234,6 +234,7 @@ $strokes: (
     @if not map.has-key($strokes, $name) {
         @error "there is no #{$name} stroke; the strokes are #{map.keys($strokes)}.";
     }
+
     $stroke: map.get($strokes, $name);
     $across: map.get($stroke, "axis") == "across";
     $pieces: ();
@@ -244,11 +245,13 @@ $strokes: (
             $separator: comma
         );
     }
+
     $head: -drawn-by("vine-box", "stroke", map.set($stroke, "piece", "head"));
     $length: list.nth($head, 4);
     @if $across {
         $length: list.nth($head, 3);
     }
+
     $end: calc(var(--band) * #{$length});
     $body: calc(100% - 2 * #{$end} + 1px);
 
@@ -297,6 +300,7 @@ $brush-marks: (
     @if not map.has-key($brush-marks, $name) {
         @error "there is no #{$name} brush mark; the marks are #{map.keys($brush-marks)}.";
     }
+
     $mark: map.get($brush-marks, $name);
     @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='#{map.get($mark, "view")}' preserveAspectRatio='none'%3E%3Cpath fill='#{-rgba($fill)}' d='#{map.get($mark, "d")}'/%3E%3C/svg%3E");
 }

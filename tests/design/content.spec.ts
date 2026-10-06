@@ -1,5 +1,12 @@
 import type { Page } from "@playwright/test";
-import { expect, FIXTURE_PAGE, section, SPEC_PAGE, test } from "./_harness";
+import {
+    expect,
+    FIXTURE_PAGE,
+    section,
+    SPEC_PAGE,
+    test,
+    token,
+} from "./_harness";
 
 /** What a pseudo-element of each match paints: its mask layers, its band and its ink. */
 const strokes = (page: Page, selector: string, pseudo: string) =>
@@ -17,16 +24,6 @@ const strokes = (page: Page, selector: string, pseudo: string) =>
                 };
             }),
         [selector, pseudo] as const,
-    );
-
-/** A colour token's value, as the page resolves it. */
-const token = (page: Page, name: string) =>
-    page.evaluate(
-        (name) =>
-            getComputedStyle(document.documentElement).getPropertyValue(
-                `--color-${name}`,
-            ),
-        name,
     );
 
 section("Content", () => {

@@ -7,6 +7,7 @@ import {
     section,
     SPEC_PAGE,
     test,
+    token,
 } from "./_harness";
 
 /** The two figures of the fixture: one taller than wide, one wider. */
@@ -242,6 +243,158 @@ section("Figures", () => {
                 );
                 expect(loose, path).toBe(0);
             }
+        });
+    });
+
+    section("Listings", () => {
+        const LISTING = "#lst-the-woodblock-frame";
+
+        test("every block of code is a numbered listing, stamped with its language and length", async ({
+            page,
+        }) => {
+            for (const path of [FIXTURE_PAGE, SPEC_PAGE]) {
+                await page.goto(path);
+                const listings = await page.evaluate(() => ({
+                    loose: [...document.querySelectorAll("article pre")].filter(
+                        (pre) => !pre.closest("figure.listing"),
+                    ).length,
+                    each: [...document.querySelectorAll("figure.listing")].map(
+                        (listing) => ({
+                            label: listing.querySelector(".copy-link")!
+                                .textContent,
+                            stamp: listing.querySelector(".listing-stamp")!
+                                .textContent,
+                            lines: listing.querySelectorAll("pre .line").length,
+                            lang: listing
+                                .querySelector("pre")!
+                                .getAttribute("data-language"),
+                        }),
+                    ),
+                }));
+                expect(listings.loose, path).toBe(0);
+                listings.each.forEach((listing, i) => {
+                    expect(listing.label).toBe(`Listing ${i + 1}`);
+                    expect(listing.stamp).toBe(
+                        `${listing.lang} · ${listing.lines}`,
+                    );
+                });
+            }
+        });
+
+        test("nothing in a listing is styled inline", async ({ page }) => {
+            const styled = await page.evaluate(
+                () =>
+                    document.querySelectorAll("figure.listing [style]").length,
+            );
+            expect(styled).toBe(0);
+        });
+
+        test("its tokens are inked with the site's own pigments, in either scheme", async ({
+            page,
+            profileName,
+        }) => {
+            test.skip(profileName === "print", "print has its own scheme");
+            for (const colorScheme of ["light", "dark"] as const) {
+                await page.emulateMedia({ colorScheme });
+                await page.goto(FIXTURE_PAGE);
+                const inks = await page.evaluate(() => {
+                    const ink = (selector: string) => {
+                        const el = document.querySelector(
+                            `figure.listing ${selector}`,
+                        );
+                        return el && getComputedStyle(el).color;
+                    };
+                    return {
+                        keyword: ink(".tok-keyword"),
+                        literal: ink(".tok-literal"),
+                        builtin: ink(".tok-builtin"),
+                        comment: ink(".tok-comment"),
+                    };
+                });
+                expect(inks).toEqual({
+                    keyword: await token(page, "accent"),
+                    literal: await token(page, "signal"),
+                    builtin: await token(page, "attention"),
+                    comment: await token(page, "muted"),
+                });
+            }
+        });
+
+        test("it is framed thick and thin, and no box of the machine's", async ({
+            page,
+        }) => {
+            const pre = await page.locator(`${LISTING} pre`).evaluate((pre) => {
+                const style = getComputedStyle(pre);
+                return {
+                    border: style.borderTopWidth,
+                    image: style.backgroundImage,
+                    shadows: style.boxShadow.split(/,(?![^(]*\))/).length,
+                };
+            });
+            expect(pre).toEqual({ border: "3px", image: "none", shadows: 2 });
+        });
+
+        test("selecting the code takes no line numbers", async ({ page }) => {
+            const { selected, code } = await page
+                .locator(`${LISTING} pre code`)
+                .evaluate((code) => {
+                    const range = document.createRange();
+                    range.selectNodeContents(code);
+                    const selection = getSelection()!;
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    return {
+                        selected: selection.toString(),
+                        code: code.textContent,
+                    };
+                });
+            expect(selected.trim()).toBe(code!.trim());
+            expect(selected).not.toMatch(/^\s*1\s*@mixin/);
+        });
+
+        test("Copy puts exactly the code on the clipboard", async ({
+            page,
+            context,
+            profileName,
+        }) => {
+            test.skip(
+                !["wide", "narrow"].includes(profileName),
+                "needs a script and a screen",
+            );
+            await context.grantPermissions([
+                "clipboard-read",
+                "clipboard-write",
+            ]);
+            await page.locator(LISTING).scrollIntoViewIfNeeded();
+            const button = page.locator(`${LISTING} .copy-code`);
+            await button.click();
+
+            const code = await page
+                .locator(`${LISTING} pre code`)
+                .evaluate((code) => code.textContent);
+            await expect
+                .poll(() =>
+                    page.evaluate(async () =>
+                        // The system clipboard may use CRLF line endings.
+                        (await navigator.clipboard.readText()).replaceAll(
+                            "\r\n",
+                            "\n",
+                        ),
+                    ),
+                )
+                .toBe(code);
+            await expect(button).toHaveAttribute("data-copied");
+            await expect(
+                page.locator(`${LISTING} [role=status]`).last(),
+            ).toHaveText("Code copied");
+        });
+
+        test("without a script there is no Copy to press", async ({
+            page,
+            profileName,
+        }) => {
+            test.skip(profileName !== "nojs", "only without a script");
+            await expect(page.locator(".copy-code")).toHaveCount(0);
         });
     });
 

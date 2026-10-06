@@ -78,14 +78,3 @@
     ><span class="said" role="status"
         >{receipt === "shown" ? "Link copied" : ""}</span
     >{/if}
-
-<style>
-    .said {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
-    }
-</style>

@@ -57,7 +57,7 @@ describe("a stroke is three pieces of one line", () => {
                 const box = viewBox(
                     strokePiece({ seed: "x", axis, piece }).svg,
                 );
-                return [box[along], box[along] + box[along + 2]];
+                return [box[along], box[along] + box[along + 2]!];
             });
             expect(spans[0]![0]).toBe(0);
             expect(spans[1]![0]).toBe(spans[0]![1]);
@@ -78,7 +78,7 @@ describe("a stroke is three pieces of one line", () => {
                 for (const piece of PIECES) {
                     const { svg } = strokePiece({ seed, axis, piece });
                     const box = viewBox(svg);
-                    const [lo, hi] = [box[along], box[along] + box[along + 2]];
+                    const [lo, hi] = [box[along], box[along] + box[along + 2]!];
                     const reach = points(svg).map((p) => p[along]);
                     expect(reach.length).toBeGreaterThan(0);
                     expect(Math.min(...reach)).toBeGreaterThanOrEqual(lo - 1.1);

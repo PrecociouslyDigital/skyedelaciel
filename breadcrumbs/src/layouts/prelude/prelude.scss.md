@@ -165,3 +165,12 @@ inline child (a link, emphasis) would become a flex item of its own.
 
 The `mark` swipe is a background with its colour baked in (`--swipe`, from
 colors.scss), not a mask. A mask on `mark` would clip its words.
+
+## 2026-10-06 — code in the woodblock frame
+
+`pre` drops its corner ticks and its print override, which existed only to
+remove those ticks on paper, and wears `ornaments.frame` (3px, 3px, 1px)
+printed on `raised`. The padding grows by the frame's 4px. The left padding
+is smaller because the line-number gutter supplies the rest. `.said` (the
+live regions' visually-hidden style) moved here from CopyLink.svelte now
+that CopyCode needs it too.

@@ -1,0 +1,39 @@
+---
+import CopyCode from "../copy/CopyCode.svelte";
+import CopyLink from "../copy/CopyLink.svelte";
+
+/**
+ * A fenced code block as a numbered listing, written by remark-figures. The
+ * fence's title, if any, is the caption. Above the code sit its number (the
+ * address), the caption, a stamp of language and line count, and a Copy
+ * button.
+ */
+interface Props {
+    id: `lst-${string}`;
+    label: string;
+    caption?: string;
+    lang: string;
+    lines: number;
+}
+
+const { id, label, caption, lang, lines } = Astro.props;
+---
+
+<figure id={id} class="listing receipt-box">
+    <figcaption class="listing-head">
+        <CopyLink
+            href={`#${id}`}
+            label={label}
+            placement="below"
+            client:visible
+        />
+        {caption && <span class="listing-caption">{caption}</span>}
+        <span class="listing-stamp">{lang} · {lines}</span>
+        {
+            /* Idle, not visible: it renders nothing until it has a script, and
+            an empty island gives `visible` nothing to watch. */
+        }
+        <CopyCode client:idle />
+    </figcaption>
+    <slot />
+</figure>

@@ -6,6 +6,7 @@ import {
     section,
     test,
     WIDE,
+    token,
 } from "./_harness";
 import type { Page } from "@playwright/test";
 
@@ -22,16 +23,6 @@ const markFor = (href: string): string => {
     if (/\.wikipedia\.org/.test(href)) return "W";
     return "↗";
 };
-
-/** A token's value as the page resolved it. */
-const token = (page: Page, name: string) =>
-    page.evaluate(
-        (property) =>
-            getComputedStyle(document.documentElement)
-                .getPropertyValue(property)
-                .trim(),
-        `--color-${name}`,
-    );
 
 /** What the article's two pseudo-elements are drawing, if anything. */
 const drawn = (page: Page) =>
@@ -227,12 +218,18 @@ section("Annotation", () => {
                     ),
                 ),
             ).toEqual([]);
+            // Nor the copy receipts or listing stamps.
+            await expect(page.locator(".listing-stamp")).not.toHaveCount(0);
             expect(
-                await page
-                    .locator("article pre")
-                    .first()
-                    .evaluate((pre) => getComputedStyle(pre).backgroundImage),
-            ).toBe("none");
+                await page.evaluate(
+                    () =>
+                        [
+                            ...document.querySelectorAll(
+                                ".receipt-word, .listing-stamp",
+                            ),
+                        ].filter((mark) => mark.checkVisibility()).length,
+                ),
+            ).toBe(0);
         });
 
         /**

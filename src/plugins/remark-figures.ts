@@ -1,7 +1,8 @@
 /**
  * Remark plugin: makes every image a numbered, captioned figure on a brushed
- * plate, and every table a numbered, captioned table, each with an address
- * of its own; and fills in the text of a link to one.
+ * plate, every table a numbered, captioned table, and every block of code a
+ * numbered listing, each with an address of its own; and fills in the text of
+ * a link to one.
  *
  *     ![What it shows](./images/fuji.jpg "Why it is here.")
  *
@@ -11,22 +12,27 @@
  *
  *     | … |
  *
+ *     ```scss title="What the code does"
+ *
  *     As [](#fig-fuji) shows…   →   As Figure 2 shows…
  *
  * An image stands alone in its paragraph, with alt text saying what it shows
  * and a title saying why it is there, which becomes its caption. A credit is
  * the paragraph after it, if that begins `Credit:`. A table's caption is the
- * paragraph before it, beginning `Table:`, and is required. Anything else (a
- * figure missing either text, a stray caption or credit, two figures with
- * one id, a link to a figure that is not there) fails the build where it
- * stands.
+ * paragraph before it, beginning `Table:`, and is required. A listing's
+ * caption is its fence's title, which is optional; a fence takes nothing
+ * else. Anything else (a figure missing either text, a stray caption or
+ * credit, two figures with one id, a link to a figure that is not there)
+ * fails the build where it stands.
  *
- * A figure's id is its file's name and a table's its caption's, so MDX,
- * which cannot carry `{#id}`, needs none written.
+ * A figure's id is its file's name, and a table's or a listing's its
+ * caption's, so MDX, which cannot carry `{#id}`, needs none written. An
+ * untitled listing is known by its number and cannot be cited.
  */
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
 import { imageMetadata } from "astro/assets/utils";
 import type {
+    Code,
     Image,
     Node,
     Paragraph,
@@ -96,9 +102,18 @@ interface TableFigure {
     caption: Paragraph;
 }
 
+interface Listing {
+    kind: "listing";
+    node: Code;
+    title?: string;
+}
+
+/** What a fence may say after its language: a title, and nothing else. */
+const FENCE = /^title="([^"]+)"$/;
+
 /** Where everything set apart sits, in document order, with its captions. */
 function survey(tree: Root, file: VFile) {
-    const found: (Figure | TableFigure)[] = [];
+    const found: (Figure | TableFigure | Listing)[] = [];
     const captions = new Set<Paragraph>();
     const claimed = new Set<Paragraph>();
     const parents = new Map<Node, Parent>();
@@ -121,6 +136,16 @@ function survey(tree: Root, file: VFile) {
                       );
             claimed.add(caption);
             found.push({ kind: "table", node, caption });
+        }
+        if (node.type === "code") {
+            const meta = node.meta?.trim() ?? "";
+            const title = FENCE.exec(meta)?.[1];
+            if (meta && !title)
+                file.fail(
+                    `a fence takes a title, title="…", and nothing else; this one says ${meta}.`,
+                    node,
+                );
+            found.push({ kind: "listing", node, title });
         }
         if (node.type !== "paragraph") return;
         if (marked(node, "Table:") || marked(node, "Credit:"))
@@ -152,11 +177,19 @@ function survey(tree: Root, file: VFile) {
     return { found, parents };
 }
 
-/** What a thing's id is made from: a figure's file, less its extension, or a table's caption. */
-const nameOf = (item: Figure | TableFigure) =>
+/**
+ * What a thing's id is made from: a figure's file, less its extension, a
+ * table's caption, or a listing's title if it has one.
+ */
+const apparatusOf = (item: Figure | TableFigure | Listing): Apparatus =>
     item.kind === "figure"
-        ? basename(item.image.url, extname(item.image.url))
-        : toString(marked(item.caption, "Table:")!);
+        ? {
+              kind: item.kind,
+              name: basename(item.image.url, extname(item.image.url)),
+          }
+        : item.kind === "table"
+          ? { kind: item.kind, name: toString(marked(item.caption, "Table:")!) }
+          : { kind: item.kind, name: item.title };
 
 /** The size a figure is drawn at, in px: no wider or taller than the page allows. */
 export function drawnSize(natural: { width: number; height: number }) {
@@ -175,14 +208,7 @@ const remarkFigures: RemarkPlugin<[{ root: URL }]> =
 
         let numbered;
         try {
-            numbered = numberApparatus(
-                found.map(
-                    (item): Apparatus => ({
-                        kind: item.kind,
-                        name: nameOf(item),
-                    }),
-                ),
-            );
+            numbered = numberApparatus(found.map(apparatusOf));
         } catch (error) {
             if (error instanceof DuplicateId)
                 file.fail(error.message, found[error.index]!.node);
@@ -195,6 +221,24 @@ const remarkFigures: RemarkPlugin<[{ root: URL }]> =
         for (const [i, item] of found.entries()) {
             const thing = numbered[i]!;
             const label = captionLabel(thing);
+
+            if (item.kind === "listing") {
+                replaced.set(
+                    item.node,
+                    block(
+                        "Listing",
+                        {
+                            id: thing.id,
+                            label,
+                            caption: item.title,
+                            lang: item.node.lang ?? "text",
+                            lines: item.node.value.split("\n").length,
+                        },
+                        [item.node],
+                    ),
+                );
+                continue;
+            }
 
             if (item.kind === "table") {
                 replaced.set(item.caption, null);

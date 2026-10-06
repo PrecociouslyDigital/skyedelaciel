@@ -1,5 +1,8 @@
-/// Figures and tables, as remark-figures writes them. Global, because their
-/// parts are slotted across Figure.astro, TableFigure.astro and Caption.astro;
+@use "motion";
+
+/// Figures, tables and listings, as remark-figures writes them. Global,
+/// because their parts are slotted across the components in
+/// src/components/mdx/figures/;
 /// and keyed on their own classes, so that a Tumblr post's images and tables
 /// are left as Tumblr gives them.
 
@@ -79,5 +82,73 @@
 
     table {
         margin: 0;
+    }
+}
+
+/* — Listings —
+
+   Above the code: number and caption on the left; language-and-length stamp
+   and Copy button on the right. */
+.listing {
+    margin: 1.5rem 0;
+
+    pre {
+        margin: 0;
+    }
+}
+
+.listing-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 1ch;
+    margin-bottom: 0.45rem;
+    font-style: normal;
+
+    .copy-link:not([data-receipt="shown"]) {
+        color: var(--color-text);
+    }
+}
+
+.listing-caption {
+    font-style: italic;
+}
+
+.listing-stamp {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-signal);
+}
+
+.copy-code {
+    all: unset;
+    @include motion.snap(color);
+    cursor: pointer;
+    font-family: var(--font-prose);
+    font-size: 0.9rem;
+    color: var(--color-muted);
+
+    &:hover {
+        color: var(--color-text);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+    }
+
+    &[data-copied] {
+        color: var(--color-signal);
+    }
+}
+
+/* Print keeps the code, not the stamp or the Copy button. */
+@media print {
+    .listing-stamp,
+    .copy-code {
+        display: none;
     }
 }
