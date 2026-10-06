@@ -7,6 +7,7 @@ import { match } from "ts-pattern";
 import svelte from "@astrojs/svelte";
 
 import mdx from "@astrojs/mdx";
+import sitemap from "@astrojs/sitemap";
 import rehypeSlug from "rehype-slug";
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
 
@@ -17,8 +18,12 @@ import { resolveRemoteLinks } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
 import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
-import tumblrTheme from "./src/integrations/tumblr-theme";
+import tumblrTheme, {
+    ROUTE as TUMBLR_THEME_ROUTE,
+} from "./src/integrations/tumblr-theme";
 import vines from "./src/integrations/vines";
+import internalLinks from "./src/integrations/internal-links";
+import { SCHEDULED_PREFIX } from "./src/content/schedule";
 
 loadCache();
 
@@ -67,7 +72,27 @@ function revision(): string {
 // https://astro.build/config
 export default defineConfig({
     site: "https://skyedelaciel.com",
-    integrations: [mdx(), svelte(), tumblrTheme(), vines()],
+    // Served to the home network as well as this machine, under the name the
+    // network knows it by.
+    server: {
+        host: true,
+        allowedHosts: ["syhome.uwu"],
+    },
+    integrations: [
+        mdx(),
+        svelte(),
+        tumblrTheme(),
+        vines(),
+        // Only what a reader can reach: not the pages Access keeps to the
+        // author, and not the theme, which the build moves out of `dist/`.
+        sitemap({
+            filter: (page) =>
+                ![SCHEDULED_PREFIX, TUMBLR_THEME_ROUTE].some((prefix) =>
+                    new URL(page).pathname.startsWith(`/${prefix}/`),
+                ),
+        }),
+        internalLinks(),
+    ],
     image: {
         // A link popover's image is copied onto this site at build time. Its
         // URL comes from resolving the link, never from a visitor, so any

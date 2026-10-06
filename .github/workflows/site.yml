@@ -1,0 +1,84 @@
+# Checks the site, builds it and uploads it to Cloudflare Pages. A push deploys
+# its own branch: `release` to production, anything else to a preview. Every
+# day `release` is built again, which is how a scheduled page comes out on its
+# day; see src/content/schedule.ts.
+name: Site
+
+on:
+    push:
+        branches: ["**"]
+    workflow_dispatch:
+    schedule:
+        # Past midnight in Los Angeles under either offset — 00:15 PST, 01:15
+        # PDT — so every run falls on the LA day its UTC date names.
+        # tests/unit/schedule.test.ts holds it to that.
+        - cron: "15 8 * * *"
+
+env:
+    # A scheduled run has no branch of its own: it republishes production.
+    BRANCH: ${{ github.event_name == 'schedule' && 'release' || github.ref_name }}
+
+# One deploy per branch at a time, so a daily run and a push cannot race to
+# be the last upload.
+concurrency:
+    group: site-${{ github.event_name == 'schedule' && 'release' || github.ref_name }}
+
+jobs:
+    check:
+        # The daily run builds what the last push to `release` already checked.
+        if: github.event_name != 'schedule'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: npm
+            - run: npm ci
+            - run: npm run check
+            - run: npm run lint:css
+            - run: npm run lint:format
+            - run: npm run test:unit
+            - run: npx playwright install --with-deps chromium
+            - run: npm test
+
+    deploy:
+        needs: check
+        if: >-
+            always() && (needs.check.result == 'success' ||
+            (github.event_name == 'schedule' && needs.check.result == 'skipped'))
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            # For the keepalive below.
+            actions: write
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: ${{ env.BRANCH }}
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  cache: npm
+            - run: npm ci
+            # Every link a page makes is looked up at build time. Carried from
+            # one run to the next, so a daily rebuild asks only what has
+            # expired.
+            - uses: actions/cache@v4
+              with:
+                  path: .link-cache.json
+                  key: link-cache-${{ github.run_id }}
+                  restore-keys: link-cache-
+            - run: npm run build
+            - run: npx wrangler pages deploy --branch="$BRANCH"
+              env:
+                  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+                  CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+            # GitHub turns a public repository's schedules off after 60 days
+            # without activity, which would stop publishing without a word.
+            # Enabling the workflow again counts as activity.
+            - name: Keep the schedule alive
+              if: github.event_name == 'schedule'
+              run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/site.yml/enable"
+              env:
+                  GH_TOKEN: ${{ github.token }}

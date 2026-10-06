@@ -1,0 +1,35 @@
+---
+import type { MarkdownHeading } from "astro";
+import TableOfContents from "~/components/TableOfContents.astro";
+
+/**
+ * What opens every page of this site: the title, the byline if it has one,
+ * the abstract, and, if there is anything to list, the table of contents as
+ * it folds into a narrow page. See design.mdx, Front Matter.
+ */
+interface Props {
+    title: string;
+    author?: string;
+    abstract: string;
+    headings?: MarkdownHeading[];
+}
+
+const { title, author, abstract, headings = [] } = Astro.props;
+---
+
+<header class="front-matter">
+    <div class="title-line">
+        <h1 class="title">{title}</h1>
+        {author && <span class="author">{author}</span>}
+    </div>
+    <p class="abstract">{abstract}</p>
+    {
+        headings.length > 0 && (
+            <nav class="toc toc-portrait" aria-label="Table of contents">
+                <input type="checkbox" id="toc-toggle" />
+                <label for="toc-toggle">Contents</label>
+                <TableOfContents headings={headings} />
+            </nav>
+        )
+    }
+</header>

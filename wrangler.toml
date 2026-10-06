@@ -1,0 +1,4 @@
+# The Pages project the site deploys to. tools/cloudflare/setup.sh reads the
+# name from here, so it is set in one place.
+name = "skyedelaciel"
+pages_build_output_dir = "dist"

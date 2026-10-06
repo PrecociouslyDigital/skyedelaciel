@@ -1,0 +1,78 @@
+---
+import type { Article } from "~/content/corpus";
+import { day } from "~/content/schedule";
+
+/**
+ * Pieces of writing, in the order given: each one's title, the day it came
+ * out, and its abstract. See design.mdx, Home and Section pages.
+ */
+interface Props {
+    pieces: Article[];
+}
+
+const { pieces } = Astro.props;
+---
+
+<ol class="pieces">
+    {
+        pieces.map(({ id, data }) => (
+            <li>
+                <div class="piece-line">
+                    <a class="piece-title" href={`/${id}/`}>
+                        {data.title}
+                    </a>
+                    <time datetime={day(data.published)}>
+                        {day(data.published)}
+                    </time>
+                </div>
+                <p class="piece-abstract">{data.abstract}</p>
+            </li>
+        ))
+    }
+</ol>
+
+<style lang="scss">
+    @use "../layouts/prelude/typography";
+
+    .pieces {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+            margin-bottom: 1.5rem;
+        }
+    }
+
+    /* A title and its date share a line the way an article's title and byline
+       do, wrapping under it only when there is no room beside it. */
+    .piece-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.1rem 1rem;
+    }
+
+    .piece-title {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: var(--text-h3);
+        line-height: 1.2;
+        text-decoration-line: none;
+
+        &:hover {
+            text-decoration-line: underline;
+            text-decoration-thickness: 2px;
+        }
+    }
+
+    time {
+        @include typography.apparatus;
+        color: var(--color-muted);
+    }
+
+    .piece-abstract {
+        font-style: italic;
+        margin: 0.25rem 0 0;
+    }
+</style>

@@ -10,6 +10,9 @@ import type { LinkEntry, LinkKind, ResolvedLink } from "./types";
 
 export const SITE_HOST = "skyedelaciel.com";
 export const SITE_NAME = "Skye De La Ciel";
+// TODO(copy): a placeholder until the introduction is written.
+export const SITE_DESCRIPTION =
+    "Fiction and nonfiction by a writer and software engineer.";
 
 /**
  * Everything true of one kind of link: which URLs it owns, how to resolve

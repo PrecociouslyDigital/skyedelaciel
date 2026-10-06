@@ -103,6 +103,30 @@ What grows is the exception. It is not a readout but a plant, or a hand, and it 
 
 A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero, and nothing grows or resolves — a section is simply open or shut. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it. A change tied to scrolling is held still too, and the logo is never rewritten.
 
+# Pages
+
+Besides its articles, the site has a few pages of its own, set in the same shell and opened by the same [front matter](#front-matter). A list of pieces looks the same wherever it appears: each piece's title in the display face, the day it came out beside it as apparatus, and its abstract under them, newest first.
+
+## Home
+
+The home page's title is the site's name, and its abstract is a short introduction. Under them are the latest pieces from every section. It has no table of contents.
+
+## Section pages
+
+A section of the site is a directory of articles with an `index.mdx` of its own. That file is the section's page, at the directory's path, and every article under the directory belongs to the section. A section page is written like any other page: a title and an abstract, `##` headings to group its pieces, and links to them and to work published elsewhere, with all the usual [popovers](#popover). It has no dates of its own, and so no byline and no [stamp](#annotation).
+
+What the page does not link to is not lost. It closes with **Everything Else**: the section's published pieces that the page does not link to, set off by a long vine as [works referenced](#bibliography) are, and listed in the table of contents beside the page's own groups. When the page links to every piece, the group and its entry are left out.
+
+## Not found
+
+An address with no page behind it is answered with a page that says so, in the same shell, with links home and to each section.
+
+## Publication
+
+An article is out from the day its `published` date names, in Los Angeles. Until then it is scheduled: it is built only under `/scheduled/`, where it reads exactly as it will once it is out, and where only the author can reach it. Cloudflare Access asks for a one-time PIN at that prefix, at every address the site is served from. Nothing else on the site knows a scheduled article is there: it is in no list of pieces, no feed, no sitemap and no popover, and its own address is not found. The site is built again every day just after midnight in Los Angeles, and the first build on an article's day moves it to its own address.
+
+A published page may not link to a scheduled one, and a scheduled article may not link to one that comes out after it. Either fails the build, rather than shipping a link that leads nowhere on the day it goes out.
+
 # Components
 
 ## Navbar

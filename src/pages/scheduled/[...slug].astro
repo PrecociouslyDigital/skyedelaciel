@@ -1,0 +1,18 @@
+---
+import PageEntry from "~/components/PageEntry.astro";
+import { scheduledArticles } from "~/content/corpus";
+
+/**
+ * Articles dated in the future, kept to the author by Cloudflare Access on
+ * this directory — see tools/cloudflare/setup.sh. The directory's name is
+ * SCHEDULED_PREFIX, which tests/unit/schedule.test.ts holds it to.
+ */
+export async function getStaticPaths() {
+    return (await scheduledArticles()).map((entry) => ({
+        params: { slug: entry.id },
+        props: { entry },
+    }));
+}
+---
+
+<PageEntry entry={Astro.props.entry} />

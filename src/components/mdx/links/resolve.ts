@@ -2,7 +2,7 @@ import type { LinkEntry, LinkKind, LinkMeta } from "./types";
 import { getCached, setCached } from "./cache";
 import { todayParts } from "./cite";
 import type { Source } from "./sources";
-import { SITE_NAME, sourceFor } from "./sources";
+import { SITE_HOST, SITE_NAME, sourceFor } from "./sources";
 
 /** A page of this site, as far as a link to it is concerned. */
 export interface InternalPage {
@@ -62,6 +62,19 @@ export async function resolveRemoteLinks(urls: string[]): Promise<LinkMeta> {
 }
 
 /**
+ * The id of the content entry an internal link names, which is its path with
+ * no slashes at either end, or undefined for a link that leaves the site.
+ * Collection ids are how a page is looked up; the route is built from them.
+ */
+export function internalId(url: string): string | undefined {
+    if (sourceFor(url).kind !== "internal") return undefined;
+    return new URL(url, `https://${SITE_HOST}`).pathname.replace(
+        /^\/+|\/+$/g,
+        "",
+    );
+}
+
+/**
  * Resolve the internal links in a document against this site's own pages.
  * A link to a page we don't have — a bare "#section" fragment, say — gets no
  * entry at all, and so renders without a popover.
@@ -71,8 +84,8 @@ export function resolveInternalLinks(
     pages: Map<string, InternalPage>,
 ): LinkMeta {
     const entries = [...new Set(urls)].flatMap((url) => {
-        if (sourceFor(url).kind !== "internal") return [];
-        const page = pages.get(url.replace(/^\//, "").replace(/[#?].*$/, ""));
+        const id = internalId(url);
+        const page = id === undefined ? undefined : pages.get(id);
         if (!page) return [];
         const entry: LinkEntry = {
             resolution: "resolved",

@@ -59,3 +59,30 @@ Both are `z.coerce.date()` rather than a string with a regex, so that an
 impossible day is caught by the parser instead of being printed. YAML hands
 them over as dates at UTC midnight, which is why `md.astro` reads them back out
 in UTC: any local-time formatter would shift half the world's pages by a day.
+
+## 2026-10-05 — scheduled articles are a collection of their own
+
+An article dated in the future is built only under `/scheduled/`, which
+Cloudflare Access keeps to the author. The alternative was to filter
+`pages` wherever it is read: in the route, the listings, the feed, and the
+link popovers. Every one of those would have been a place to forget the
+filter. Instead the same glob feeds two collections, `pages` and `scheduled`,
+each keeping the entries on its side of today (`src/content/partitioned.ts`).
+So no `getCollection("pages")` can see a scheduled page at all.
+
+The partition has to re-judge entries the glob loader did not touch. The
+loader skips an entry whose file is unchanged, so without the sweep after
+`load`, a page scheduled yesterday would stay in `scheduled` forever.
+`tests/unit/schedule.test.ts` runs a fake of that loader through daily builds
+to hold this.
+
+Fixtures get the same split (`fixtures`, `scheduledFixtures`,
+`fixtureSections`), and `src/content/corpus.ts` is the only place that
+decides which collections a route reads.
+
+## 2026-10-05 — the day is Los Angeles's
+
+`published` is a day, not an instant, and "has its day come" needs a
+calendar. The author's is Los Angeles. UTC would publish at 4 or 5pm the day
+before. The daily build runs at 08:15 UTC because that is past LA midnight
+under both PST and PDT, so no DST logic is needed anywhere.

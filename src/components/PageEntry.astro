@@ -1,0 +1,44 @@
+---
+import Layout from "~/layouts/prelude/md.astro";
+import { mdxComponents } from "~/components/mdx";
+import { internalId } from "~/components/mdx/links/resolve";
+import type { Article } from "~/content/corpus";
+import { renderWithLinks } from "~/content/render";
+import { day } from "~/content/schedule";
+
+/**
+ * One article, rendered. Both article routes — the published one and the
+ * scheduled one — render through this, so that an article previewed under
+ * `/scheduled/` is the article its readers will get.
+ */
+interface Props {
+    entry: Article;
+}
+
+const { entry } = Astro.props;
+const { Content, headings, links, linkMeta, targets } = await renderWithLinks(
+    entry,
+    { bibliography: entry.data.bibliography },
+);
+
+/* An article that links to one published after it would carry a broken link
+   on the day it came out. Refused here, by date, rather than by the link
+   checker on that day, when the build that fails is the one meant to publish. */
+const premature = links.filter((url) => {
+    const target = targets.get(internalId(url) ?? "");
+    return (
+        target &&
+        "published" in target.data &&
+        day(target.data.published) > day(entry.data.published)
+    );
+});
+if (premature.length > 0) {
+    throw new Error(
+        `${entry.id} links to ${premature.join(", ")}, published after it.`,
+    );
+}
+---
+
+<Layout frontmatter={{ ...entry.data, links, linkMeta }} headings={headings}>
+    <Content components={mdxComponents} />
+</Layout>

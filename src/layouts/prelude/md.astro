@@ -3,10 +3,12 @@ import type { MarkdownHeading } from "astro";
 import type { CollectionEntry } from "astro:content";
 
 import Shell from "./Shell.astro";
+import FrontMatter from "./FrontMatter.astro";
 import { RAIL_SEPARATOR } from "./rail";
 import TableOfContents from "~/components/TableOfContents.astro";
 import Bibliography from "~/components/mdx/links/Bibliography.astro";
 import type { LinkMeta } from "~/components/mdx/links/types";
+import { day } from "~/content/schedule";
 
 export interface Props {
     /** The page's own frontmatter, plus what the remark plugins added to it. */
@@ -19,10 +21,6 @@ export interface Props {
 
 const { frontmatter, headings } = Astro.props;
 const author = frontmatter.author ?? "Skye De La Ciel";
-
-/* A frontmatter date is a day, not an instant: it parses to UTC midnight, and
-   reading it back out in UTC is what returns the day that was written down. */
-const day = (date: Date) => date.toISOString().slice(0, 10);
 
 /**
  * What identifies this copy of the page: when it was published, when it was
@@ -48,18 +46,12 @@ const rail = [
 >
     <TableOfContents slot="toc" headings={headings} />
     <article data-rail={rail}>
-        <header class="front-matter">
-            <div class="title-line">
-                <h1 class="title">{frontmatter.title}</h1>
-                <span class="author">{author}</span>
-            </div>
-            <p class="abstract">{frontmatter.abstract}</p>
-            <nav class="toc toc-portrait" aria-label="Table of contents">
-                <input type="checkbox" id="toc-toggle" />
-                <label for="toc-toggle">Contents</label>
-                <TableOfContents headings={headings} />
-            </nav>
-        </header>
+        <FrontMatter
+            title={frontmatter.title}
+            author={author}
+            abstract={frontmatter.abstract}
+            headings={headings}
+        />
 
         <slot />
 

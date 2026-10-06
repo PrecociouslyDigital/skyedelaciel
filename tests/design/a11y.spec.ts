@@ -1,5 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, FIXTURE_PAGE, onlyIn, SPEC_PAGE, test } from "./_harness";
+import {
+    expect,
+    FIXTURE_PAGE,
+    onlyIn,
+    SHELF,
+    SPEC_PAGE,
+    test,
+} from "./_harness";
 
 /**
  * Not tied to a section of design.mdx: the spec asks throughout for screen
@@ -16,7 +23,7 @@ const BLOCKING = new Set(["serious", "critical"]);
 // its own timeout; and its colour rules describe a screen, not paper.
 onlyIn("wide", "narrow");
 
-for (const path of [SPEC_PAGE, FIXTURE_PAGE]) {
+for (const path of [SPEC_PAGE, FIXTURE_PAGE, "/", SHELF.page, "/404.html"]) {
     test(`no serious accessibility violations on ${path}`, async ({ page }) => {
         await page.goto(path);
 

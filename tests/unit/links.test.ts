@@ -7,7 +7,10 @@ import {
     formatInlineCitation,
 } from "~/components/mdx/links/cite";
 import { buildPreview } from "~/components/mdx/links/preview";
-import { resolveInternalLinks } from "~/components/mdx/links/resolve";
+import {
+    internalId,
+    resolveInternalLinks,
+} from "~/components/mdx/links/resolve";
 import type { CslData, LinkEntry } from "~/components/mdx/links/types";
 import { linkEntry, linkFrontmatter } from "~/components/mdx/links/types";
 
@@ -316,5 +319,25 @@ describe("resolveInternalLinks", () => {
         expect(resolveInternalLinks(["https://example.com/a"], pages)).toEqual(
             {},
         );
+    });
+});
+
+describe("internalId", () => {
+    test("names a page by its path, however the link spells it", () => {
+        for (const url of [
+            "/fiction/piece",
+            "fiction/piece",
+            "/fiction/piece/",
+            "/fiction/piece#part",
+            "/fiction/piece?ref=1",
+            "/fiction/piece/?ref=1#part",
+            "https://skyedelaciel.com/fiction/piece",
+        ]) {
+            expect(internalId(url), url).toBe("fiction/piece");
+        }
+    });
+
+    test("names nothing for a link that leaves the site", () => {
+        expect(internalId("https://example.com/fiction/piece")).toBeUndefined();
     });
 });

@@ -15,6 +15,21 @@ export const SPEC_PAGE = "/design/";
 export const FIXTURE_PAGE = "/fixtures/kitchen-sink/";
 
 /**
+ * A section: src/content/fixtures/shelf/. Its page links one of its pieces and
+ * not the other, and a third is scheduled so far ahead it is never out.
+ */
+export const SHELF = {
+    page: "/fixtures/shelf/",
+    linked: "/fixtures/shelf/linked/",
+    unlinked: "/fixtures/shelf/unlinked/",
+    scheduled: {
+        title: "Scheduled Piece",
+        path: "/fixtures/shelf/scheduled/",
+        preview: "/scheduled/fixtures/shelf/scheduled/",
+    },
+} as const;
+
+/**
  * The Tumblr theme, filled in with the sample blog in
  * src/content/fixtures/tumblr.ts: an index page, and one post's own page.
  */

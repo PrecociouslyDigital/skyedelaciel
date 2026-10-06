@@ -1,0 +1,28 @@
+---
+import Shell from "~/layouts/prelude/Shell.astro";
+import FrontMatter from "~/layouts/prelude/FrontMatter.astro";
+import { sectionPages } from "~/content/corpus";
+
+const sections = (await sectionPages()).toSorted((a, b) =>
+    a.data.title.localeCompare(b.data.title),
+);
+---
+
+<Shell title="Not found" description="There is no page here." host="site">
+    <article class="not-found">
+        <FrontMatter
+            title="Not found"
+            abstract="There is no page at this address."
+        />
+        <p>Try one of the sections, or <a href="/">the home page</a>.</p>
+        <ul>
+            {
+                sections.map(({ id, data }) => (
+                    <li>
+                        <a href={`/${id}/`}>{data.title}</a>: {data.abstract}
+                    </li>
+                ))
+            }
+        </ul>
+    </article>
+</Shell>

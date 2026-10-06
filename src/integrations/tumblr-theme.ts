@@ -20,7 +20,7 @@ import { stamp } from "../tumblr/stamp.mjs";
  * /fixtures/tumblr/, for the design suite to read.
  */
 
-const ROUTE = "tumblr-theme";
+export const ROUTE = "tumblr-theme";
 
 /**
  * What would stop the file working once Tumblr serves it, each with the

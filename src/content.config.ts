@@ -1,6 +1,8 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { cslData } from "~/components/mdx/links/types";
+import { partitioned } from "~/content/partitioned";
+import { isPublished } from "~/content/schedule";
 import { z } from "zod";
 
 const pageSchema = z.object({
@@ -17,28 +19,68 @@ const pageSchema = z.object({
     citation: z.array(cslData).default([]),
 });
 
+/** A section page introduces its directory's articles, and is not dated. */
+const sectionSchema = z.object({
+    title: z.string(),
+    abstract: z.string(),
+});
+
 /**
- * Real pages. The negated glob is what keeps fixtures out: a fixture cannot
- * end up here by being named or moved carelessly, only by leaving the
- * fixtures directory entirely.
+ * The part of src/content a family of collections reads. Real pages and
+ * fixtures each get a family, so a fixture cannot end up among real pages by
+ * being named or moved carelessly, only by leaving the fixtures directory.
  */
-const pages = defineCollection({
-    loader: glob({
-        pattern: ["**/*.mdx", "!fixtures/**"],
+interface Scope {
+    within: string;
+    except: string[];
+}
+const SITE: Scope = { within: "", except: ["fixtures/**"] };
+const FIXTURES: Scope = { within: "fixtures/", except: [] };
+
+/** The files in `scope` called `name`, less any that match `also`. */
+const files = ({ within, except }: Scope, name: string, ...also: string[]) =>
+    glob({
+        pattern: [
+            `${within}**/${name}`,
+            ...[...except, ...also].map((pattern) => `!${pattern}`),
+        ],
         base: "./src/content",
-    }),
-    schema: pageSchema,
-});
+    });
+
+/** A directory's `index.mdx` is its section page, and never an article. */
+const articles = (scope: Scope) => files(scope, "*.mdx", "**/index.mdx");
+
+const sections = (scope: Scope) =>
+    defineCollection({
+        loader: files(scope, "index.mdx"),
+        schema: sectionSchema,
+    });
+
+/** Whether an article's parsed data says it is out. */
+const isOut = (data: Record<string, unknown>) =>
+    isPublished(pageSchema.shape.published.parse(data.published));
+
+/** Articles that are out, and the ones still to come, from the same files. */
+const published = (scope: Scope) =>
+    defineCollection({
+        loader: partitioned(articles(scope), isOut),
+        schema: pageSchema,
+    });
+const scheduled = (scope: Scope) =>
+    defineCollection({
+        loader: partitioned(articles(scope), (data) => !isOut(data)),
+        schema: pageSchema,
+    });
 
 /**
- * Pages that exist only to be tested against. They share `pages`' schema but
- * live in their own collection, so the production route has to opt into them
- * explicitly — see src/pages/[...slug].astro and
- * breadcrumbs/src/content.config.ts.md.
+ * Which of these are routed, and where, is decided in one place:
+ * src/content/corpus.ts. See breadcrumbs/src/content.config.ts.md.
  */
-const fixtures = defineCollection({
-    loader: glob({ pattern: "fixtures/**/*.mdx", base: "./src/content" }),
-    schema: pageSchema,
-});
-
-export const collections = { pages, fixtures };
+export const collections = {
+    pages: published(SITE),
+    scheduled: scheduled(SITE),
+    sections: sections(SITE),
+    fixtures: published(FIXTURES),
+    scheduledFixtures: scheduled(FIXTURES),
+    fixtureSections: sections(FIXTURES),
+};

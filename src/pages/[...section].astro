@@ -1,0 +1,33 @@
+---
+import Layout from "~/layouts/prelude/section.astro";
+import { mdxComponents } from "~/components/mdx";
+import { publishedArticles, sectionPages } from "~/content/corpus";
+import { renderWithLinks } from "~/content/render";
+import { everythingElse } from "~/content/sections";
+
+/** Each section page at its directory's path. */
+export async function getStaticPaths() {
+    return (await sectionPages()).map((section) => ({
+        params: { section: section.id },
+        props: { section },
+    }));
+}
+
+const { section } = Astro.props;
+const { Content, headings, links } = await renderWithLinks(section, {
+    bibliography: false,
+});
+---
+
+<Layout
+    title={section.data.title}
+    abstract={section.data.abstract}
+    headings={headings}
+    everythingElse={everythingElse(
+        section.id,
+        links,
+        await publishedArticles(),
+    )}
+>
+    <Content components={mdxComponents} />
+</Layout>

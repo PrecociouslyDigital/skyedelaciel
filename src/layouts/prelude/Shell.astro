@@ -12,6 +12,7 @@ import "@fontsource-variable/cormorant/wght-italic.css";
 
 import Navbar from "~/components/Navbar.astro";
 import type { Host } from "~/components/nav";
+import { SITE_NAME } from "~/components/mdx/links/sources";
 
 /**
  * Everything a page of this site has around its text, wherever it is served:
@@ -58,6 +59,18 @@ const { title, description, author = "Skye De La Ciel", host } = Astro.props;
         <title>{title}</title>
         <meta name="author" content={author} />
         <meta name="description" content={description} />
+        {
+            /* Only where this site serves the page: this feed is the site's,
+               and on Tumblr a root-relative URL would resolve against Tumblr. */
+            host === "site" && (
+                <link
+                    rel="alternate"
+                    type="application/rss+xml"
+                    title={SITE_NAME}
+                    href="/rss.xml"
+                />
+            )
+        }
         <slot name="head" />
     </head>
     <body>

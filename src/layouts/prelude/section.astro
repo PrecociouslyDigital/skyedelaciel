@@ -1,0 +1,51 @@
+---
+import type { MarkdownHeading } from "astro";
+
+import Shell from "./Shell.astro";
+import FrontMatter from "./FrontMatter.astro";
+import TableOfContents from "~/components/TableOfContents.astro";
+import PieceList from "~/components/PieceList.astro";
+import H2 from "~/components/mdx/heading/H2.astro";
+import type { Article } from "~/content/corpus";
+
+/**
+ * A section page: what its author wrote, then Everything Else — the section's
+ * pieces the writing does not already link to. Unlike an article it has no
+ * dates of its own, so no byline and no rail. See design.mdx, Section pages.
+ */
+interface Props {
+    title: string;
+    abstract: string;
+    headings: MarkdownHeading[];
+    everythingElse: Article[];
+}
+
+const { title, abstract, headings, everythingElse } = Astro.props;
+
+/* A `##` of its own, so the contents list it beside the groups the author
+   wrote — and leave it out with the group when nothing is left over. */
+const closing: MarkdownHeading = {
+    depth: 2,
+    slug: "everything-else",
+    text: "Everything Else",
+};
+const contents = everythingElse.length > 0 ? [...headings, closing] : headings;
+---
+
+<Shell title={title} description={abstract} host="site">
+    <TableOfContents slot="toc" headings={contents} />
+    <article>
+        <FrontMatter title={title} abstract={abstract} headings={contents} />
+
+        <slot />
+
+        {
+            everythingElse.length > 0 && (
+                <section class="everything-else closing">
+                    <H2 id={closing.slug}>{closing.text}</H2>
+                    <PieceList pieces={everythingElse} />
+                </section>
+            )
+        }
+    </article>
+</Shell>
