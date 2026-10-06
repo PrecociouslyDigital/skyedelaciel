@@ -1,3 +1,4 @@
+// @ts-check
 /* The logo's brush, for every straight line the site paints rather than
    rules: a port of the stroke model in ~/data/logo-brush.py, which painted
    the logo. Strokes are drawn in the logo's units, where a stroke is 19.5
@@ -6,17 +7,45 @@
 
 import { chance } from "./chance.mjs";
 
+/** @typedef {import("./chance.mjs").Chance} Chance */
+/** @typedef {[number, number]} Point */
+/** A function of distance along a stroke. @typedef {(s: number) => number} Profile */
+/** One edge of a stroke, or the other. @typedef {-1 | 1} Side */
+/**
+ * Something of each edge.
+ *
+ * @template T
+ * @typedef {{ "-1": T, "1": T }} Ragged
+ */
+
+/** @type {(e0: number, e1: number, x: number) => number} */
 const smoothstep = (e0, e1, x) => {
     const t = Math.min(Math.max((x - e0) / (e1 - e0), 0), 1);
     return t * t * (3 - 2 * t);
 };
+/** @type {(p: Point, q: Point) => number} */
 const distance = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+
+/**
+ * The `i`th of `list`, which the caller knows is there.
+ *
+ * @template T
+ * @param {readonly T[]} list
+ * @param {number} i
+ * @returns {T}
+ */
+const nth = (list, i) => /** @type {T} */ (list[i]);
+
+/** @type {<T>(list: readonly T[]) => T} */
+const last = (list) => nth(list, list.length - 1);
 const TAU = 2 * Math.PI;
 
 /* — The hand — */
 
 /* Smooth 1-D noise in roughly [-1, 1]: the slow drift of a hand. */
+/** @param {Chance} r @param {number} wavelength @returns {Profile} */
 function wobble(r, wavelength, terms = 3) {
+    /** @type {[number, number][]} */
     const waves = Array.from({ length: terms }, () => [
         TAU / (wavelength * r.between(0.6, 1.6)),
         r.between(0, TAU),
@@ -28,23 +57,33 @@ function wobble(r, wavelength, terms = 3) {
 }
 
 /* Value noise with jittered knots: the tooth of a brush edge on paper. */
+/** @param {Chance} r @param {number} spacing @param {number} length @returns {Profile} */
 function grain(r, spacing, length) {
     const knots = [0];
-    while (knots.at(-1) <= length + spacing)
-        knots.push(knots.at(-1) + spacing * r.between(0.4, 1.6));
+    while (last(knots) <= length + spacing)
+        knots.push(last(knots) + spacing * r.between(0.4, 1.6));
     const values = knots.map(() => r.sign() * r.between(0, 1) ** 2);
     let i = 0;
     return (s) => {
-        s = Math.min(Math.max(s, 0), knots.at(-1));
-        if (knots[i] > s) i = 0;
-        while (i < knots.length - 2 && knots[i + 1] <= s) i++;
-        const f = smoothstep(knots[i], knots[i + 1], s);
-        return values[i] + (values[i + 1] - values[i]) * f;
+        s = Math.min(Math.max(s, 0), last(knots));
+        if (nth(knots, i) > s) i = 0;
+        while (i < knots.length - 2 && nth(knots, i + 1) <= s) i++;
+        const f = smoothstep(nth(knots, i), nth(knots, i + 1), s);
+        return nth(values, i) + (nth(values, i + 1) - nth(values, i)) * f;
     };
 }
 
 /* Soft bulges where ink pooled and bled past the brush. */
+/**
+ * @param {Chance} r
+ * @param {number} length
+ * @param {number} count
+ * @param {[number, number]} height
+ * @param {[number, number]} spread
+ * @returns {Profile}
+ */
 function bleed(r, length, count, height, spread) {
+    /** @type {[number, number, number][]} */
     const bumps = Array.from({ length: count }, () => [
         r.between(0, length),
         r.between(...height),
@@ -60,15 +99,21 @@ function bleed(r, length, count, height, spread) {
 /* — The stroke — */
 
 /* Distance along a polyline at each point, and the unit normal there. */
+/**
+ * @param {Point[]} points
+ * @returns {[number[], Point[]]}
+ */
 function frame(points) {
     const lengths = [0];
     for (let i = 1; i < points.length; i++)
-        lengths.push(lengths[i - 1] + distance(points[i - 1], points[i]));
+        lengths.push(
+            nth(lengths, i - 1) + distance(nth(points, i - 1), nth(points, i)),
+        );
     const normals = points.map((_, i) => {
-        const [x0, y0] = points[Math.max(i - 1, 0)];
-        const [x1, y1] = points[Math.min(i + 1, points.length - 1)];
+        const [x0, y0] = nth(points, Math.max(i - 1, 0));
+        const [x1, y1] = nth(points, Math.min(i + 1, points.length - 1));
         const d = Math.hypot(x1 - x0, y1 - y0);
-        return [-(y1 - y0) / d, (x1 - x0) / d];
+        return /** @type {Point} */ ([-(y1 - y0) / d, (x1 - x0) / d]);
     });
     return [lengths, normals];
 }
@@ -76,10 +121,18 @@ function frame(points) {
 /* A centreline with a width and two ragged edges along it. `u` runs across
    the stroke from -1 on one edge to 1 on the other. */
 class Stroke {
+    /**
+     * @param {Point[]} points
+     * @param {Profile} width
+     * @param {Ragged<Profile>} ragged
+     */
     constructor(points, width, ragged) {
         this.points = points;
-        [this.s, this.normals] = frame(points);
-        this.length = this.s.at(-1);
+        const [s, normals] = frame(points);
+        /** How far along the stroke each point is. */
+        this.s = s;
+        this.normals = normals;
+        this.length = last(this.s);
         this.widths = this.s.map(width);
         this.ragged = {
             [-1]: this.s.map(ragged[-1]),
@@ -87,18 +140,36 @@ class Stroke {
         };
     }
 
+    /**
+     * The point `u` of the way across the stroke at its `i`th point, and
+     * `outward` further out.
+     *
+     * @param {number} i
+     * @param {number} u
+     * @returns {Point}
+     */
     at(i, u, outward = 0) {
-        const [x, y] = this.points[i];
-        const [nx, ny] = this.normals[i];
-        const off = (this.widths[i] / 2) * u + (u >= 0 ? outward : -outward);
+        const [x, y] = nth(this.points, i);
+        const [nx, ny] = nth(this.normals, i);
+        const off =
+            (nth(this.widths, i) / 2) * u + (u >= 0 ? outward : -outward);
         return [x + nx * off, y + ny * off];
     }
 
+    /** @param {number} i @param {Side} side */
     edge(i, side) {
-        return this.at(i, side, this.ragged[side][i]);
+        return this.at(i, side, nth(this.ragged[side], i));
     }
 }
 
+/**
+ * @param {Chance} r
+ * @param {number} length
+ * @param {number} tooth
+ * @param {number} pooling
+ * @param {number} dryFrom
+ * @returns {Ragged<Profile>}
+ */
 function raggedEdges(r, length, tooth, pooling, dryFrom) {
     const side = () => {
         const fine = grain(r, 2.5, length);
@@ -110,7 +181,7 @@ function raggedEdges(r, length, tooth, pooling, dryFrom) {
             [0.4, pooling],
             [4, 14],
         );
-        return (s) => {
+        return (/** @type {number} */ s) => {
             const dryness = smoothstep(dryFrom, length, s);
             return (
                 fine(s) * tooth * (1 + 3 * dryness) + drift(s) * 0.5 + pooled(s)
@@ -121,14 +192,16 @@ function raggedEdges(r, length, tooth, pooling, dryFrom) {
 }
 
 /* The rounded, slightly lopsided head where the brush touched down. */
+/** @param {Chance} r @returns {(stroke: Stroke) => Point[]} */
 function startCap(r) {
     const lean = r.between(-0.3, 0.3);
     const g = grain(r, 0.25, Math.PI);
     return (stroke) => {
-        const [x, y] = stroke.points[0];
-        const [nx, ny] = stroke.normals[0];
+        const [x, y] = nth(stroke.points, 0);
+        const [nx, ny] = nth(stroke.normals, 0);
         const [tx, ty] = [ny, -nx];
-        const half = stroke.widths[0] / 2;
+        const half = nth(stroke.widths, 0) / 2;
+        /** @type {Point[]} */
         const out = [];
         for (let j = 1; j < 24; j++) {
             const a = -Math.PI / 2 - (Math.PI * j) / 24;
@@ -150,6 +223,7 @@ class DryTail {
     static MAX_GAP = 0.14;
     static POINT_LENGTH = 16;
 
+    /** @param {Chance} r @param {Stroke} stroke @param {number} length */
     constructor(r, stroke, length) {
         this.dryFrom = stroke.length - length;
         this.bodyEnd = stroke.s.findIndex((s) => s >= this.dryFrom);
@@ -158,40 +232,47 @@ class DryTail {
             r.between(-0.8, 0.8),
         ).sort((a, b) => a - b);
         this.bounds = [-1, ...inner, 1];
+        /** @type {number[]} */
         this.reach = [];
         for (let b = 0; b < this.bounds.length - 1; b++) {
-            const middle = Math.abs(this.bounds[b] + this.bounds[b + 1]) / 2;
+            const middle =
+                Math.abs(nth(this.bounds, b) + nth(this.bounds, b + 1)) / 2;
             this.reach.push(stroke.length - r.between(0, 22) * (0.3 + middle));
         }
         this.innerGrain = this.bounds.map(() => grain(r, 3, stroke.length));
         this.r = chance(r.integer(2 ** 32));
     }
 
+    /**
+     * @param {Stroke} stroke
+     * @param {number} i
+     * @param {number} bound
+     * @param {number} u
+     * @param {number} dryness
+     */
     rag(stroke, i, bound, u, dryness) {
-        if (Math.abs(u) === 1) return stroke.ragged[u][i];
-        return this.innerGrain[bound](stroke.s[i]) * 0.8 * dryness;
+        if (Math.abs(u) === 1)
+            return nth(stroke.ragged[/** @type {Side} */ (u)], i);
+        return nth(this.innerGrain, bound)(nth(stroke.s, i)) * 0.8 * dryness;
     }
 
+    /** @param {Stroke} stroke @returns {Point[][]} */
     filaments(stroke) {
         const polygons = [];
         for (let b = 0; b < this.bounds.length - 1; b++) {
-            const [loU, hiU] = [this.bounds[b], this.bounds[b + 1]];
+            const [loU, hiU] = [nth(this.bounds, b), nth(this.bounds, b + 1)];
+            const reach = nth(this.reach, b);
             const lower = [];
             const upper = [];
             for (let i = this.bodyEnd - 3; i < stroke.s.length; i++) {
-                const s = stroke.s[i];
-                if (s > this.reach[b]) break;
+                const s = nth(stroke.s, i);
+                if (s > reach) break;
                 const dryness = smoothstep(this.dryFrom, stroke.length, s);
                 const gap = (DryTail.MAX_GAP * dryness) / 2;
                 const lo = loU + (loU > -1 ? gap : 0);
                 const hi = hiU - (hiU < 1 ? gap : 0);
                 const taper =
-                    1 -
-                    smoothstep(
-                        this.reach[b] - DryTail.POINT_LENGTH,
-                        this.reach[b],
-                        s,
-                    );
+                    1 - smoothstep(reach - DryTail.POINT_LENGTH, reach, s);
                 const mid = (lo + hi) / 2;
                 const half = ((hi - lo) / 2) * taper;
                 lower.push(
@@ -216,9 +297,11 @@ class DryTail {
 
     /* Thin unpainted streaks inside the body, where the brush began to run
        dry before it split; returned as holes. */
+    /** @param {Stroke} stroke @returns {Point[][]} */
     streaks(stroke) {
         const r = this.r;
-        const last = stroke.s[this.bodyEnd - 4];
+        const last = nth(stroke.s, this.bodyEnd - 4);
+        /** @type {[number, number, number][]} */
         const plans = this.bounds
             .slice(1, -1)
             .filter(() => r.odds(0.7))
@@ -234,7 +317,9 @@ class DryTail {
         return plans
             .map(([u, start, end]) => {
                 const thickness = r.between(0.04, 0.1);
+                /** @type {Point[]} */
                 const upper = [];
+                /** @type {Point[]} */
                 const lower = [];
                 stroke.s.forEach((s, i) => {
                     if (s >= start && s <= end) {
@@ -258,12 +343,13 @@ class DryTail {
 }
 
 /* Points every `step` units along a polyline. */
+/** @param {Point[]} points @param {number} step */
 function resample(points, step) {
-    const out = [points[0]];
+    const out = [nth(points, 0)];
     let carried = 0;
     for (let k = 1; k < points.length; k++) {
-        const p = points[k - 1];
-        const q = points[k];
+        const p = nth(points, k - 1);
+        const q = nth(points, k);
         const d = distance(p, q);
         let pos = step - carried;
         while (pos <= d) {
@@ -279,14 +365,16 @@ function resample(points, step) {
 }
 
 /* A polyline through `corners`, each inner corner filleted, sampled every unit. */
+/** @param {Point[]} corners @param {number} radius */
 function filleted(corners, radius) {
-    const dense = [corners[0]];
+    const dense = [nth(corners, 0)];
     for (let i = 1; i < corners.length - 1; i++) {
         const [prev, corner, next] = [
-            corners[i - 1],
-            corners[i],
-            corners[i + 1],
+            nth(corners, i - 1),
+            nth(corners, i),
+            nth(corners, i + 1),
         ];
+        /** @type {(p: Point, q: Point) => Point} */
         const toward = (p, q) => {
             const d = distance(p, q);
             return [
@@ -299,16 +387,18 @@ function filleted(corners, radius) {
         for (let j = 0; j <= 16; j++) {
             const t = j / 16;
             dense.push(
-                [0, 1].map(
-                    (d) =>
-                        (1 - t) ** 2 * a[d] +
-                        2 * (1 - t) * t * corner[d] +
-                        t * t * b[d],
+                /** @type {Point} */ (
+                    [0, 1].map(
+                        (d) =>
+                            (1 - t) ** 2 * nth(a, d) +
+                            2 * (1 - t) * t * nth(corner, d) +
+                            t * t * nth(b, d),
+                    )
                 ),
             );
         }
     }
-    dense.push(corners.at(-1));
+    dense.push(last(corners));
     return resample(dense, 1);
 }
 
@@ -324,6 +414,12 @@ export const RULED = { drift: 0.8, grain: 0.35, bleed: 0.8 };
    (`holes`). `width` is in units; `drift` is how far the hand wanders off the
    line, and `grain` and `bleed` how rough the edges are, so that lowering all
    three rules a straighter stroke. */
+/**
+ * @param {Chance} r
+ * @param {Point[]} corners
+ * @param {Partial<typeof FREE>} [style]
+ * @returns {{ solids: Point[][], holes: Point[][] }}
+ */
 export function brushStroke(r, corners, style = {}) {
     const {
         width,
@@ -339,21 +435,21 @@ export function brushStroke(r, corners, style = {}) {
     const turns = corners.slice(1, -1).map((c) => {
         let best = 0;
         base.forEach((p, i) => {
-            if (distance(p, c) < distance(base[best], c)) best = i;
+            if (distance(p, c) < distance(nth(base, best), c)) best = i;
         });
-        return baseS[best];
+        return nth(baseS, best);
     });
     const drift = wobble(r, 260);
     const points = base.map(([x, y], i) => {
-        const [nx, ny] = baseN[i];
-        const off = wander * drift(baseS[i]);
-        return [x + nx * off, y + ny * off];
+        const [nx, ny] = nth(baseN, i);
+        const off = wander * drift(nth(baseS, i));
+        return /** @type {Point} */ ([x + nx * off, y + ny * off]);
     });
 
-    const length = baseS.at(-1);
+    const length = last(baseS);
     const dryTail = 140;
     const pressure = wobble(r, 260);
-    const widthAt = (s) => {
+    const widthAt = (/** @type {number} */ s) => {
         let w = width * (1 + 0.16 * pressure(s));
         // Pressed down at the start, and into each turn.
         w *= 1 + 0.3 * Math.exp(-(((s - 16) / 14) ** 2));
@@ -389,19 +485,22 @@ export function brushStroke(r, corners, style = {}) {
 /* — Writing it out — */
 
 /* Ramer–Douglas–Peucker. */
+/** @param {Point[]} points @param {number} tolerance */
 function simplify(points, tolerance) {
     const keep = points.map(() => false);
     keep[0] = keep[points.length - 1] = true;
+    /** @type {[number, number][]} */
     const stack = [[0, points.length - 1]];
     while (stack.length) {
-        const [a, b] = stack.pop();
-        const [ax, ay] = points[a];
-        const [bx, by] = points[b];
+        const [a, b] = last(stack);
+        stack.pop();
+        const [ax, ay] = nth(points, a);
+        const [bx, by] = nth(points, b);
         const span = Math.hypot(bx - ax, by - ay) || 1e-9;
         let worst = -1;
         let worstD = tolerance;
         for (let i = a + 1; i < b; i++) {
-            const [px, py] = points[i];
+            const [px, py] = nth(points, i);
             const d =
                 Math.abs((bx - ax) * (ay - py) - (ax - px) * (by - ay)) / span;
             if (d > worstD) {
@@ -417,20 +516,25 @@ function simplify(points, tolerance) {
     return points.filter((_, i) => keep[i]);
 }
 
+/** @type {(points: Point[]) => number} */
 const signedArea = (points) =>
     points.reduce((sum, [x0, y0], i) => {
-        const [x1, y1] = points[(i + 1) % points.length];
+        const [x1, y1] = nth(points, (i + 1) % points.length);
         return sum + x0 * y1 - x1 * y0;
     }, 0) / 2;
 
+/** @type {(v: number) => string} */
 const num = (v) => v.toFixed(1).replace(/\.0$/, "");
 
 /* SVG path data for paint and holes. Solids are wound one way, so that where
    they overlap they union under the nonzero rule, and holes the other. */
+/** @param {Point[][]} solids @param {Point[][]} holes */
 export function pathData(solids, holes) {
-    return [...solids.map((p) => [p, 1]), ...holes.map((p) => [p, -1])]
+    /** @type {(winding: number) => (polygon: Point[]) => [Point[], number]} */
+    const wound = (winding) => (polygon) => [polygon, winding];
+    return [...solids.map(wound(1)), ...holes.map(wound(-1))]
         .filter(([polygon]) => polygon.length > 2)
-        .map(([polygon, winding]) => [simplify(polygon, 0.12), winding])
+        .map(([polygon, winding]) => wound(winding)(simplify(polygon, 0.12)))
         .filter(([points]) => points.length > 2)
         .map(([points, winding]) => {
             if (signedArea(points) * winding < 0) points = points.reverse();
@@ -439,6 +543,7 @@ export function pathData(solids, holes) {
         .join("");
 }
 
+/** @type {(box: number[], d: string) => string} */
 const svg = (box, d) =>
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${box.map(num).join(" ")}' preserveAspectRatio='none'><path d='${d}'/></svg>`;
 
@@ -456,6 +561,7 @@ const BAND = 40;
 const LENGTH = 1200;
 export const END = 3 * BAND;
 
+/** @type {Record<"head" | "body" | "tail", [number, number]>} */
 const PIECES = {
     head: [0, END],
     body: [END, LENGTH - END],
@@ -464,10 +570,17 @@ const PIECES = {
 
 /* The part of `polygon` whose coordinate `k` lies between `lo` and `hi`
    (Sutherland–Hodgman, against the two sides of the slab). */
+/**
+ * @param {Point[]} polygon
+ * @param {0 | 1} k
+ * @param {number} lo
+ * @param {number} hi
+ */
 function slab(polygon, k, lo, hi) {
+    /** @type {(points: Point[], inside: (p: Point) => boolean, at: number) => Point[]} */
     const cut = (points, inside, at) =>
         points.flatMap((p, i) => {
-            const q = points[(i + 1) % points.length];
+            const q = nth(points, (i + 1) % points.length);
             const out = inside(p) ? [p] : [];
             if (inside(p) !== inside(q)) {
                 const t = (at - p[k]) / (q[k] - p[k]);
@@ -487,8 +600,17 @@ function slab(polygon, k, lo, hi) {
    `body` or `tail`, and `ruled` draws it as straight as a frame's rules.
    Each piece carries only its own stretch of the stroke, cut a unit past its
    edges so that the cut never shows. */
+/**
+ * @param {object} stroke
+ * @param {number | string} stroke.seed
+ * @param {"across" | "down"} stroke.axis
+ * @param {keyof typeof PIECES} stroke.piece
+ * @param {boolean} [stroke.ruled]
+ * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number } }}
+ */
 export function strokePiece({ seed, axis, piece, ruled = false }) {
     const k = axis === "down" ? 1 : 0;
+    /** @type {(a: number) => Point} */
     const along = (a) => (k ? [BAND / 2, a] : [a, BAND / 2]);
     const { solids, holes } = brushStroke(
         chance(seed),
@@ -496,8 +618,10 @@ export function strokePiece({ seed, axis, piece, ruled = false }) {
         ruled ? RULED : {},
     );
     const [lo, hi] = PIECES[piece];
-    const crop = (polygon) => slab(polygon, k, lo - 1, hi + 1);
+    const crop = (/** @type {Point[]} */ polygon) =>
+        slab(polygon, k, lo - 1, hi + 1);
     const d = pathData(solids.map(crop), holes.map(crop));
+    /** @type {[number, number, number, number]} */
     const box = k ? [0, lo, BAND, hi - lo] : [lo, 0, hi - lo, BAND];
     const [w, h] = [box[2] / BAND, box[3] / BAND];
     return { svg: svg(box, d), box: { x: 0, y: 0, w, h } };
@@ -525,6 +649,13 @@ const UNITS_PER_PX = 3.25;
    is two strokes turned half about each other: across the top and down the
    right, then back along the foot and up the left, so that each corner where
    they cross holds one stroke's head and the other's dry tail. */
+/**
+ * @param {object} plate
+ * @param {number} plate.width
+ * @param {number} plate.height
+ * @param {number | string} plate.seed
+ * @returns {string}
+ */
 export function plate({ width, height, seed }) {
     const [W, H] = [width * UNITS_PER_PX, height * UNITS_PER_PX];
     const r = chance(seed);

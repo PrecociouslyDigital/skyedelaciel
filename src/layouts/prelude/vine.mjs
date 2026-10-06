@@ -1,3 +1,4 @@
+// @ts-check
 /* A flowering vine drawn as a rule, after the vine-stem borders of
    illuminated manuscripts: one pen-drawn stem running left to right, steered
    by hand rather than by a wave, branching into spirals large and small, some
@@ -12,44 +13,103 @@
 
 import { chance } from "./chance.mjs";
 
+/** @typedef {import("./chance.mjs").Chance} Chance */
+
+/** @typedef {[number, number]} Point */
+
+/**
+ * A path traced through points, measured along its length.
+ *
+ * @typedef {object} Traced
+ * @property {Point[]} points
+ * @property {number[]} lengths How far along it each point is.
+ * @property {number} length
+ * @property {(d: number) => { p: Point, θ: number }} at Where it is at
+ *     distance `d` along it, and which way it is heading.
+ */
+
+/** How wide a stroke is at fraction `s` of its length. @typedef {(s: number, length: number) => number} Weight */
+
+/** A disc of the page a growth occupies. @typedef {{ p: Point, r: number, free?: boolean }} Disc */
+
+/** [x, y, width, height]. @typedef {[number, number, number, number]} Box */
+
+/**
+ * A drawing placed by a point on the vine, with the box it fills about that
+ * point, in vine widths.
+ *
+ * @typedef {{ svg: string, box: { x: number, y: number, w: number, h: number } }} Placed
+ */
+
+/** The inks a drawing is painted in, by what they paint. */
+export const INKS = /** @type {const} */ ([
+    "leaf",
+    "flower",
+    "iron",
+    "pot",
+    "ground",
+]);
+
+/** @typedef {(typeof INKS)[number]} Ink */
+
+/** The two hands a mark is painted in: the pen's line, or a dab of the brush. @typedef {"line" | "dab"} Hand */
+
+/** @typedef {{ ink: Ink, hand: Hand, outlines: Point[][] }} Mark */
+
 const H = 40;
 
 /* — Geometry — */
 
 const TAU = 2 * Math.PI;
+/** @type {(p: Point, θ: number, r: number) => Point} */
 const toward = ([x, y], θ, r) => [x + r * Math.cos(θ), y + r * Math.sin(θ)];
+/** @type {(a: number, b: number, t: number) => number} */
 const lerp = (a, b, t) => a + (b - a) * t;
+/** @type {(a: number, b: number, x: number) => number} */
 const smoothstep = (a, b, x) => {
     const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
     return t * t * (3 - 2 * t);
 };
 
+/**
+ * The `i`th of `list`, which the caller knows is there.
+ *
+ * @template T
+ * @param {readonly T[]} list
+ * @param {number} i
+ * @returns {T}
+ */
+const nth = (list, i) => /** @type {T} */ (list[i]);
+
 /* A path traced through points, measured so that anything can be placed on
    it by distance along it. Headings follow the chords between samples. */
+/** @param {Point[]} points @returns {Traced} */
 function trace(points) {
     const lengths = [0];
     for (let i = 1; i < points.length; i++) {
+        const [p, q] = [nth(points, i - 1), nth(points, i)];
         lengths.push(
-            lengths[i - 1] +
-                Math.hypot(
-                    points[i][0] - points[i - 1][0],
-                    points[i][1] - points[i - 1][1],
-                ),
+            nth(lengths, i - 1) + Math.hypot(q[0] - p[0], q[1] - p[1]),
         );
     }
-    const length = lengths[lengths.length - 1];
+    const length = nth(lengths, lengths.length - 1);
+    /** @param {number} d */
     const at = (d) => {
         const x = Math.min(length, Math.max(0, d));
         let [i, j] = [0, points.length - 1];
         while (j - i > 1) {
             const m = (i + j) >> 1;
-            if (lengths[m] <= x) i = m;
+            if (nth(lengths, m) <= x) i = m;
             else j = m;
         }
-        const [a, b] = [points[i], points[i + 1]];
-        const t = (x - lengths[i]) / (lengths[i + 1] - lengths[i] || 1);
+        const [a, b] = [nth(points, i), nth(points, i + 1)];
+        const [la, lb] = [nth(lengths, i), nth(lengths, i + 1)];
+        const t = (x - la) / (lb - la || 1);
         return {
-            p: [lerp(a[0], b[0], t), lerp(a[1], b[1], t)],
+            p: /** @type {Point} */ ([
+                lerp(a[0], b[0], t),
+                lerp(a[1], b[1], t),
+            ]),
             θ: Math.atan2(b[1] - a[1], b[0] - a[0]),
         };
     };
@@ -58,6 +118,13 @@ function trace(points) {
 
 /* Walk from `start`, turning by `curl(s)` radians per unit at arc length s.
    A positive curl turns clockwise on the page. */
+/**
+ * @param {Point} start
+ * @param {number} θ0
+ * @param {number} length
+ * @param {(s: number) => number} curl
+ * @param {number} [step]
+ */
 function walk(start, θ0, length, curl, step = 0.6) {
     const points = [start];
     let [p, θ] = [start, θ0];
@@ -74,9 +141,15 @@ function walk(start, θ0, length, curl, step = 0.6) {
    curls ever tighter in the direction `turn` (±1) until it has turned
    through `turns` revolutions. Returns the path, and the curvature it ends
    with, whose reciprocal is the radius of the scroll's eye. */
+/**
+ * @param {Point} base
+ * @param {number} θ
+ * @param {number} turn
+ * @param {{ length: number, turns: number, κ0?: number, growth?: number }} shape
+ */
 function scroll(base, θ, turn, { length, turns, κ0 = 0, growth = 2 }) {
     const rise = ((turns * TAU - κ0 * length) * (growth + 1)) / length;
-    const κ = (s) => κ0 + rise * (s / length) ** growth;
+    const κ = (/** @type {number} */ s) => κ0 + rise * (s / length) ** growth;
     /* Walked finely, then kept only as finely as its curl needs. */
     const path = resample(
         trace(walk(base, θ, length, (s) => turn * κ(s), 0.25)),
@@ -86,6 +159,7 @@ function scroll(base, θ, turn, { length, turns, κ0 = 0, growth = 2 }) {
 }
 
 /* The centre of the eye a scroll ends in, at distance `r` inside its last turn. */
+/** @param {Traced} path @param {number} turn @param {number} r */
 function eye(path, turn, r) {
     const { p, θ } = path.at(path.length);
     return toward(p, θ + (turn * Math.PI) / 2, r);
@@ -93,19 +167,27 @@ function eye(path, turn, r) {
 
 /* The outline of a stroke drawn along a path, `width(s)` across at fraction s
    of its length. A stroke that starts with a width starts with a round press. */
+/**
+ * @param {Traced} path
+ * @param {(s: number) => number} width
+ * @returns {Point[]}
+ */
 function ribbon(path, width) {
     const { points, lengths, length } = path;
     const n = points.length - 1;
-    const heading = (i) => {
-        const [a, b] = [points[Math.max(0, i - 1)], points[Math.min(n, i + 1)]];
+    const heading = (/** @type {number} */ i) => {
+        const [a, b] = [
+            nth(points, Math.max(0, i - 1)),
+            nth(points, Math.min(n, i + 1)),
+        ];
         return Math.atan2(b[1] - a[1], b[0] - a[0]);
     };
-    const side = (sign) =>
+    const side = (/** @type {number} */ sign) =>
         points.map((p, i) =>
             toward(
                 p,
                 heading(i) + (sign * Math.PI) / 2,
-                width(lengths[i] / length) / 2,
+                width(nth(lengths, i) / length) / 2,
             ),
         );
     const press = width(0) / 2;
@@ -115,7 +197,7 @@ function ribbon(path, width) {
         for (let k = 1; k < n; k++)
             cap.push(
                 toward(
-                    points[0],
+                    nth(points, 0),
                     heading(0) + (3 * Math.PI) / 2 - (k / n) * Math.PI,
                     press,
                 ),
@@ -126,6 +208,7 @@ function ribbon(path, width) {
 
 /* Evenly spaced points along a path, `step(d)` apart, for an outline that is
    smooth without being heavier than it needs to be. */
+/** @param {Traced} path @param {(d: number) => number} step */
 function resample(path, step) {
     const points = [];
     for (let d = 0; d < path.length; d += step(d)) points.push(path.at(d).p);
@@ -134,6 +217,7 @@ function resample(path, step) {
 }
 
 /* An ellipse, its first axis along θ. */
+/** @param {Point} centre @param {number} rx @param {number} ry @returns {Point[]} */
 function oval([cx, cy], rx, ry, θ = 0) {
     const [c, s] = [Math.cos(θ), Math.sin(θ)];
     return Array.from({ length: 10 }, (_, i) => {
@@ -147,11 +231,15 @@ function oval([cx, cy], rx, ry, θ = 0) {
    Written compactly, as relative moves in tenths of a unit, with the points
    rounded before they are differenced so that rounding never accumulates
    along a long stroke. */
+/** @param {Point[]} points */
 function closedPath(points) {
-    const tenths = (v) => Math.round(v * 10);
-    const at = (i) => points[(i + points.length) % points.length];
-    const number = (t) => (t / 10).toString().replace(/^(-?)0\./, "$1.");
-    const numbers = (ts) => ts.map(number).join(" ").replace(/ -/g, "-");
+    const tenths = (/** @type {number} */ v) => Math.round(v * 10);
+    const at = (/** @type {number} */ i) =>
+        nth(points, (i + points.length) % points.length);
+    const number = (/** @type {number} */ t) =>
+        (t / 10).toString().replace(/^(-?)0\./, "$1.");
+    const numbers = (/** @type {number[]} */ ts) =>
+        ts.map(number).join(" ").replace(/ -/g, "-");
     let here = at(0).map(tenths);
     let d = `M${numbers(here)}c`;
     for (let i = 0; i < points.length; i++) {
@@ -167,7 +255,7 @@ function closedPath(points) {
         const to = p2.map(tenths);
         d +=
             (i ? " " : "") +
-            numbers([...c1, ...c2, ...to].map((t, k) => t - here[k % 2]));
+            numbers([...c1, ...c2, ...to].map((t, k) => t - nth(here, k % 2)));
         here = to;
     }
     return d.replace(/ -/g, "-") + "Z";
@@ -178,11 +266,13 @@ function closedPath(points) {
 /* Every mark is painted in one of the two inks and one of two hands: the
    pen's line, or a dab of the brush. A mark may be several overlapping
    outlines, which paint as one shape with one rim. */
+/** @type {(ink: Ink, hand: Hand, ...outlines: Point[][]) => Mark} */
 const mark = (ink, hand, ...outlines) => ({ ink, hand, outlines });
 
 /* How wide each kind of stem is drawn, at fraction s of its length: pen
    lines of nearly even weight, lightly tapered. The main stem has a slight
    press where the pen came down. */
+/** @satisfies {Record<string, Weight>} */
 const WEIGHT = {
     shoot: (s) => lerp(1.4, 0.75, s),
     stalk: (s) => lerp(0.8, 0.6, s),
@@ -195,6 +285,11 @@ const WEIGHT = {
    both ends and rolls up alike at each, and the growth along it, its
    `vigour` at a given x, is fullest in the middle and dies away to either
    side. */
+/**
+ * @param {number} width
+ * @param {boolean} centred
+ * @returns {{ centred: boolean, weight: Weight, vigour: (x: number) => number }}
+ */
 function form(width, centred) {
     if (!centred) {
         return {
@@ -216,12 +311,17 @@ function form(width, centred) {
 /* The room left on the page: discs round everything drawn so far, kept in a
    grid, so that each new growth can look for space instead of piling onto
    the last. Growth must also stay inside the rule. */
+/** @param {number} width */
 function room(width) {
     const cell = 6;
+    /** @type {Map<string, { x: number, y: number, r: number }[]>} */
     const grid = new Map();
+    /** @type {(x: number, y: number) => string} */
     const key = (x, y) => `${Math.floor(x / cell)},${Math.floor(y / cell)}`;
+    /** @type {(p: Point, r: number) => boolean} */
     const inside = ([x, y], r) =>
         x - r > 0.5 && x + r < width - 0.5 && y - r > 1 && y + r < H - 1;
+    /** @type {(p: Point, r: number) => boolean} */
     const clear = ([x, y], r) => {
         for (let i = -1; i <= 1; i++) {
             for (let j = -1; j <= 1; j++) {
@@ -236,15 +336,16 @@ function room(width) {
     return {
         /* Discs may skip the room check (`free`) where a growth joins what
            it grew from, but never the edges of the rule. */
-        fits: (discs) =>
+        fits: (/** @type {Disc[]} */ discs) =>
             discs.every(
                 ({ p, r, free }) => inside(p, r) && (free || clear(p, r)),
             ),
-        claim: (discs) => {
+        claim: (/** @type {Disc[]} */ discs) => {
             for (const { p, r } of discs) {
                 const k = key(...p);
-                if (!grid.has(k)) grid.set(k, []);
-                grid.get(k).push({ x: p[0], y: p[1], r });
+                const held = grid.get(k) ?? [];
+                grid.set(k, held);
+                held.push({ x: p[0], y: p[1], r });
             }
         },
     };
@@ -254,15 +355,21 @@ function room(width) {
    eye of a curl is part of the curl, and nothing else may grow into it. A
    spiral's eye is in its later coils, from `from` of the way along; a loop's
    is the whole loop. */
+/** @param {Point[]} points @returns {Disc} */
 function hollow(points, from = 0.35) {
     const coil = points.slice(Math.floor(points.length * from));
-    const c = [0, 1].map(
-        (k) => coil.reduce((sum, p) => sum + p[k], 0) / coil.length,
+    const c = /** @type {Point} */ (
+        [0, 1].map(
+            (k) => coil.reduce((sum, p) => sum + nth(p, k), 0) / coil.length,
+        )
     );
     const distances = coil
         .map(([x, y]) => Math.hypot(x - c[0], y - c[1]))
         .sort((a, b) => a - b);
-    return { p: c, r: 0.85 * distances[Math.floor(distances.length / 2)] };
+    return {
+        p: c,
+        r: 0.85 * nth(distances, Math.floor(distances.length / 2)),
+    };
 }
 
 /* How far a curl runs beside its parent, in units, before the two are clear
@@ -273,6 +380,7 @@ const CLEAR = 8;
    The first `joint` units, where it leaves its parent, are free: a growth
    that leaves along its parent's tangent runs beside it for a while before
    the two are clear of each other. */
+/** @param {Traced} path @param {Weight} weight @returns {Disc[]} */
 function discs(path, weight, joint = 0, margin = 0.6) {
     const out = [];
     for (let d = 0; d <= path.length; d += 1) {
@@ -287,6 +395,7 @@ function discs(path, weight, joint = 0, margin = 0.6) {
 
 /* An ivy leaf: three pointed lobes, the middle one longest, on a heart-shaped
    base. Points are repeated at the tips so the spline comes to a point. */
+/** @type {Point[]} */
 const IVY = [
     [0.06, 0],
     [0.04, -0.14],
@@ -306,6 +415,7 @@ const IVY = [
     [0.14, 0.32],
     [0.04, 0.14],
 ];
+/** @param {Point} base @param {number} θ @param {number} size @returns {Point[]} */
 function ivy(base, θ, size) {
     const [c, s] = [Math.cos(θ), Math.sin(θ)];
     return IVY.map(([x, y]) => [
@@ -315,6 +425,7 @@ function ivy(base, θ, size) {
 }
 
 /* A small rose: five round petals about an open eye. */
+/** @type {(c: Point, radius: number, θ: number) => Point[][]} */
 const rose = (c, radius, θ) =>
     Array.from({ length: 5 }, (_, i) =>
         oval(
@@ -331,7 +442,9 @@ const rose = (c, radius, θ) =>
    middle, a loop that crosses itself; and at the end a spiral. A centred
    rule starts with a spiral too. Returns the path, and the stretch of it,
    between the spirals, that runs along the rule. */
+/** @param {number} width @param {Chance} r @param {{ centred: boolean }} form */
 function mainStem(width, r, { centred }) {
+    /** @type {Point[]} */
     const points = [
         [centred ? r.between(13, 17) : 2.5, H / 2 + r.between(-2, 2)],
     ];
@@ -342,7 +455,7 @@ function mainStem(width, r, { centred }) {
     const end = width - r.between(20, 26);
     const hollows = [];
     let loops = Math.max(0, Math.round(width / 240 + r.between(-0.6, 0.5)));
-    const here = () => points[points.length - 1];
+    const here = () => nth(points, points.length - 1);
     const advance = () => points.push(toward(here(), θ, step));
     /* Which way to turn to come back toward the middle, judged a little way
        ahead along the current heading. */
@@ -402,10 +515,11 @@ function mainStem(width, r, { centred }) {
     /* An end rolls up toward the middle, as large as the room left allows.
        The start's spiral is drawn outward from the first point, heading
        back, then reversed, so the pen comes out of the curl into the stem. */
-    const within = ({ path }) =>
+    const within = (/** @type {{ path: Traced }} */ { path }) =>
         path.points.every(
             ([x, y]) => x > 1.5 && x < width - 1.5 && y > 1.5 && y < H - 1.5,
         );
+    /** @type {(from: Point, heading: number, turn: number) => Point[]} */
     const curl = (from, heading, turn) => {
         const spiral = { turns: r.between(1.15, 1.45), κ0: 0.04, growth: 1.3 };
         const sizes = centred ? [14, 11, 8, 6] : [20, 16, 12, 9, 6];
@@ -419,23 +533,26 @@ function mainStem(width, r, { centred }) {
         ).path.points;
     };
     const tip = curl(here(), θ, homeward());
-    const [x0, y0] = points[0];
+    const start = nth(points, 0);
+    const [x0, y0] = start;
     const head = centred
-        ? curl(points[0], θ0 + Math.PI, y0 > H / 2 ? 1 : -1)
+        ? curl(start, θ0 + Math.PI, y0 > H / 2 ? 1 : -1)
         : null;
-    const tail = head ? [...head].reverse() : [points[0]];
+    const tail = head ? [...head].reverse() : [start];
     const path = resample(
         trace([...tail, ...points.slice(1), ...tip.slice(1)]),
         () => 2,
     );
-    const along = (x) =>
+    const along = (/** @type {number} */ x) =>
         path.lengths[path.points.findIndex(([px]) => px >= x)] ?? path.length;
     return {
         path,
-        span: [along(x0), along(here()[0])],
+        span: /** @type {[number, number]} */ ([along(x0), along(here()[0])]),
         hollows: [
             ...hollows,
-            ...[tip, head].filter(Boolean).map((points) => hollow(points)),
+            ...[tip, head].flatMap((points) =>
+                points ? [hollow(points)] : [],
+            ),
         ],
     };
 }
@@ -446,34 +563,49 @@ function mainStem(width, r, { centred }) {
    in a leaf. Ivy leaves on short stalks follow the stems at varied angles,
    and hairline tendrils off the main stem fill what gaps are left. Curls grow
    only from the main stem, never from one another. */
+/**
+ * @param {number} width
+ * @param {Chance} r
+ * @param {ReturnType<typeof form> & { blooms: boolean }} form
+ * @returns {Mark[]}
+ */
 function grow(width, r, { weight, vigour, centred, blooms }) {
     const space = room(width);
+    /** @type {Mark[]} */
     const marks = [];
+    /** @type {{ path: Traced, weight: Weight }[]} */
     const stems = [];
 
     /* Paint the marks if the discs they occupy are free, and take the room. */
+    /** @type {(occupied: Disc[], ...painted: Mark[]) => boolean} */
     const place = (occupied, ...painted) => {
         if (!space.fits(occupied)) return false;
         space.claim(occupied);
         marks.push(...painted);
         return true;
     };
+    /** @type {(path: Traced, weight: Weight) => Mark} */
     const line = (path, weight) =>
         mark(
             "leaf",
             "line",
             ribbon(path, (s) => weight(s, path.length)),
         );
+    /**
+     * @typedef {{ discs: Disc[], mark: Mark | null }} Growth
+     * @type {(path: Traced, weight: Weight, joint: number, ...more: Growth[]) => boolean}
+     */
     const stem = (path, weight, joint, ...more) => {
         const placed = place(
             [...discs(path, weight, joint), ...more.flatMap((m) => m.discs)],
             line(path, weight),
-            ...more.map((m) => m.mark).filter(Boolean),
+            ...more.flatMap((m) => (m.mark ? [m.mark] : [])),
         );
         if (placed) stems.push({ path, weight });
         return placed;
     };
     /* A curl is a stem that also holds the space inside its coils. */
+    /** @type {(path: Traced, weight: Weight, ...more: Growth[]) => boolean} */
     const curl = (path, weight, ...more) =>
         stem(
             path,
@@ -488,9 +620,11 @@ function grow(width, r, { weight, vigour, centred, blooms }) {
     marks.push(line(main, weight));
     stems.push({ path: main, weight });
     /* How strongly the vine grows where a growth would leave its stem. */
-    const strength = (path, d) => vigour(path.at(d).p[0]);
+    const strength = (/** @type {Traced} */ path, /** @type {number} */ d) =>
+        vigour(path.at(d).p[0]);
 
     /* A leaf at the end of a short stalk, off a stem at distance d. */
+    /** @type {(path: Traced, d: number, side: number) => boolean} */
     const sprig = (path, d, side) => {
         const { p, θ } = path.at(d);
         const stalk = trace(
@@ -518,6 +652,7 @@ function grow(width, r, { weight, vigour, centred, blooms }) {
 
     const roseBudget = Math.max(1, Math.round(width / 70));
     let roses = 0;
+    /** @type {(c: Point, radius: number) => Growth | null} */
     const bloom = (c, radius) => {
         if (!blooms || roses >= roseBudget) return null;
         return {
@@ -568,13 +703,14 @@ function grow(width, r, { weight, vigour, centred, blooms }) {
                 !large || !r.odds(0.8 * v)
                     ? []
                     : [
-                          eyeRadius > 3.2 &&
-                              bloom(
-                                  eye(path, side, eyeRadius),
-                                  Math.min(4.4, eyeRadius - 0.6),
-                              ),
+                          eyeRadius > 3.2
+                              ? bloom(
+                                    eye(path, side, eyeRadius),
+                                    Math.min(4.4, eyeRadius - 0.6),
+                                )
+                              : null,
                           bloom(toward(end.p, end.θ, 3.3), 3.2),
-                      ].filter(Boolean);
+                      ].flatMap((crown) => (crown ? [crown] : []));
             const crowned = crowns.some((crown) =>
                 curl(path, WEIGHT.shoot, crown),
             );
@@ -608,15 +744,8 @@ function grow(width, r, { weight, vigour, centred, blooms }) {
             walk(p, θ + s * 0.9, r.between(4, 6), () => s * 0.1, 1),
         );
         const end = stalk.at(stalk.length);
-        if (
-            stem(
-                stalk,
-                WEIGHT.stalk,
-                CLEAR,
-                bloom(toward(end.p, end.θ, 3.4), 3.3),
-            )
-        )
-            roses++;
+        const crown = bloom(toward(end.p, end.θ, 3.4), 3.3);
+        if (crown && stem(stalk, WEIGHT.stalk, CLEAR, crown)) roses++;
     }
 
     /* Hairline tendrils in the gaps, from the main stem only: a curl never
@@ -640,6 +769,7 @@ function grow(width, r, { weight, vigour, centred, blooms }) {
 /* — The paint — */
 
 /* A slight tremor at the edge, as a pen or a fine brush leaves on paper. */
+/** @type {(frequency: string, amount: number, seed: number) => string} */
 const tremor = (frequency, amount, seed) => `
     <feTurbulence type='fractalNoise' baseFrequency='${frequency}' numOctaves='2' seed='${seed}' result='edge'/>
     <feDisplacementMap in='SourceGraphic' in2='edge' scale='${amount}' xChannelSelector='A' yChannelSelector='G' result='shape'/>`;
@@ -649,6 +779,7 @@ const tremor = (frequency, amount, seed) => `
    keeps whatever colour the shape was painted in. Lines are narrower than
    twice the reach, so they have no interior and stay at full strength; leaves
    and roses get a darker outline round a paler wash. */
+/** @type {(reach: number, thinning: number) => string} */
 const rim = (reach, thinning) => `
     <feMorphology in='shape' operator='erode' radius='${reach}'/>
     <feGaussianBlur stdDeviation='0.6'/>
@@ -661,8 +792,16 @@ const rim = (reach, thinning) => `
    over a ground of the page's own colour so that nothing beneath it shows
    through its pale middle. Growth never lets two marks of a layer overlap,
    so painting them as one shape changes nothing. */
+/**
+ * @param {Mark[]} marks
+ * @param {Box} box
+ * @param {Partial<Record<Ink, string>>} inks
+ * @param {string} id
+ * @param {Chance} r
+ */
 function picture(marks, box, inks, id, r) {
     const noise = () => r.integer(1000);
+    /** @type {(name: Hand, body: string) => string} */
     const filter = (name, body) =>
         `<filter id='${id}-${name}' x='-20%' y='-20%' width='140%' height='140%' color-interpolation-filters='sRGB'>${body}</filter>`;
     const defs = [
@@ -672,6 +811,7 @@ function picture(marks, box, inks, id, r) {
         .join("")
         .replace(/\s+/g, " ")
         .replace(/> </g, "><");
+    /** @type {[Ink, Hand][]} */
     const layers = [
         ["pot", "dab"],
         ["iron", "line"],
@@ -680,7 +820,7 @@ function picture(marks, box, inks, id, r) {
         ["ground", "line"],
         ["flower", "dab"],
     ];
-    const paint = ([which, hand]) => {
+    const paint = (/** @type {[Ink, Hand]} */ [which, hand]) => {
         const outlines = marks
             .filter((m) => m.ink === which && m.hand === hand)
             .flatMap((m) => m.outlines);
@@ -694,9 +834,12 @@ function picture(marks, box, inks, id, r) {
 
 /* Marks moved by [dx, dy], or turned a quarter clockwise, so that a vine
    grown left to right grows down the page instead. */
+/** @type {(marks: Mark[], by: Point) => Mark[]} */
 const moved = (marks, [dx, dy]) =>
     reshaped(marks, ([x, y]) => [x + dx, y + dy]);
+/** @type {(marks: Mark[]) => Mark[]} */
 const turned = (marks) => reshaped(marks, ([x, y]) => [H - y, x]);
+/** @type {(marks: Mark[], f: (p: Point) => Point) => Mark[]} */
 const reshaped = (marks, f) =>
     marks.map((m) => ({ ...m, outlines: m.outlines.map((o) => o.map(f)) }));
 
@@ -752,9 +895,11 @@ export function vine({
 
 /* Where an upright vine's stem starts across its column, in units: the first
    thing its stem draws by chance is how far off the middle it starts. */
+/** @param {number} seed */
 const vineStart = (seed) => H / 2 - chance(seed).between(-2, 2);
 
 /* A leaf at the end of a short stalk. */
+/** @param {Point} p @param {number} θ @param {number} stalk @param {number} size */
 function stalkedLeaf(p, θ, stalk, size, side = 1) {
     const path = trace(walk(p, θ, stalk, () => side * 0.08, 0.5));
     const end = path.at(path.length);
@@ -765,6 +910,7 @@ function stalkedLeaf(p, θ, stalk, size, side = 1) {
 }
 
 /* The box round some marks, `pad` units clear of them. */
+/** @param {Mark[]} marks @param {number} pad @returns {Box} */
 function boxOf(marks, pad) {
     const all = marks.flatMap((m) => m.outlines.flat());
     const xs = all.map((p) => p[0]);
@@ -774,11 +920,10 @@ function boxOf(marks, pad) {
 }
 
 /* A drawing, with the box it fills measured in vine widths. */
-const placed = (svg, box) => ({
+/** @type {(svg: string, box: Box) => Placed} */
+const placed = (svg, [x, y, w, h]) => ({
     svg,
-    box: Object.fromEntries(
-        ["x", "y", "w", "h"].map((key, i) => [key, box[i] / H]),
-    ),
+    box: { x: x / H, y: y / H, w: w / H, h: h / H },
 });
 
 /**
@@ -827,7 +972,7 @@ export function shoot({ reach, radius, seed, leaf }) {
     const lead = 3;
     const elbow = (Math.PI / 2) * bend;
     const wave = r.between(0.03, 0.05) * r.sign();
-    const steer = (d) =>
+    const steer = (/** @type {number} */ d) =>
         d < lead
             ? 0
             : d < lead + elbow
@@ -958,16 +1103,19 @@ const HANGING_SHOOTS = [
  * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number }, frames: number }}
  */
 export function hanging({ seed, rise, leaf, iron, pot }) {
+    /** @type {Point} */
     const base = [vineStart(seed) + COIL.x, COIL.h + 0.5];
     /* How far round the ring the shoot passes as it comes over it. */
     const R = 6.4;
     /* Level with the heading's line, with the vine's column on its far side,
        so the shoot drops from it straight down that column. */
+    /** @type {Point} */
     const centre = [base[0] - R, COIL.h - rise * H];
 
     /* The ring, the same in every frame. */
     const radius = 4.8;
     const top = toward(centre, -Math.PI / 2, radius);
+    /** @type {Point} */
     const plate = [centre[0], top[1] - 6];
     const half = 3.4;
     const ring = trace(
@@ -1002,6 +1150,7 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
        half a turn round it. */
     const tuck = 3;
     const lead = tuck + Math.PI * R;
+    /** @type {Point} */
     const start = [centre[0] - R, centre[1] + tuck];
     const hang = { curled: 6, open: base[1] - centre[1] };
     const curl = { curled: 52, open: 5, turns: 1.15, growth: 0.5 };
@@ -1009,11 +1158,12 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
        its full drop, so that it leaves the ring and reaches the vine both
        heading straight down the column. */
     const sway = chance(seed + 2).between(0.22, 0.32) * chance(seed + 3).sign();
-    const wave = (t) =>
+    const wave = (/** @type {number} */ t) =>
         t < hang.open
             ? sway * (TAU / hang.open) * Math.cos((TAU * t) / hang.open)
             : 0;
 
+    /** @type {Mark[]} */
     const marks = [];
     for (let k = 0; k < COIL.frames; k++) {
         const f = smoothstep(0, 1, k / (COIL.frames - 1));
@@ -1022,7 +1172,7 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
         const tip = lerp(curl.curled, curl.open, f);
         const turns = curl.turns * (1 - f);
         const length = lead + down + tip;
-        const steer = (s) => {
+        const steer = (/** @type {number} */ s) => {
             if (s < tuck) return 0;
             if (s < lead) return 1 / R;
             if (s < lead + down) return wave(s - lead);
@@ -1041,7 +1191,7 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
            it runs on into it. */
         const hung = lead / length;
         const end = lerp(0.7, 2.0, f);
-        const weight = (s) =>
+        const weight = (/** @type {number} */ s) =>
             s < hung
                 ? lerp(0.9, 1.7, s / hung)
                 : lerp(1.7, end, (s - hung) / (1 - hung));
@@ -1101,6 +1251,7 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
     };
 }
 
+/** @param {string} text */
 function hash(text) {
     let h = 5381;
     for (const c of text) h = (Math.imul(h, 33) ^ c.charCodeAt(0)) >>> 0;

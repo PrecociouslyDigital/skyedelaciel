@@ -61,3 +61,22 @@ A piece of a brush stroke, from brush.mjs `strokePiece`. Its `vine-box` is
 its size in bands, not in vine widths. `brushed()` uses `-drawn-by` directly
 rather than `drawing-box`, because `drawing-box` scales by
 `$toc-vine-width`.
+
+## 2026-10-06 — kinds are parsed, and placed kinds are their own table
+
+`kinds` was `Record<string, (args) => Drawn>` with six `as Parameters<…>`
+casts, so a `$vines` entry missing `seed` drew with `NaN` and nobody heard.
+Each kind is now built by `kind(shape, inks, draw)`: a zod shape for its
+geometry, the inks it paints in, and the drawing function, whose argument type
+comes from both. Two tables: `lines` (rule, toc), which only `drawing()`
+reads, and `placed` (shoot, blossom, hanging, stroke), whose `Placed` result
+has a required `box`. `vine-box()` looks only in `placed`, so "this kind has
+no box" is a lookup miss rather than a runtime check on an optional field.
+
+`drawing-box` in _ornaments.scss asks for a box without inks (the box is the
+same in every scheme). Rather than make every ink optional, `shaped` fills in
+any ink not given with a placeholder before parsing; `drawn` requires them.
+
+`blocks()` moved to patchwork.mjs, beside `quilt`, sharing `STRENGTHS`; its
+own list was `STRENGTHS` with one more blank in front, which it still is, so
+the masks are byte-identical. The integration keeps only the Sass glue.

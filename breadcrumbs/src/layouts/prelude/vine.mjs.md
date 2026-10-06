@@ -56,3 +56,15 @@ section opens, on the same transition as the unrolling frames. The drawing
 stays at the open height, because that is where its stem meets the vine.
 `translate` composes with the sidebar's mirroring `transform`, so the two
 don't conflict.
+
+## 2026-10-06 — `@ts-check`
+
+vine.mjs, brush.mjs, patchwork.mjs and chance.mjs are type-checked, with
+JSDoc typedefs for what they export (`Point`, `Traced`, `Mark`, `Ink`,
+`Placed`, `Chance`, `Patch`…). `noUncheckedIndexedAccess` applies to JS too,
+and these files index arrays everywhere; `nth(list, i)` asserts the element
+is there without changing what `list[i]` reads (brush.mjs's `last` replaces
+`.at(-1)`, and `nth` is never `.at`, whose negative indexes wrap where `[]`
+gives `undefined`). Each rewrite was checked against the built drawings and
+masks, which are byte-identical. `INKS` is exported for vines.ts's kinds, and
+picture's paint layers are typed against it. `chance` gained `pick(list)`.
