@@ -1,0 +1,90 @@
+/// Resolve: words come in as a picture loads at rising resolutions — coarse
+/// blocks, finer blocks, finest blocks, then the words through a moment's
+/// blur — and leave by the same sequence played backwards. The blocks are a
+/// mask on a patch of the words' own ink, swapped three times; nothing filters
+/// the words but the blur, which is cheap for the compositor.
+///
+/// Mixins only. prelude.scss sets the strips on `:root` and writes the
+/// keyframes once; whatever resolves names them.
+
+@use "ornaments";
+
+/// The squares words resolve through, about a letter wide, then half that, then
+/// a quarter: each a strip 8em wide and a line of type tall. They have no
+/// colour of their own; a patch paints them in its ink.
+@mixin strips {
+    --blocks-coarse: #{ornaments.blocks-of(16, 2, 101)};
+    --blocks-medium: #{ornaments.blocks-of(32, 4, 102)};
+    --blocks-fine: #{ornaments.blocks-of(64, 8, 103)};
+}
+
+@mixin -words {
+    0%,
+    66% {
+        -webkit-text-fill-color: transparent;
+        filter: none;
+    }
+
+    66.1% {
+        -webkit-text-fill-color: transparent;
+        filter: blur(1.6px);
+    }
+
+    100% {
+        -webkit-text-fill-color: currentcolor;
+        filter: none;
+    }
+}
+
+@mixin -blocks {
+    0% {
+        mask-image: var(--blocks-coarse);
+        opacity: 0;
+    }
+
+    4%,
+    30% {
+        mask-image: var(--blocks-coarse);
+        opacity: 0.8;
+    }
+
+    30.1%,
+    50% {
+        mask-image: var(--blocks-medium);
+        opacity: 0.8;
+    }
+
+    50.1%,
+    66% {
+        mask-image: var(--blocks-fine);
+        opacity: 0.8;
+    }
+
+    66.1%,
+    100% {
+        mask-image: var(--blocks-fine);
+        opacity: 0;
+    }
+}
+
+/// `resolve` and `unresolve` for the words, `resolve-blocks` and
+/// `unresolve-blocks` for their patch. Arriving and leaving are one sequence
+/// played either way, under two names, because only a change of name starts
+/// it over.
+@mixin keyframes {
+    @keyframes resolve {
+        @include -words;
+    }
+
+    @keyframes unresolve {
+        @include -words;
+    }
+
+    @keyframes resolve-blocks {
+        @include -blocks;
+    }
+
+    @keyframes unresolve-blocks {
+        @include -blocks;
+    }
+}

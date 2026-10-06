@@ -1,16 +1,14 @@
 import type { AstroIntegration } from "astro";
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import * as sass from "sass";
+import { chance } from "../layouts/prelude/chance.mjs";
 import {
     blossom,
-    chance,
     hanging,
     shoot,
     tocVine,
     vine,
 } from "../layouts/prelude/vine.mjs";
+import { drawingsDir, store } from "./drawn";
 
 /** What a `$vines` entry gives a drawing to draw from. */
 type Args = Record<string, number | boolean | string>;
@@ -40,13 +38,13 @@ const kinds: Record<string, (args: Args) => Drawn> = {
  * that grow from them. Two Sass functions, evaluated while the stylesheet
  * compiles:
  *
- * - `vine($kind, $args)` returns a `url()` to the drawing;
+ * - `drawing($kind, $args)` returns a `url()` to the drawing;
  * - `vine-box($kind, $args)` returns where the drawing lies about the point
  *   it is placed by, in widths of a vine, as `($x, $y, $width, $height,
  *   $frames)`.
  *
- * `$args` is a map, of numbers, booleans and colours. See `vine-image` and
- * `drawing-box` in _ornaments.scss.
+ * `$args` is a map, of numbers, booleans, strings and colours. See
+ * `vine-image` and `drawing-box` in _ornaments.scss.
  *
  * A drawing is a file rather than a data URL. Each scheme needs its own copy
  * of every vine with its colours baked in, and inlined they would bloat the
@@ -54,8 +52,7 @@ const kinds: Record<string, (args: Args) => Drawn> = {
  * scheme shows, and Vite fingerprints and serves them like any other asset the
  * stylesheet names.
  *
- * Files are named by their own content, so they never go stale. They live
- * under `.astro/`, which is generated and not committed.
+ * The files are kept by `store`, in drawn.ts.
  *
  * A third function, `blocks($cols, $rows, $seed)`, is the pattern the table
  * of contents resolves its entries through, inline: it has no colour of its
@@ -66,9 +63,6 @@ export default function vines(): AstroIntegration {
         name: "vines",
         hooks: {
             "astro:config:setup": ({ config, updateConfig }) => {
-                const dir = new URL(".astro/vines/", config.root);
-                mkdirSync(dir, { recursive: true });
-
                 /* Every scheme is applied more than once, so the same
                    drawing is asked for again and again. */
                 const drawn = new Map<string, Drawn>();
@@ -82,14 +76,10 @@ export default function vines(): AstroIntegration {
                     return drawn.get(key)!;
                 };
 
-                const file = (svg: string) => {
-                    const name = `${createHash("sha256").update(svg).digest("hex").slice(0, 16)}.svg`;
-                    const path = fileURLToPath(new URL(name, dir));
-                    if (!existsSync(path)) writeFileSync(path, svg);
-                    return new sass.SassString(`url(/.astro/vines/${name})`, {
+                const file = (svg: string) =>
+                    new sass.SassString(`url(${store(config.root, svg)})`, {
                         quotes: false,
                     });
-                };
 
                 const box = (args: sass.Value[]) => {
                     const { box, frames = 1 } = draw(args);
@@ -106,7 +96,7 @@ export default function vines(): AstroIntegration {
                     );
                 };
 
-                const ours = fileURLToPath(dir).replaceAll("\\", "/");
+                const ours = drawingsDir(config.root);
 
                 updateConfig({
                     vite: {
@@ -124,7 +114,7 @@ export default function vines(): AstroIntegration {
                             preprocessorOptions: {
                                 scss: {
                                     functions: {
-                                        "vine($kind, $args)": (
+                                        "drawing($kind, $args)": (
                                             args: sass.Value[],
                                         ) => file(draw(args).svg),
                                         "vine-box($kind, $args)": box,

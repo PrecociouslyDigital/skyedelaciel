@@ -30,3 +30,14 @@ the nojs sidebar get it too.
   of name restarts an animation. Arrivals fill backwards only, so an entry
   keeps no `filter` at rest; departures fill both and stay transparent, which
   the fold hides anyway.
+
+## 2026-10-06 — Resolve moved out to _resolve.scss
+
+The copy receipt (Headings, Figures) resolves its word COPIED in the same
+way the contents resolve an entry. The keyframe bodies and the block strips
+therefore moved to _resolve.scss. The strips are now `--blocks-*` on
+`:root`, where they used to be `--toc-blocks-*` on each entry. The keyframes
+are `resolve`, `unresolve`, `resolve-blocks` and `unresolve-blocks`, written
+once by prelude.scss. The entry's own patch (`::after`, its inset and its
+offset per `--i`) stays here, because it is measured against the contents'
+pitch.

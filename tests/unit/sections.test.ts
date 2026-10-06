@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { everythingElse, isIn, type Piece } from "~/content/sections";
-import { chance } from "~/layouts/prelude/vine.mjs";
+import { chance } from "~/layouts/prelude/chance.mjs";
 
 const SECTIONS = ["fiction", "nonfiction", "fiction/novellas"];
 const DAY = 24 * 60 * 60 * 1000;

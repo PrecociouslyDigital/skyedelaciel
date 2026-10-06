@@ -3,7 +3,7 @@ import type { LoaderContext } from "astro/loaders";
 import { existsSync, readFileSync } from "node:fs";
 import { partitioned } from "~/content/partitioned";
 import { day, isPublished, SCHEDULED_PREFIX, today } from "~/content/schedule";
-import { chance } from "~/layouts/prelude/vine.mjs";
+import { chance } from "~/layouts/prelude/chance.mjs";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;

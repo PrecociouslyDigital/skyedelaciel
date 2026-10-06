@@ -25,3 +25,11 @@ stays inside this file.
 section vine, so the shoot lands where the vine starts by construction.
 `vineStart` replicates the first random draw of `mainStem` for a flush-left
 vine: change the order of draws in `mainStem` and the two stop meeting.
+
+## 2026-10-06 — `chance` moved to chance.mjs
+
+The brush model (brush.mjs) draws from the same seeded PRNG, and importing
+it from vine.mjs would have tied the brush to the vines. It was moved
+unchanged, so every seed draws what it drew before, and the vine.test.ts
+hash pins prove it. The tests that used `chance` for property inputs now
+import it from chance.mjs.

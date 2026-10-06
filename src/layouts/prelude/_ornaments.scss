@@ -130,7 +130,7 @@ $-shoot-reach: $toc-reach + $toc-column * 0.5 + $toc-gap - $toc-shoot-clear;
 @function vine-image($name, $theme) {
     $vine: vine-of($name);
     @return -drawn-by(
-        "vine",
+        "drawing",
         map.get($vine, "kind"),
         map.merge(
             $vine,
@@ -179,7 +179,7 @@ $-shoot-reach: $toc-reach + $toc-column * 0.5 + $toc-gap - $toc-shoot-clear;
 /// drawing should be.
 @function -drawn-by($function, $args...) {
     @if not meta.function-exists($function) {
-        @error "#{$function}() is not defined: the vines integration draws the vines, and is not loaded.";
+        @error "#{$function}() is not defined: the vines integration defines it, and is not loaded.";
     }
     @return meta.call(meta.get-function($function), $args...);
 }

@@ -3,6 +3,7 @@
 @use "breakpoints";
 @use "motion";
 @use "ornaments";
+@use "resolve";
 @use "typography";
 
 /// How far the frame holds the text off the article's outer edge. Registered so
@@ -28,7 +29,10 @@
 
 :root {
     @include typography.tokens;
+    @include resolve.strips;
 }
+
+@include resolve.keyframes;
 
 /* Base typography */
 body {

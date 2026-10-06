@@ -40,3 +40,17 @@ own directory only; everything else keeps Vite's default.
 
 `blocks()` is Resolve's mask. It has no colour, so it is inline, written as
 one path per strength with only `%#<>` escaped (~6 KB for all three).
+
+## 2026-10-06 — `drawing()`, and the files moved to drawn.ts
+
+The Sass function `vine($kind, $args)` is now `drawing($kind, $args)`,
+because brush strokes are drawn through it too and are not vines.
+`vine-box` keeps its name: `drawing-box` is already the Sass-side wrapper in
+_ornaments.scss, and the two would collide.
+
+Writing a drawing to disk moved to `store(root, svg)` in drawn.ts, because
+the figure plugin writes plates the same way and imports them with `?url`.
+The directory is now `.astro/drawings/`. `store` returns the root-relative
+path, so Sass wraps it in `url()` and the MDX import uses it as it is. The
+`assetsInlineLimit` exemption reads the same directory through
+`drawingsDir`.
