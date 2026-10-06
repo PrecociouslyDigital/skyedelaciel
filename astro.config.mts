@@ -17,6 +17,7 @@ import { visit } from "unist-util-visit";
 import { resolveRemoteLinks } from "./src/components/mdx/links/resolve";
 import { loadCache, saveCache } from "./src/components/mdx/links/cache";
 import remarkSidenotes from "./src/plugins/remark-sidenotes";
+import remarkSections from "./src/plugins/remark-sections";
 import rehypeCodeBlocks from "./src/plugins/rehype-code-blocks";
 import rehypeTaskLists from "./src/plugins/rehype-task-lists";
 import tumblrTheme, {
@@ -70,6 +71,18 @@ function revision(): string {
     }
 }
 
+/** What every page of prose is put through, Markdown and MDX alike. */
+const remarkPlugins = [extractLinks];
+const rehypePlugins = [rehypeSlug, rehypeCodeBlocks, rehypeTaskLists];
+
+/**
+ * What only MDX is put through: these write MDX components into the page,
+ * which a plain Markdown page such as resume.md cannot render. Given its own
+ * `remarkPlugins`, MDX drops Markdown's rather than extending them, so the
+ * shared ones are restated.
+ */
+const mdxRemarkPlugins = [...remarkPlugins, remarkSidenotes, remarkSections];
+
 // https://astro.build/config
 export default defineConfig({
     site: "https://skyedelaciel.com",
@@ -80,7 +93,7 @@ export default defineConfig({
         allowedHosts: ["syhome.uwu"],
     },
     integrations: [
-        mdx(),
+        mdx({ remarkPlugins: mdxRemarkPlugins }),
         svelte(),
         tumblrTheme(),
         vines(),
@@ -112,7 +125,7 @@ export default defineConfig({
         // every code block, which no stylesheet can then re-ink for the reader's
         // scheme. Code is set in ink on paper like the rest of the page.
         syntaxHighlight: false,
-        remarkPlugins: [extractLinks, remarkSidenotes],
-        rehypePlugins: [rehypeSlug, rehypeCodeBlocks, rehypeTaskLists],
+        remarkPlugins,
+        rehypePlugins,
     },
 });

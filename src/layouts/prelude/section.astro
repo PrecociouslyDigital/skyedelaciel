@@ -42,7 +42,9 @@ const contents = everythingElse.length > 0 ? [...headings, closing] : headings;
         {
             everythingElse.length > 0 && (
                 <section class="everything-else closing">
-                    <H2 id={closing.slug}>{closing.text}</H2>
+                    <H2 id={closing.slug} unnumbered>
+                        {closing.text}
+                    </H2>
                     <PieceList pieces={everythingElse} />
                 </section>
             )

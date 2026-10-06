@@ -13,3 +13,8 @@ Moving the print rule here puts it behind the same scoping class, so it wins on
 source order instead, and puts it next to the declaration that would otherwise
 undo it. Any future rule targeting this button from outside has the same
 problem; the fix is to write it here.
+
+## 2026-10-06 — deleted
+
+Replaced by copy/CopyLink.svelte: the `§ N` number is the heading's only
+link and copies its address. See that file's breadcrumbs.

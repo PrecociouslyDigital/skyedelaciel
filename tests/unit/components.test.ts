@@ -1,6 +1,9 @@
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import { select, selectAll } from "hast-util-select";
+import { getContainerRenderer } from "@astrojs/svelte";
+import { loadRenderers } from "astro:container";
 import { beforeAll, describe, expect, test } from "vitest";
+import Heading from "~/components/mdx/heading/Heading.astro";
 import TableOfContents from "~/components/TableOfContents.astro";
 import Bibliography from "~/components/mdx/links/Bibliography.astro";
 import Link from "~/components/mdx/links/Link.astro";
@@ -404,5 +407,50 @@ describe("Bibliography", () => {
             { ...book, id: "abbott", author: [{ family: "Abbott" }] },
         ]);
         expect(html.indexOf("Abbott")).toBeLessThan(html.indexOf("Tufte"));
+    });
+});
+
+describe("Heading", () => {
+    /** Headings carry their address as a Svelte island, so they need its renderer. */
+    let withIslands: AstroContainer;
+    beforeAll(async () => {
+        const renderers = await loadRenderers([getContainerRenderer()]);
+        withIslands = await AstroContainer.create({ renderers });
+    });
+
+    const render = (props: Record<string, unknown>) =>
+        withIslands
+            .renderToString(Heading, {
+                props: { as: "h2", ...props },
+                slots: { default: "Default Style" },
+            })
+            .then((html) => parse(clean(html)));
+
+    test("its words are not a link, and its address is its only one", async () => {
+        const tree = await render({
+            id: "default-style",
+            "data-section": "1.1",
+        });
+        const words = select(".heading-words", tree)!;
+        expect(text(words)).toBe("Default Style");
+        expect(select("a", words)).toBeUndefined();
+        expect(selectAll("a", tree).map((a) => a.properties.href)).toEqual([
+            "#default-style",
+        ]);
+        expect(text(select("a", tree)!)).toBe("§ 1.1");
+    });
+
+    test("an unnumbered heading's address is the bare section sign", async () => {
+        const tree = await render({ id: "everything-else", unnumbered: true });
+        expect(text(select("a[href='#everything-else']", tree)!)).toBe("§");
+        expect(select("[data-section]", tree)).toBeUndefined();
+    });
+
+    test("a heading neither numbered nor unnumbered fails", async () => {
+        await expect(render({ id: "lost" })).rejects.toThrow(/section number/);
+    });
+
+    test("a heading with no id fails", async () => {
+        await expect(render({ "data-section": "1" })).rejects.toThrow(/id/);
     });
 });

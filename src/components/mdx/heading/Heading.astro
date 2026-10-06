@@ -1,38 +1,44 @@
 ---
 import type { HTMLTag } from "astro/types";
-import CopyAnchorIcon from "./CopyAnchorIcon.svelte";
+import CopyLink from "../copy/CopyLink.svelte";
 
-export interface Props {
-    /** e.g. "h1", "h2", ... */
-    as: HTMLTag;
-    id?: string;
-    [key: string]: any;
+/**
+ * A heading, closed by its address: `§ 5.4`, the section sign and the
+ * heading's number, which is the heading's only link. remark-sections numbers
+ * the prose's headings; one written outside the prose says `unnumbered`, and
+ * its address is the bare `§`. A heading that is neither fails the build.
+ */
+type Props = { as: HTMLTag; id: string } & (
+    | { "data-section": string; unnumbered?: never }
+    | { unnumbered: true; "data-section"?: never }
+);
+
+const { as: Tag, id, ...rest } = Astro.props as Props;
+const section = rest["data-section"];
+if (!id) throw new Error("a heading needs an id for its address.");
+if (!section && !rest.unnumbered) {
+    throw new Error(
+        `heading #${id} has no section number, and does not say it is unnumbered.`,
+    );
 }
-
-const { as: Tag, id, ...rest } = Astro.props;
 ---
 
-<Tag id={id} class="heading" {...rest}
-    ><a href={id ? `#${id}` : undefined} class="heading-anchor"><slot /></a>{
-        id && <CopyAnchorIcon slug={id} client:visible />
-    }</Tag
+<Tag id={id} class="heading" data-section={section}
+    ><span class="heading-box receipt-box"
+        ><span class="heading-words"><slot /></span>
+        <CopyLink
+            href={`#${id}`}
+            label={section ? `§ ${section}` : "§"}
+            client:visible
+        /></span
+    ></Tag
 >
 
-<style lang="scss">
+<style>
     /* The type scale itself lives in prelude.scss, where the bibliography's
-       own <h2> and the front matter's <h1> can reach it too. */
-    .heading:hover :global(.copy-anchor) {
-        opacity: 1;
-    }
-
-    .heading-anchor {
-        text-decoration-line: none;
-
-        // Longhand, so the underline keeps the accent colour prelude.scss
-        // gives every link rather than resetting to `currentColor`.
-        &:hover {
-            text-decoration-line: underline;
-            text-decoration-thickness: 2px;
-        }
+       own <h2> and the front matter's <h1> can reach it too. The box sits
+       tight round the words and the address, so the machine's ticks do. */
+    .heading-box {
+        display: inline-block;
     }
 </style>

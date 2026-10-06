@@ -19,3 +19,9 @@ link is turned into an id, here and for popovers alike.
 
 It is a `##` added to the TOC's headings, not a heading in the MDX, so it is
 dropped together with its entry when nothing is left over.
+
+## 2026-10-06 — Everything Else is unnumbered
+
+The section page writes its own Everything Else heading. No remark plugin
+sees it, so it passes `unnumbered` and its address is a bare `§`. Heading.astro
+fails the build for a heading that is neither numbered nor unnumbered.

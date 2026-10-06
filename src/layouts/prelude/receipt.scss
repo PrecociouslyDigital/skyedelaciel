@@ -1,0 +1,148 @@
+@use "breakpoints";
+@use "motion";
+@use "ornaments";
+
+/// The receipt for a copied address. Global, because CopyLink.svelte is set
+/// inside whichever component holds the thing it names: Heading.astro's box,
+/// and a figure's.
+///
+/// The link's container is its `.receipt-box`. While the link's
+/// `data-receipt` is `shown`, the machine draws corner ticks round the box
+/// and writes its one word, COPIED, which resolves in as a table-of-contents
+/// entry does (see _resolve.scss). When the receipt is `leaving`, the ticks
+/// lift and the word unresolves.
+
+/// How long the word takes to come in, and to go.
+$arrive: 320ms;
+$leave: 260ms;
+
+/// The address itself: the section sign and number, or a figure's number,
+/// set as a quiet label that turns the machine's colour while it is copied.
+.copy-link {
+    font-family: var(--font-prose);
+    font-size: 0.95rem;
+    font-style: normal;
+    font-weight: 400;
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: var(--color-muted);
+    text-decoration-line: none;
+
+    &:hover {
+        color: var(--color-text);
+        text-decoration-line: underline;
+    }
+
+    &[data-receipt="shown"] {
+        color: var(--color-signal);
+    }
+}
+
+.receipt-box {
+    position: relative;
+
+    /* The box is drawn a little outside what it holds, so that drawing it
+       moves nothing. */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: var(--receipt-outset, -0.2rem -0.5ch);
+        pointer-events: none;
+    }
+
+    &:has(.copy-link[data-receipt="shown"])::before {
+        @include ornaments.corner-ticks(var(--color-signal), 0.6rem, 1.5px);
+    }
+}
+
+.receipt-word {
+    position: absolute;
+    visibility: hidden;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-signal);
+    pointer-events: none;
+
+    /* The patch of the word's own ink it resolves through. */
+    &::after {
+        content: "";
+        position: absolute;
+        inset: -0.15em 0;
+        background: currentcolor;
+        mask-size: 8em 100%;
+        mask-repeat: repeat-x;
+        opacity: 0;
+    }
+
+    /* The default, for narrow measures with no room beside the box: the word
+       stands over the box's right-hand corner, in the heading's own margin.
+       Under it would be a top-level heading's vine, and then the text. */
+    &[data-placement="beside"] {
+        right: 0;
+        bottom: calc(100% + 0.3rem);
+    }
+
+    /* Under the box's right-hand corner, where the next tick would be. */
+    &[data-placement="below"] {
+        right: 0;
+        top: calc(100% + 0.35rem);
+    }
+}
+
+@include breakpoints.wide {
+    .receipt-word[data-placement="beside"] {
+        left: calc(100% + 1ch);
+        right: auto;
+        top: 50%;
+        bottom: auto;
+        translate: 0 -50%;
+    }
+}
+
+.copy-link[data-receipt="shown"] + .receipt-word {
+    @include motion.grown(resolve, $arrive, 0s, linear);
+    visibility: visible;
+
+    &::after {
+        @include motion.grown(resolve-blocks, $arrive, 0s, linear);
+    }
+}
+
+.copy-link[data-receipt="leaving"] + .receipt-word {
+    @include motion.grown(unresolve, $leave, 0s, linear, $leaving: true);
+    visibility: visible;
+
+    &::after {
+        @include motion.grown(
+            unresolve-blocks,
+            $leave,
+            0s,
+            linear,
+            $leaving: true
+        );
+    }
+
+    // With nothing to play, it is simply gone.
+    @media (prefers-reduced-motion: reduce) {
+        visibility: hidden;
+    }
+}
+
+/* Paper keeps the number, as plain text, and none of the receipt. */
+@media print {
+    .copy-link {
+        color: var(--color-text);
+    }
+
+    .receipt-box::before,
+    .receipt-word {
+        display: none;
+    }
+}

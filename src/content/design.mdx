@@ -87,9 +87,9 @@ Each pigment keeps its hue and chroma, and each scheme sets its lightness at bui
 
 ## Annotation
 
-The machine layer is one idea, and everything drawn in `signal` belongs to it: a second reader has been over this page and left its working visible. It never writes words of its own — it draws boxes and it stamps identifiers, which is the whole of its vocabulary.
+The machine layer is one idea, and everything drawn in `signal` belongs to it: a second reader has been over this page and left its working visible. It draws boxes and it stamps identifiers, which is nearly the whole of its vocabulary. The one word it writes is COPIED, beside an address it has just copied, to say that it did.
 
-It draws a **bounding box** as four corner ticks, a right angle at each corner with the edges between them left open, around anything it has taken as a subject: the article, outside the ink frame rather than replacing it, so that both readers' boxes stand; a code block; the popover on a link; the entry of the [table of contents](#table-of-contents) being read. That last box never lands on the contents' vines: around a whole section — an entry with what it unfolded — it reaches out past the vine the section grows on, and around a single entry it hugs the words and stops short of the vine and its marks. Where the thing it has boxed can scroll, the ticks are painted on it rather than around it, since a box drawn outside a scrolling element would be clipped.
+It draws a **bounding box** as four corner ticks, a right angle at each corner with the edges between them left open, around anything it has taken as a subject: the article, outside the ink frame rather than replacing it, so that both readers' boxes stand; a heading whose address it has just [copied](#headings); a code block; the popover on a link; the entry of the [table of contents](#table-of-contents) being read. That last box never lands on the contents' vines: around a whole section — an entry with what it unfolded — it reaches out past the vine the section grows on, and around a single entry it hugs the words and stops short of the vine and its marks. Where the thing it has boxed can scroll, the ticks are painted on it rather than around it, since a box drawn outside a scrolling element would be clipped.
 
 It draws a **rail slug** down the right margin of a framed article, set in a vertical column in the monospace face — the 書口 of a woodblock page, which carries the title and fascicle number down the fold. The column runs downward but the characters stand upright in it, as they do on a seal, rather than being turned on their side. It dates and counts the page: published, edited if it has been, and the revision the build was made from. An unedited page carries no edited date, and outside a git checkout the revision is simply absent. On [Tumblr](#tumblr) it stamps each post with its day and, once it has any, its count of notes.
 
@@ -109,7 +109,7 @@ The scale runs from the article title, which is the largest thing on the page, d
 
 A readout snaps to where it belongs rather than easing into it. Every transition on the site is linear, runs no longer than 120ms, and moves only geometry or colour; a longer one should fail the build rather than be caught by eye. Delays are exempt from that limit and are a separate tool — the link popover waits before it appears, so that a pointer crossing a link on its way somewhere else never summons one. A change tied to scrolling, like a popover's banner giving way to its text, is not a transition: it has no duration, and moves exactly as far as the reader scrolls.
 
-What grows is the exception. It is not a readout but a plant, or a hand, and it moves at a brush's pace and with a brush's easing, in no more than 600ms: the logo when it is [rewritten](#content-1), and the [table of contents](#table-of-contents) as its sections unfold and fold away. A section grows open in about half a second and folds in less, its growing edge soft rather than cut; the shoot over its ring unrolls into its vine as it opens and curls back as it folds. Each entry arrives as the growing tip reaches it, and resolves: coarse blocks of its own ink, finer blocks, finer still, then its words through a moment's blur, as a picture loads at rising resolutions. Folding plays the same backwards, last entry first. The blocks are not drawn from the letters, only cut to about their size.
+What grows is the exception. It is not a readout but a plant, or a hand, and it moves at a brush's pace and with a brush's easing, in no more than 600ms: the logo when it is [rewritten](#content-1), and the [table of contents](#table-of-contents) as its sections unfold and fold away. A section grows open in about half a second and folds in less, its growing edge soft rather than cut; the shoot over its ring unrolls into its vine as it opens and curls back as it folds. Each entry arrives as the growing tip reaches it, and resolves: coarse blocks of its own ink, finer blocks, finer still, then its words through a moment's blur, as a picture loads at rising resolutions. Folding plays the same backwards, last entry first. The blocks are not drawn from the letters, only cut to about their size. The machine's one word resolves the same way: COPIED, in a copied address's [receipt](#headings), comes in over about a third of a second and unresolves when the receipt lifts.
 
 A reader who has asked for reduced motion gets none of it: under `prefers-reduced-motion: reduce` every transition duration is zero, and nothing grows or resolves — a section is simply open or shut. That answer should travel with each transition rather than being applied once over the top of everything, so a component that grows a new one cannot forget it. A change tied to scrolling is held still too, and the logo is never rewritten.
 
@@ -183,7 +183,13 @@ In print, the table of contents should be in line with the content, always expan
 
 ## Headings
 
-Hedings should be in a different font from the main content. They should be [anchor links](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a) to themselves. On platforms with javascript enabled, an icon should appear on hover that copies the full anchor link to the clipboard. A top-level heading is underscored by a short vine.
+Headings are set in the display face, apart from the prose. Each is numbered as a section of its page (1, 1.1, 1.2, 2), counting from the shallowest level the page uses. A page whose headings skip a level fails the build, since a skipped level has no number that would mean anything.
+
+The number closes the heading as `§ 5.4`: the section sign that marks every address on this site, and the heading's number, set in muted ink and always shown. It is the heading's only link. The words are plain text, so a reader selecting them never follows a link by accident. A heading that stands outside the page's outline, such as a section page's Everything Else, closes with a bare `§`.
+
+Clicking the number copies the heading's full address to the clipboard and puts it in the address bar, without moving the page. The machine answers with a receipt: it draws its [bounding box](#annotation) tight round the heading, the number turns `signal`, and beside the box the word COPIED resolves in as an entry of the contents does. On a narrow screen, where there is no room beside the box, the word stands over its right-hand corner instead. After a moment and a half the box lifts and the word unresolves. A screen reader hears "Link copied". Without javascript the number is an ordinary link to the heading. On paper the number prints as plain text in ink, and none of the receipt does.
+
+A top-level heading is underscored by a short vine.
 
 ## Links
 
@@ -221,7 +227,7 @@ When printed, links should appear as regular text, since a printed link cannot b
 
 If `bibliography: true` is set in the frontmatter, the article should include a "Works Referenced" section generated from every link in the article, in MLA style. Entries should be links to their source
 
-#### Additional Citations
+### Additional Citations
 
 Articles can provide an additional list of citations under the `citation` frontmatter property. The list of citations should be in [bibjson](https://rufuspollock-okfn.github.io/bibjson/) format, validated by Astro's support for [frontmatter schema](https://rufuspollock-okfn.github.io/bibjson/).
 

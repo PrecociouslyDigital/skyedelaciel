@@ -15,7 +15,8 @@ const GROW_LIMIT_MS = 600;
 /**
  * Every transition the page declares, and every keyframed animation that runs
  * on the clock rather than on the scroll, wherever it was declared, and
- * whether it is in a table of contents — the one thing here that grows.
+ * whether it is paced — a table of contents growing, or a receipt resolving
+ * the word COPIED, the two things here that take a brush's time.
  *
  * Read off the rendered page rather than off the stylesheets, because that is
  * the only reading that covers Astro's scoped rules, Svelte's scoped rules and
@@ -28,7 +29,7 @@ const running = (page: Page) =>
         const found: { where: string; ms: number; growing: boolean }[] = [];
 
         for (const element of document.querySelectorAll("*")) {
-            const growing = element.closest(".toc") !== null;
+            const growing = element.closest(".toc, .receipt-word") !== null;
             const name = element.className || element.tagName;
             for (const pseudo of [
                 "",
@@ -109,12 +110,35 @@ section("Motion", () => {
             expect(growth.filter(({ ms }) => ms > GROW_LIMIT_MS)).toEqual([]);
         });
 
+        test(`a copy's receipt resolves at a brush's pace, and no slower (${path})`, async ({
+            page,
+            context,
+        }) => {
+            await context.grantPermissions(["clipboard-write"]);
+            await page.goto(path);
+            await page.locator("article .copy-link").first().click();
+
+            const receipt = (await running(page)).filter(({ where }) =>
+                where.startsWith("receipt-word"),
+            );
+            expect(receipt.length, "the word resolves").toBeGreaterThan(0);
+            expect(receipt.filter(({ ms }) => ms > GROW_LIMIT_MS)).toEqual([]);
+        });
+
         test(`a reader who asked for less motion gets none (${path})`, async ({
             page,
+            context,
         }) => {
             await page.emulateMedia({ reducedMotion: "reduce" });
+            await context.grantPermissions(["clipboard-write"]);
             await page.goto(path);
+            expect(await running(page)).toEqual([]);
 
+            // Not even a copy's receipt.
+            await page.locator("article .copy-link").first().click();
+            await expect(
+                page.locator("article [role=status]").first(),
+            ).toHaveText("Link copied");
             expect(await running(page)).toEqual([]);
         });
     }
