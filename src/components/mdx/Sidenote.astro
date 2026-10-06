@@ -29,10 +29,29 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
 
 <style lang="scss">
     @use "../../layouts/prelude/breakpoints";
+    @use "../../layouts/prelude/ornaments";
+
+    /// A stroke of the brush down a note's left edge, in `$ink`, holding
+    /// its column.
+    @mixin held($ink) {
+        position: relative;
+
+        &::before {
+            @include ornaments.brushed("down");
+            --band: 4px;
+            content: "";
+            position: absolute;
+            inset-block: 0;
+            left: calc(var(--band) / -2);
+            width: var(--band);
+            background-color: $ink;
+            pointer-events: none;
+        }
+    }
 
     /**
-     * 旁批: commentary set outside the frame, in lighter ink, with a thin rule
-     * holding the column. Written once because the margin is where a note
+     * 旁批: commentary set outside the frame, in lighter ink, with a light
+     * stroke holding the column. Written once because the margin is where a note
      * lives on a wide screen and on paper alike, and paper is narrower than
      * the wide breakpoint.
      */
@@ -51,9 +70,8 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         margin-right: calc(var(--standoff) - var(--sidenote-width, 14rem));
         margin-bottom: 0.5rem;
         padding: 0 0 0 1ch;
-        border: 0;
-        border-left: 1px solid var(--color-border);
         font-size: $size;
+        @include held(var(--color-border));
 
         /* Label is not interactive out here, just a number */
         > label {
@@ -113,7 +131,7 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         display: block;
         margin: 0.5rem 0;
         padding-left: 1rem;
-        border-left: 2px solid var(--color-accent);
+        @include held(var(--color-accent));
     }
 
     /* — Wide: always visible in right margin — */
@@ -127,7 +145,10 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         /* Bring a note up to full ink while its marker is hovered. */
         .sidenote-wrapper:has(label[role="doc-noteref"]:hover) > small {
             color: var(--color-text);
-            border-left-color: var(--color-accent);
+
+            &::before {
+                background-color: var(--color-accent);
+            }
         }
     }
 

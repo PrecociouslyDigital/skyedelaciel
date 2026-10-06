@@ -177,3 +177,13 @@ hanging strips for n ≥ 12 are identical files and deduplicate by content hash.
 The host functions are called through `-drawn-by()`, which fails the build if
 the integration isn't loaded; otherwise Sass writes `vine(...)` out as an
 unknown CSS function and the page silently shows nothing.
+
+## 2026-10-06 — `$strokes` and `brushed()`
+
+`brushed($name)` takes only the name. The plan had `brushed($name, $axis)`,
+but each stroke is drawn along one axis, so the axis is stored in the
+`$strokes` entry and an across stroke can't be laid down a column. The body
+layer is `100% - 2·end + 1px` wide, overlapping each end by a pixel, which
+is how the specimen hid the seams. The call site supplies `--band`, the
+size, the position and the ink, so the same mixin serves table rows,
+quotations and sidenotes.

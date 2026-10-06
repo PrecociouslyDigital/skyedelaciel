@@ -54,3 +54,10 @@ The directory is now `.astro/drawings/`. `store` returns the root-relative
 path, so Sass wraps it in `url()` and the MDX import uses it as it is. The
 `assetsInlineLimit` exemption reads the same directory through
 `drawingsDir`.
+
+## 2026-10-06 — kind `stroke`
+
+A piece of a brush stroke, from brush.mjs `strokePiece`. Its `vine-box` is
+its size in bands, not in vine widths. `brushed()` uses `-drawn-by` directly
+rather than `drawing-box`, because `drawing-box` scales by
+`$toc-vine-width`.

@@ -204,6 +204,77 @@ $-shoot-reach: $toc-reach + $toc-column * 0.5 + $toc-gap - $toc-shoot-clear;
     @return map.get($vines, $name);
 }
 
+/// The brush strokes for lines that are not vines: a table's, a quotation's,
+/// a marginal note's. See brush.mjs. Two across, so that neighbouring rows
+/// differ; one down, ruled straight.
+$strokes: (
+    "across-a": (
+        "seed": "across-a",
+        "axis": "across",
+    ),
+    "across-b": (
+        "seed": "across-b",
+        "axis": "across",
+    ),
+    "down": (
+        "seed": "down",
+        "axis": "down",
+        "ruled": true,
+    ),
+);
+
+/// A line painted as one stroke of the brush, through a mask, so that it
+/// takes whatever colour the element paints. The head and tail keep their
+/// shape at the ends; only the body between them stretches.
+///
+/// The element is the band the stroke is drawn in, `--band` thick; the paint
+/// is about half of that. The ends are as long as brush.mjs drew them, in
+/// bands; the body overlaps each by a pixel to hide the seams.
+@mixin brushed($name) {
+    @if not map.has-key($strokes, $name) {
+        @error "there is no #{$name} stroke; the strokes are #{map.keys($strokes)}.";
+    }
+    $stroke: map.get($strokes, $name);
+    $across: map.get($stroke, "axis") == "across";
+    $pieces: ();
+    @each $piece in ("head", "body", "tail") {
+        $pieces: list.append(
+            $pieces,
+            -drawn-by("drawing", "stroke", map.set($stroke, "piece", $piece)),
+            $separator: comma
+        );
+    }
+    $head: -drawn-by("vine-box", "stroke", map.set($stroke, "piece", "head"));
+    $length: list.nth($head, 4);
+    @if $across {
+        $length: list.nth($head, 3);
+    }
+    $end: calc(var(--band) * #{$length});
+    $body: calc(100% - 2 * #{$end} + 1px);
+
+    mask-image: $pieces;
+    mask-repeat: no-repeat;
+    @if $across {
+        mask-size:
+            $end var(--band),
+            $body var(--band),
+            $end var(--band);
+        mask-position:
+            0 50%,
+            $end 50%,
+            100% 50%;
+    } @else {
+        mask-size:
+            var(--band) $end,
+            var(--band) $body,
+            var(--band) $end;
+        mask-position:
+            50% 0,
+            50% $end,
+            50% 100%;
+    }
+}
+
 /// 文武線: a heavy rule outside, a hairline inside, and a channel of ground
 /// between them. `border-style: double` divides its width into three equal
 /// parts and so cannot draw a thick/thin pair; two stacked inset shadows can,

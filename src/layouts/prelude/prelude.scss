@@ -202,10 +202,26 @@ strong {
     font-weight: 650;
 }
 
+/* A quotation hangs from one stroke of ink down its left, ruled straight. It
+   is at least two lines tall, so that the stroke has room for its head and
+   its tail. */
 blockquote {
+    position: relative;
     margin: 1.25em 0;
     padding: 0.1em 0 0.1em 1.5ch;
-    border-left: 2px solid var(--color-text);
+    min-block-size: 2lh;
+
+    &::before {
+        @include ornaments.brushed("down");
+        --band: 7px;
+        content: "";
+        position: absolute;
+        inset-block: 0;
+        left: calc(var(--band) / -2 + 1px);
+        width: var(--band);
+        background-color: var(--color-text);
+        pointer-events: none;
+    }
 }
 
 ul {
@@ -262,14 +278,44 @@ table {
 th,
 td {
     padding: 0.35em 1ch;
-    border-bottom: 1px solid var(--color-border);
     text-align: left;
 }
 
 th {
     @include typography.apparatus(0.9rem);
     font-weight: 600;
-    border-bottom: 2px solid var(--color-text);
+}
+
+/* Each row is ruled off by a stroke of the brush across its foot, straddling
+   the line between it and the next: the header's in ink, the body's lighter
+   and in the border colour. Body rows take turns between two strokes, so
+   that no line repeats the one above it. */
+tr {
+    position: relative;
+
+    &::after {
+        @include ornaments.brushed("across-a");
+        content: "";
+        position: absolute;
+        inset-inline: 0;
+        bottom: calc(var(--band) / -2);
+        height: var(--band);
+        pointer-events: none;
+    }
+}
+
+thead tr::after {
+    --band: 8px;
+    background-color: var(--color-text);
+}
+
+tbody tr::after {
+    --band: 4px;
+    background-color: var(--color-border);
+}
+
+tbody tr:nth-child(even)::after {
+    @include ornaments.brushed("across-b");
 }
 
 hr {

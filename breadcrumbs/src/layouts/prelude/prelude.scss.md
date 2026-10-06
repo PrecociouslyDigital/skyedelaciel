@@ -130,3 +130,18 @@ fading the top for good.
 Known, and not from this change: between 60rem and 80rem the sidebar, and so
 the navbar, is hidden entirely (since "Sidenotes 1"). Raising the breakpoint
 widened that gap from 960–1152px to 960–1280px.
+
+## 2026-10-06 — brushed rows and quotations
+
+Each table row's stroke is `tr::after`, absolutely positioned with
+`tr { position: relative }`, and straddles the row's bottom edge by half its
+band. It is global, so Tumblr bodies get it too; the popover's ledger is
+built from spans, not a table, and is unaffected. Even body rows switch the
+mask to `across-b` by including `brushed` again, which repeats the
+size/position longhands. That costs a few bytes, and it keeps the mixin the
+only place those longhands are written. `tr::after` in Safari has not been
+checked: the suite runs Chromium only.
+
+A blockquote is `min-block-size: 2lh` so that a one-line quotation still has
+room for both the head and the tail. Under 6 bands (42px) they would
+overlap.

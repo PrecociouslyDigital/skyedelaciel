@@ -1,5 +1,6 @@
 import type { AstroIntegration } from "astro";
 import * as sass from "sass";
+import { strokePiece } from "../layouts/prelude/brush.mjs";
 import { chance } from "../layouts/prelude/chance.mjs";
 import {
     blossom,
@@ -31,17 +32,18 @@ const kinds: Record<string, (args: Args) => Drawn> = {
     shoot: (args) => shoot(args as Parameters<typeof shoot>[0]),
     blossom: (args) => blossom(args as Parameters<typeof blossom>[0]),
     hanging: (args) => hanging(args as Parameters<typeof hanging>[0]),
+    stroke: (args) => strokePiece(args as Parameters<typeof strokePiece>[0]),
 };
 
 /**
- * Lets the stylesheets draw vines, and the pieces of the table of contents
- * that grow from them. Two Sass functions, evaluated while the stylesheet
- * compiles:
+ * Lets the stylesheets draw vines, the pieces of the table of contents that
+ * grow from them, and the brush strokes of brush.mjs. Two Sass functions,
+ * evaluated while the stylesheet compiles:
  *
  * - `drawing($kind, $args)` returns a `url()` to the drawing;
  * - `vine-box($kind, $args)` returns where the drawing lies about the point
  *   it is placed by, in widths of a vine, as `($x, $y, $width, $height,
- *   $frames)`.
+ *   $frames)`; for a piece of a stroke, its size in bands.
  *
  * `$args` is a map, of numbers, booleans, strings and colours. See
  * `vine-image` and `drawing-box` in _ornaments.scss.
