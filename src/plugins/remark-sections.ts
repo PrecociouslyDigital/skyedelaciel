@@ -9,7 +9,7 @@
 import type { RemarkPlugin } from "@astrojs/markdown-remark";
 import type { Heading, Root } from "mdast";
 import { visit } from "unist-util-visit";
-import { SkippedLevel, sectionNumbers } from "./numbering";
+import { SECTION_ATTRIBUTE, SkippedLevel, sectionNumbers } from "./numbering";
 
 const remarkSections: RemarkPlugin = () => (tree: Root, file) => {
     const headings: Heading[] = [];
@@ -31,7 +31,7 @@ const remarkSections: RemarkPlugin = () => (tree: Root, file) => {
         heading.data ??= {};
         heading.data.hProperties = {
             ...heading.data.hProperties,
-            "data-section": numbers[i],
+            [SECTION_ATTRIBUTE]: numbers[i],
         };
     });
 };

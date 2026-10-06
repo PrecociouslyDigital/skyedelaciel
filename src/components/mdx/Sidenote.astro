@@ -1,4 +1,5 @@
 ---
+import type { Written } from "./written";
 /**
  * CSS-only sidenote. Renders footnote content in the right margin when the
  * viewport is wide enough, or as a toggle-able inline note otherwise.
@@ -6,9 +7,7 @@
  * Numbering is entirely CSS-counter-driven — the `id` prop is a slug, not a
  * number, so manually authored <Sidenote> components won't break numbering.
  */
-export interface Props {
-    id: string;
-}
+type Props = Written["Sidenote"];
 
 const { id } = Astro.props;
 const inputId = `sn-${id}`;

@@ -1,4 +1,5 @@
 ---
+import type { Written } from "./written";
 import CopyLink from "./copy/CopyLink.svelte";
 
 /**
@@ -6,10 +7,7 @@ import CopyLink from "./copy/CopyLink.svelte";
  * `Def. 3.2`, which copies the address as a heading's number does. Written
  * by remark-figures, from a `<dt>`.
  */
-interface Props {
-    id: `def-${string}`;
-    label: string;
-}
+type Props = Written["Term"];
 
 const { id, label } = Astro.props;
 ---

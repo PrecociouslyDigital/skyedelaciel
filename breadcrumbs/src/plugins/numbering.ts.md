@@ -47,3 +47,16 @@ remark-figures reads the top-level number off each heading's `data-section`,
 which remark-sections writes, and fails the build if it is missing rather than
 numbering flat. Terms are matched as both flow and text JSX elements: a
 `<dl>` written on one line parses as text and was silently skipped before.
+
+## 2026-10-06 — kinds carry their id types
+
+`KINDS` is `as const satisfies Record<Kind, …>`, so each prefix is a literal
+and `IdOf<K>` is the id type of kind `K` (`fig-${string}`). `Numbered<T>` is
+distributive: numbering a union of items gives each member an id of its own
+kind, which is what lets remark-figures hand `Written["Figure"]` a
+`fig-` id without a cast. `numberApparatus` is generic over the items and
+holds the one cast, at the one place ids are made; TypeScript cannot follow
+the item's kind through a generic union to the distributed result.
+
+`SECTION_ATTRIBUTE` is the `data-section` name remark-sections writes,
+remark-figures reads and Heading.astro renders, in one place.

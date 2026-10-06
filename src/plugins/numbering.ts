@@ -49,19 +49,7 @@ export type Kind = "figure" | "table" | "definition" | "lemma" | "theorem";
 
 export type Track = "figures" | "statements";
 
-export const KINDS: Record<
-    Kind,
-    {
-        /** Which sequence it is numbered in. */
-        track: Track;
-        /** What an id starts with, before the hyphen. */
-        prefix: string;
-        /** How the text names one: "Figure 3.2". */
-        label: string;
-        /** How its own caption or heading names it: "Fig. 3.2". */
-        short: string;
-    }
-> = {
+export const KINDS = {
     figure: { track: "figures", prefix: "fig", label: "Figure", short: "Fig." },
     table: { track: "figures", prefix: "tab", label: "Table", short: "Table" },
     definition: {
@@ -82,7 +70,28 @@ export const KINDS: Record<
         label: "Theorem",
         short: "Theorem",
     },
-};
+} as const satisfies Record<
+    Kind,
+    {
+        /** Which sequence it is numbered in. */
+        track: Track;
+        /** What an id starts with, before the hyphen. */
+        prefix: string;
+        /** How the text names one: "Figure 3.2". */
+        label: string;
+        /** How its own caption or heading names it: "Fig. 3.2". */
+        short: string;
+    }
+>;
+
+/** The id of a thing of kind `K`: `fig-fuji` is a figure's. */
+export type IdOf<K extends Kind> = `${(typeof KINDS)[K]["prefix"]}-${string}`;
+
+/**
+ * The attribute a heading's section number travels in: remark-sections sets
+ * it, remark-figures reads it, and Heading.astro writes it on the page.
+ */
+export const SECTION_ATTRIBUTE = "data-section";
 
 /**
  * A thing set apart, named for its id: an image by its file, a block of code
@@ -98,7 +107,10 @@ export type Apparatus = (
     | { kind: "table" | "definition"; name: string }
 ) & { section?: string };
 
-export type Numbered = Apparatus & { id: string; number: string };
+/** `T` with its id and number, each kind of it with an id of that kind. */
+export type Numbered<T extends Apparatus = Apparatus> = T extends Apparatus
+    ? T & { id: IdOf<T["kind"]>; number: string }
+    : never;
 
 /** Two things on one page whose names come to the same id. */
 export class DuplicateId extends Error {
@@ -131,19 +143,23 @@ export class DanglingReference extends Error {
  * A thing is identified by its kind's prefix and the slug of its name, or of
  * its number if it has none. Throws `DuplicateId` where two would share an id.
  */
-export function numberApparatus(items: readonly Apparatus[]): Numbered[] {
+export function numberApparatus<T extends Apparatus>(
+    items: readonly T[],
+): Numbered<T>[] {
     const counts = new Map<string, number>();
     const ids = new Set<string>();
     return items.map((item, index) => {
-        const { track, prefix } = KINDS[item.kind];
+        const { track, prefix } = KINDS[item.kind as T["kind"]];
         const counter = `${track} ${item.section ?? ""}`;
         const n = (counts.get(counter) ?? 0) + 1;
         counts.set(counter, n);
         const number = item.section ? `${item.section}.${n}` : `${n}`;
-        const id = `${prefix}-${slug(item.name ?? number.replaceAll(".", "-"))}`;
+        const id: IdOf<T["kind"]> = `${prefix}-${slug(item.name ?? number.replaceAll(".", "-"))}`;
         if (ids.has(id)) throw new DuplicateId(index, id);
         ids.add(id);
-        return { ...item, id, number };
+        // The id is made from this item's own kind, which is what Numbered
+        // says of each kind; TypeScript cannot follow a union through `T`.
+        return { ...item, id, number } as Numbered<T>;
     });
 }
 

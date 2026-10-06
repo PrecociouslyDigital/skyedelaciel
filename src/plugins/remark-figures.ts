@@ -52,24 +52,31 @@ import type {
 import type { MdxJsxFlowElement, MdxJsxTextElement } from "mdast-util-mdx-jsx";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, extname, resolve } from "node:path";
+import { match } from "ts-pattern";
 import { visit } from "unist-util-visit";
 import type { VFile } from "vfile";
 import { store } from "../integrations/drawn";
 import { PLATE_PAD, plate } from "../layouts/prelude/brush.mjs";
-import { block, importDefault, inline, recast } from "./mdx-nodes";
+import { block, importDefault, recast, slot } from "./mdx-nodes";
 import {
     captionLabel,
     DanglingReference,
     DuplicateId,
+    KINDS,
     namesApparatus,
     numberApparatus,
     referenceText,
-    type Apparatus,
+    SECTION_ATTRIBUTE,
 } from "./numbering";
 
 /** The widest a figure is drawn, and the tallest, in px. */
 const MAX_WIDTH = 640;
 const MAX_HEIGHT = 720;
+
+/** What the paragraph that captions a table begins with. */
+const TABLE = "Table:";
+/** What the paragraph that credits an image begins with. */
+const CREDIT = "Credit:";
 
 /** The text of some markdown, without its markup. */
 const toString = (node: Node | Node[]): string =>
@@ -81,12 +88,22 @@ const toString = (node: Node | Node[]): string =>
             ? toString(node.children as Node[])
             : "";
 
-/** A paragraph that begins with `marker`, less the marker. */
-function marked(node: Paragraph, marker: string): PhrasingContent[] | null {
+/** A paragraph that begins with a marker, and what it says after it. */
+interface Marked {
+    node: Paragraph;
+    text: PhrasingContent[];
+}
+
+/** `node`, if it is a paragraph that begins with `marker`. */
+function marked(node: RootContent | undefined, marker: string): Marked | null {
+    if (node?.type !== "paragraph") return null;
     const [first, ...rest] = node.children;
     if (first?.type !== "text" || !first.value.startsWith(marker)) return null;
     const after = first.value.slice(marker.length).trimStart();
-    return after ? [{ ...first, value: after }, ...rest] : rest;
+    return {
+        node,
+        text: after ? [{ ...first, value: after }, ...rest] : rest,
+    };
 }
 
 /** The image a paragraph holds and nothing else, if it holds one. */
@@ -97,40 +114,59 @@ function lone(node: Paragraph): Image | null {
     return meant.length === 1 && meant[0]!.type === "image" ? meant[0] : null;
 }
 
-/** Where a thing stands: the number of its top-level section, if it is in one. */
+/**
+ * Where a thing stands: the number of its top-level section, if it is in one.
+ * Each thing below is also its own apparatus: `kind` is what it is numbered
+ * as, so that an image and a block of code are both figures, and `name` is
+ * what its id is made from.
+ */
 interface Placed {
     section?: string;
 }
 
+/** An image, named for its file, less its extension. */
 interface ImageFigure extends Placed {
-    kind: "image";
+    form: "image";
+    kind: "figure";
+    name: string;
     node: Paragraph;
     image: Image;
-    credit?: Paragraph;
+    alt: string;
+    caption: string;
+    credit?: Marked;
 }
 
+/** A table, named for its caption. */
 interface TableFigure extends Placed {
+    form: "table";
     kind: "table";
+    name: string;
     node: Table;
-    caption: Paragraph;
+    caption: Marked;
 }
 
+/** A block of code, named for its fence's title if it has one. */
 interface CodeFigure extends Placed {
-    kind: "code";
+    form: "code";
+    kind: "figure";
+    name?: string;
     node: Code;
-    title?: string;
 }
 
+/** A term a definition list defines, named for itself. */
 interface DefinedTerm extends Placed {
-    kind: "term";
+    form: "term";
+    kind: "definition";
+    name: string;
     node: MdxJsxFlowElement | MdxJsxTextElement;
 }
 
 /** A lemma or a theorem, written `<Theorem name="…">…</Theorem>`. */
 interface Statement extends Placed {
+    form: "statement";
     kind: "lemma" | "theorem";
-    node: MdxJsxFlowElement;
     name?: string;
+    node: MdxJsxFlowElement;
 }
 
 type SetApart =
@@ -140,12 +176,17 @@ type SetApart =
     | DefinedTerm
     | Statement;
 
+/** Each element a statement is written as, `<Lemma>` or `<Theorem>`, and its kind. */
+const STATEMENTS = new Map<string, "lemma" | "theorem">(
+    (["lemma", "theorem"] as const).map((kind) => [KINDS[kind].label, kind]),
+);
+
 /**
  * The number of the top-level section a heading opens or stands in: "3" for
  * § 3.2. remark-sections has put it on the heading already.
  */
 function topSection(heading: Heading, file: VFile): string {
-    const number = heading.data?.hProperties?.["data-section"];
+    const number = heading.data?.hProperties?.[SECTION_ATTRIBUTE];
     if (typeof number !== "string")
         file.fail(
             "this heading has no section number; remark-sections runs before remark-figures.",
@@ -174,7 +215,10 @@ function statementName(node: MdxJsxFlowElement, file: VFile) {
 /** What a fence may say after its language: a title, and nothing else. */
 const FENCE = /^title="([^"]+)"$/;
 
-/** Where everything set apart sits, in document order, with its captions. */
+/**
+ * Where everything set apart sits, in document order, with its captions.
+ * Whatever is malformed fails the build here, so what comes back is whole.
+ */
 function survey(tree: Root, file: VFile) {
     const found: SetApart[] = [];
     const captions = new Set<Paragraph>();
@@ -185,14 +229,15 @@ function survey(tree: Root, file: VFile) {
     visit(tree, (node, index, parent) => {
         if (parent) parents.set(node, parent);
         if (node.type === "heading") section = topSection(node, file);
-        if (
+        const statement =
             node.type === "mdxJsxFlowElement" &&
-            (node.name === "Theorem" || node.name === "Lemma")
-        )
+            STATEMENTS.get(node.name ?? "");
+        if (statement)
             found.push({
-                kind: node.name === "Theorem" ? "theorem" : "lemma",
-                node,
+                form: "statement",
+                kind: statement,
                 name: statementName(node, file),
+                node,
                 section,
             });
         if (node.type === "imageReference")
@@ -201,16 +246,21 @@ function survey(tree: Root, file: VFile) {
                 node,
             );
         if (node.type === "table") {
-            const before = parent!.children[index! - 1];
             const caption =
-                before?.type === "paragraph" && marked(before, "Table:")
-                    ? before
-                    : file.fail(
-                          "a table needs a `Table: caption` paragraph right before it.",
-                          node,
-                      );
-            claimed.add(caption);
-            found.push({ kind: "table", node, caption, section });
+                marked(parent!.children[index! - 1], TABLE) ??
+                file.fail(
+                    `a table needs a \`${TABLE} caption\` paragraph right before it.`,
+                    node,
+                );
+            claimed.add(caption.node);
+            found.push({
+                form: "table",
+                kind: "table",
+                name: toString(caption.text),
+                node,
+                caption,
+                section,
+            });
         }
         if (node.type === "code") {
             const meta = node.meta?.trim() ?? "";
@@ -220,161 +270,30 @@ function survey(tree: Root, file: VFile) {
                     `a fence takes a title, title="…", and nothing else; this one says ${meta}.`,
                     node,
                 );
-            found.push({ kind: "code", node, title, section });
+            found.push({
+                form: "code",
+                kind: "figure",
+                name: title,
+                node,
+                section,
+            });
         }
         if (
             (node.type === "mdxJsxFlowElement" ||
                 node.type === "mdxJsxTextElement") &&
             node.name === "dt"
         )
-            found.push({ kind: "term", node, section });
+            found.push({
+                form: "term",
+                kind: "definition",
+                name: toString(node),
+                node,
+                section,
+            });
         if (node.type !== "paragraph") return;
-        if (marked(node, "Table:") || marked(node, "Credit:"))
-            captions.add(node);
+        if (marked(node, TABLE) || marked(node, CREDIT)) captions.add(node);
         const image = lone(node);
         if (image) {
-            const after = parent!.children[index! + 1];
-            const credit =
-                after?.type === "paragraph" && marked(after, "Credit:")
-                    ? after
-                    : undefined;
-            if (credit) claimed.add(credit);
-            found.push({ kind: "image", node, image, credit, section });
-        } else if (node.children.some((child) => child.type === "image")) {
-            file.fail(
-                "an image is a figure, and stands alone in its paragraph.",
-                node,
-            );
-        }
-    });
-
-    for (const caption of captions) {
-        if (!claimed.has(caption))
-            file.fail(
-                "this caption belongs to nothing: `Table:` goes right before a table, and `Credit:` right after an image.",
-                caption,
-            );
-    }
-    return { found, parents };
-}
-
-/**
- * What a thing is numbered as, and what its id is made from: an image's
- * file, less its extension, a table's caption, a block of code's title or a
- * lemma's or theorem's name if it has one, or a definition's term. Images and
- * code are numbered as figures alike.
- */
-function apparatusOf(item: SetApart): Apparatus {
-    const { section } = item;
-    switch (item.kind) {
-        case "image":
-            return {
-                kind: "figure",
-                name: basename(item.image.url, extname(item.image.url)),
-                section,
-            };
-        case "table":
-            return {
-                kind: "table",
-                name: toString(marked(item.caption, "Table:")!),
-                section,
-            };
-        case "code":
-            return { kind: "figure", name: item.title, section };
-        case "term":
-            return { kind: "definition", name: toString(item.node), section };
-        case "lemma":
-        case "theorem":
-            return { kind: item.kind, name: item.name, section };
-    }
-}
-
-/** The size a figure is drawn at, in px: no wider or taller than the page allows. */
-export function drawnSize(natural: { width: number; height: number }) {
-    const aspect = natural.width / natural.height;
-    const width = Math.round(
-        Math.min(natural.width, MAX_WIDTH, MAX_HEIGHT * aspect),
-    );
-    // Rounding the width of a sliver can lengthen it past the limit.
-    return { width, height: Math.min(MAX_HEIGHT, Math.round(width / aspect)) };
-}
-
-const remarkFigures: RemarkPlugin<[{ root: URL }]> =
-    ({ root }) =>
-    async (tree: Root, file) => {
-        const { found, parents } = survey(tree, file);
-
-        let numbered;
-        try {
-            numbered = numberApparatus(found.map(apparatusOf));
-        } catch (error) {
-            if (error instanceof DuplicateId)
-                file.fail(error.message, found[error.index]!.node);
-            throw error;
-        }
-
-        const imports: RootContent[] = [];
-        const replaced = new Map<Node, RootContent | null>();
-
-        for (const [i, item] of found.entries()) {
-            const thing = numbered[i]!;
-            const label = captionLabel(thing);
-
-            if (item.kind === "term") {
-                replaced.set(
-                    item.node,
-                    recast(item.node, "Term", { id: thing.id, label }),
-                );
-                continue;
-            }
-
-            if (item.kind === "lemma" || item.kind === "theorem") {
-                replaced.set(
-                    item.node,
-                    recast(item.node, "Statement", {
-                        id: thing.id,
-                        label,
-                        name: item.name,
-                    }),
-                );
-                continue;
-            }
-
-            if (item.kind === "code") {
-                replaced.set(
-                    item.node,
-                    block(
-                        "CodeFigure",
-                        {
-                            id: thing.id,
-                            label,
-                            caption: item.title,
-                            lang: item.node.lang ?? "text",
-                            lines: item.node.value.split("\n").length,
-                        },
-                        [item.node],
-                    ),
-                );
-                continue;
-            }
-
-            if (item.kind === "table") {
-                replaced.set(item.caption, null);
-                replaced.set(
-                    item.node,
-                    block("TableFigure", { id: thing.id, label }, [
-                        inline(
-                            "span",
-                            { slot: "caption" },
-                            marked(item.caption, "Table:")!,
-                        ),
-                        item.node,
-                    ]),
-                );
-                continue;
-            }
-
-            const { image, credit } = item;
             if (!image.alt?.trim())
                 file.fail(
                     "a figure needs alt text, saying what it shows.",
@@ -390,53 +309,150 @@ const remarkFigures: RemarkPlugin<[{ root: URL }]> =
                     "a figure's image is a file beside the page, by a relative path.",
                     image,
                 );
-
-            const path = resolve(dirname(file.path), image.url);
-            const natural = await imageMetadata(await readFile(path), path);
-            const { width, height } = drawnSize(natural);
-            const drawing = store(
-                root,
-                plate({
-                    width: width + 2 * PLATE_PAD,
-                    height: height + 2 * PLATE_PAD,
-                    seed: thing.id,
-                }),
+            const credit = marked(parent!.children[index! + 1], CREDIT);
+            if (credit) claimed.add(credit.node);
+            found.push({
+                form: "image",
+                kind: "figure",
+                name: basename(image.url, extname(image.url)),
+                node,
+                image,
+                alt: image.alt,
+                caption: image.title,
+                credit: credit ?? undefined,
+                section,
+            });
+        } else if (node.children.some((child) => child.type === "image")) {
+            file.fail(
+                "an image is a figure, and stands alone in its paragraph.",
+                node,
             );
+        }
+    });
 
-            const [picture, frame] = [`__figure${i}`, `__plate${i}`];
-            imports.push(
-                importDefault(picture, image.url),
-                importDefault(frame, `${drawing}?url`),
+    for (const caption of captions) {
+        if (!claimed.has(caption))
+            file.fail(
+                `this caption belongs to nothing: \`${TABLE}\` goes right before a table, and \`${CREDIT}\` right after an image.`,
+                caption,
             );
-            if (credit) replaced.set(credit, null);
-            replaced.set(
-                item.node,
-                block(
-                    "Figure",
-                    {
-                        id: thing.id,
-                        label,
-                        image: { identifier: picture },
-                        alt: image.alt!,
-                        plate: { identifier: frame },
-                        width,
-                    },
+    }
+    return { found, parents };
+}
+
+/** The size a figure is drawn at, in px: no wider or taller than the page allows. */
+export function drawnSize(natural: { width: number; height: number }) {
+    const aspect = natural.width / natural.height;
+    const width = Math.round(
+        Math.min(natural.width, MAX_WIDTH, MAX_HEIGHT * aspect),
+    );
+    // Rounding the width of a sliver can lengthen it past the limit.
+    return { width, height: Math.min(MAX_HEIGHT, Math.round(width / aspect)) };
+}
+
+/** A node of the page, and what takes its place: a component, or nothing. */
+type Replacement = [Node, RootContent | null];
+
+const remarkFigures: RemarkPlugin<[{ root: URL }]> =
+    ({ root }) =>
+    async (tree: Root, file) => {
+        const { found, parents } = survey(tree, file);
+
+        let numbered;
+        try {
+            numbered = numberApparatus(found);
+        } catch (error) {
+            if (error instanceof DuplicateId)
+                file.fail(error.message, found[error.index]!.node);
+            throw error;
+        }
+
+        const imports: RootContent[] = [];
+        const replaced = new Map<Node, RootContent | null>();
+
+        for (const [i, thing] of numbered.entries()) {
+            const label = captionLabel(thing);
+            const replacements = await match(thing)
+                .returnType<Replacement[] | Promise<Replacement[]>>()
+                .with({ form: "term" }, ({ node, id }) => [
+                    [node, recast(node, "Term", { id, label })],
+                ])
+                .with({ form: "statement" }, ({ node, id, name }) => [
+                    [node, recast(node, "Statement", { id, label, name })],
+                ])
+                .with({ form: "code" }, ({ node, id, name }) => [
                     [
-                        inline("span", { slot: "caption" }, [
-                            { type: "text", value: image.title! },
-                        ]),
-                        ...(credit
-                            ? [
-                                  inline(
-                                      "span",
-                                      { slot: "credit" },
-                                      marked(credit, "Credit:")!,
-                                  ),
-                              ]
-                            : []),
+                        node,
+                        block(
+                            "CodeFigure",
+                            {
+                                id,
+                                label,
+                                caption: name,
+                                lang: node.lang ?? "text",
+                                lines: node.value.split("\n").length,
+                            },
+                            [node],
+                        ),
                     ],
-                ),
-            );
+                ])
+                .with({ form: "table" }, ({ node, id, caption }) => [
+                    [caption.node, null],
+                    [
+                        node,
+                        block("TableFigure", { id, label }, [
+                            slot("caption", caption.text),
+                            node,
+                        ]),
+                    ],
+                ])
+                .with({ form: "image" }, async (figure) => {
+                    const { image, credit } = figure;
+                    const path = resolve(dirname(file.path), image.url);
+                    const natural = await imageMetadata(
+                        await readFile(path),
+                        path,
+                    );
+                    const { width, height } = drawnSize(natural);
+                    const drawing = store(
+                        root,
+                        plate({
+                            width: width + 2 * PLATE_PAD,
+                            height: height + 2 * PLATE_PAD,
+                            seed: figure.id,
+                        }),
+                    );
+
+                    const [picture, frame] = [`__figure${i}`, `__plate${i}`];
+                    imports.push(
+                        importDefault(picture, image.url),
+                        importDefault(frame, `${drawing}?url`),
+                    );
+                    const figured = block(
+                        "Figure",
+                        {
+                            id: figure.id,
+                            label,
+                            image: { identifier: picture },
+                            alt: figure.alt,
+                            plate: { identifier: frame },
+                            width,
+                        },
+                        [
+                            slot("caption", [
+                                { type: "text", value: figure.caption },
+                            ]),
+                            ...(credit ? [slot("credit", credit.text)] : []),
+                        ],
+                    );
+                    return [
+                        [figure.node, figured],
+                        ...(credit ? [[credit.node, null] as Replacement] : []),
+                    ];
+                })
+                .exhaustive();
+            for (const [node, replacement] of replacements)
+                replaced.set(node, replacement);
         }
 
         for (const parent of new Set(

@@ -11,6 +11,7 @@ import { visit } from "unist-util-visit";
 import { match } from "ts-pattern";
 import type { Root, FootnoteDefinition } from "mdast";
 import type { MdxJsxTextElement } from "mdast-util-mdx-jsx";
+import { inline } from "./mdx-nodes";
 
 const remarkSidenotes: RemarkPlugin = () => (tree: Root) => {
     // 1. Collect footnote definitions keyed by identifier
@@ -43,20 +44,11 @@ const remarkSidenotes: RemarkPlugin = () => (tree: Root) => {
             );
         }
 
-        const sidenote: MdxJsxTextElement = {
-            type: "mdxJsxTextElement",
-            name: "Sidenote",
-            attributes: [
-                {
-                    type: "mdxJsxAttribute",
-                    name: "id",
-                    value: node.identifier,
-                },
-            ],
-            children: inlineChildren,
-        };
-
-        parent.children.splice(index, 1, sidenote);
+        parent.children.splice(
+            index,
+            1,
+            inline("Sidenote", { id: node.identifier }, inlineChildren),
+        );
     });
 
     // 3. Remove all footnoteDefinition nodes

@@ -12,14 +12,10 @@ import type {
     MdxJsxTextElement,
 } from "mdast-util-mdx-jsx";
 import type { MdxjsEsm } from "mdast-util-mdxjs-esm";
-
-/** An identifier the page has imported, to pass as a prop by reference. */
-export interface Imported {
-    identifier: string;
-}
+import type { Imported, Written } from "../components/mdx/written";
 
 /** What a prop can be: written out, or a value the page imported. */
-export type Prop = string | number | Imported;
+type Prop = string | number | Imported;
 
 const program = (body: Program["body"]): Program => ({
     type: "Program",
@@ -80,9 +76,9 @@ const attributes = (props: Record<string, Prop | undefined>) =>
     );
 
 /** `<name {...props}>children</name>`, standing as a block of its own. */
-export const block = (
-    name: string,
-    props: Record<string, Prop | undefined>,
+export const block = <N extends keyof Written>(
+    name: N,
+    props: Written<"written">[N],
     children: MdxJsxFlowElement["children"] = [],
 ): MdxJsxFlowElement => ({
     type: "mdxJsxFlowElement",
@@ -91,32 +87,46 @@ export const block = (
     children,
 });
 
-/**
- * `<name {...props}>children</name>`, holding a run of text. Set into a
- * block's children, it is how a component is handed a named slot of inline
- * content (a caption, a credit) without a paragraph round it.
- */
-export const inline = (
-    name: string,
-    props: Record<string, Prop | undefined>,
+/** `<name {...props}>children</name>`, running in a line of text. */
+export const inline = <N extends keyof Written>(
+    name: N,
+    props: Written<"written">[N],
     children: MdxJsxTextElement["children"],
-): MdxJsxFlowElement =>
+): MdxJsxTextElement => ({
+    type: "mdxJsxTextElement",
+    name,
+    attributes: attributes(props),
+    children,
+});
+
+/**
+ * `<span slot={name}>children</span>`, set into a block's children: how a
+ * component is handed a named slot of inline content (a caption, a credit)
+ * without a paragraph round it.
+ */
+export const slot = (
+    name: string,
+    children: MdxJsxTextElement["children"],
+): MdxJsxFlowElement => ({
+    type: "mdxJsxFlowElement",
+    name: "span",
+    attributes: [attribute("slot", name)],
     // A flow element holding phrasing is what MDX itself parses
     // `<span>*a*</span>` on a line of its own into; mdast's types do not
     // allow for it, but every stage after them does.
-    block(
-        name,
-        props,
-        children as RootContent[] as MdxJsxFlowElement["children"],
-    );
+    children: children as RootContent[] as MdxJsxFlowElement["children"],
+});
 
 /**
  * `node` as `<name {...props}>`, keeping what it holds and whether it stands
  * as a block or runs in a line of text, as an element written on one line
  * (`<dl><dt>…</dt></dl>`) does.
  */
-export const recast = <Element extends MdxJsxFlowElement | MdxJsxTextElement>(
+export const recast = <
+    N extends keyof Written,
+    Element extends MdxJsxFlowElement | MdxJsxTextElement,
+>(
     node: Element,
-    name: string,
-    props: Record<string, Prop | undefined>,
+    name: N,
+    props: Written<"written">[N],
 ): Element => ({ ...node, name, attributes: attributes(props) });

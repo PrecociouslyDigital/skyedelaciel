@@ -1,4 +1,5 @@
 ---
+import type { Written } from "../written";
 import CopyCode from "../copy/CopyCode.svelte";
 import CopyLink from "../copy/CopyLink.svelte";
 
@@ -8,13 +9,7 @@ import CopyLink from "../copy/CopyLink.svelte";
  * address), the caption, a stamp of language and line count, and a Copy
  * button.
  */
-interface Props {
-    id: `fig-${string}`;
-    label: string;
-    caption?: string;
-    lang: string;
-    lines: number;
-}
+type Props = Written["CodeFigure"];
 
 const { id, label, caption, lang, lines } = Astro.props;
 ---

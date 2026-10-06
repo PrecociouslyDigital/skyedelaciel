@@ -1,5 +1,6 @@
 ---
 import type { HTMLTag } from "astro/types";
+import { SECTION_ATTRIBUTE } from "~/plugins/numbering";
 import CopyLink from "../copy/CopyLink.svelte";
 
 /**
@@ -9,12 +10,12 @@ import CopyLink from "../copy/CopyLink.svelte";
  * its address is the bare `§`. A heading that is neither fails the build.
  */
 type Props = { as: HTMLTag; id: string } & (
-    | { "data-section": string; unnumbered?: never }
-    | { unnumbered: true; "data-section"?: never }
+    | { [SECTION_ATTRIBUTE]: string; unnumbered?: never }
+    | { unnumbered: true; [SECTION_ATTRIBUTE]?: never }
 );
 
-const { as: Tag, id, ...rest } = Astro.props as Props;
-const section = rest["data-section"];
+const { as: Tag, id, ...rest } = Astro.props;
+const section = rest[SECTION_ATTRIBUTE];
 if (!id) throw new Error("a heading needs an id for its address.");
 if (!section && !rest.unnumbered) {
     throw new Error(
@@ -23,7 +24,7 @@ if (!section && !rest.unnumbered) {
 }
 ---
 
-<Tag id={id} class="heading" data-section={section}
+<Tag id={id} class="heading" {...{ [SECTION_ATTRIBUTE]: section }}
     ><span class="heading-box receipt-box"
         ><span class="heading-words"><slot /></span>
         <CopyLink

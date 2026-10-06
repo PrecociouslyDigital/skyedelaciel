@@ -1,4 +1,5 @@
 ---
+import type { Written } from "../written";
 import Caption from "./Caption.astro";
 
 /**
@@ -7,10 +8,7 @@ import Caption from "./Caption.astro";
  * the table after it. The table scrolls sideways on its own where it is
  * wider than the column, and can be reached from the keyboard to do so.
  */
-interface Props {
-    id: `tab-${string}`;
-    label: string;
-}
+type Props = Written["TableFigure"];
 
 const { id, label } = Astro.props;
 ---

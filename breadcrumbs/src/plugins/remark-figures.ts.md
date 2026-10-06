@@ -40,3 +40,19 @@ added above it. The line count is taken from the raw text, which is the
 same count Shiki's `.line` spans give (figures.spec checks they agree).
 Shiki runs at the rehype stage, after this plugin, and still finds the
 `<pre>` inside the JSX element's children.
+
+## 2026-10-06 — one survey, one dispatch
+
+`survey()` used to collect raw nodes, `apparatusOf` turned each into an
+`Apparatus` with a switch, and the transform re-checked images and re-parsed
+captions (`image.alt!`, `image.title!`, three `marked(...)!`) in an if/continue
+chain whose narrowing broke (`kind: "lemma" | "theorem"` left `item` as
+`ImageFigure | Statement` after the chain, a tsc error). Now each surveyed
+item is its own apparatus: `form` says what was written (image, code, table,
+term, statement), `kind` what it is numbered as, `name` what its id is made
+from. Validation happens once in `survey()`, and `Marked` keeps a caption's
+paragraph with its parsed text. One exhaustive `match` on `form` builds every
+replacement; the image arm is the only async one.
+
+`<Lemma>`/`<Theorem>` are recognised by `KINDS[kind].label`, and `Table:` and
+`Credit:` are named constants used in both parsing and error messages.

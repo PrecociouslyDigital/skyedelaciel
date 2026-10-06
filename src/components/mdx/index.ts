@@ -14,9 +14,13 @@ import Statement from "./Statement.astro";
 import Figure from "./figures/Figure.astro";
 import CodeFigure from "./figures/CodeFigure.astro";
 import TableFigure from "./figures/TableFigure.astro";
+import type { Written } from "./written";
 
-/** Global MDX component overrides, passed to <Content /> in the dynamic route. */
-export const mdxComponents: Record<string, AstroComponentFactory> = {
+/**
+ * Global MDX component overrides, passed to <Content /> in the dynamic route:
+ * the elements markdown renders, and every component a remark plugin writes.
+ */
+export const mdxComponents = {
     h1: H1,
     h2: H2,
     h3: H3,
@@ -30,4 +34,7 @@ export const mdxComponents: Record<string, AstroComponentFactory> = {
     CodeFigure,
     Term,
     Statement,
-};
+} satisfies Record<
+    "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "a" | keyof Written,
+    AstroComponentFactory
+>;

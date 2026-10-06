@@ -1,5 +1,5 @@
 ---
-import type { ImageMetadata } from "astro";
+import type { Written } from "../written";
 import { Image } from "astro:assets";
 import { PLATE_PAD } from "~/layouts/prelude/brush.mjs";
 import Caption from "./Caption.astro";
@@ -11,16 +11,7 @@ import Caption from "./Caption.astro";
  * The plate was drawn for the image at `width`, so the figure is never wider
  * than that; on a narrower column it shrinks as a whole, frame and all.
  */
-interface Props {
-    id: `fig-${string}`;
-    label: string;
-    image: ImageMetadata;
-    alt: string;
-    /** The URL of its plate's drawing. */
-    plate: string;
-    /** How wide the image is drawn, in px. */
-    width: number;
-}
+type Props = Written["Figure"];
 
 const { id, label, image, alt, plate, width } = Astro.props;
 const geometry = [
