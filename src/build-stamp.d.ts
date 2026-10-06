@@ -4,7 +4,7 @@
  *
  * Declared rather than imported because that is what `define` substitutes: a
  * bare identifier, replaced before anything runs. md.astro reads it for the
- * rail slug — see design.mdx, Annotation.
+ * rail slug — see fixtures/design.mdx, Annotation.
  */
 
 /** The short SHA this build was made from, or "" outside a git checkout. */

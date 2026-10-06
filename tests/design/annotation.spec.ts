@@ -13,7 +13,7 @@ import type { Page } from "@playwright/test";
 /**
  * Which glyph a link of each kind wears.
  *
- * Restated from design.mdx rather than imported from sources.ts: the spec
+ * Restated from fixtures/design.mdx rather than imported from sources.ts: the spec
  * names the four symbols outright, and a test that read them out of the
  * registry could only prove that file agrees with itself.
  */
@@ -53,6 +53,11 @@ const drawn = (page: Page) =>
                     parseFloat(getComputedStyle(article).borderLeftWidth) +
                     parseFloat(slug.left),
                 width: parseFloat(slug.width),
+                top:
+                    article.getBoundingClientRect().y +
+                    parseFloat(getComputedStyle(article).borderTopWidth) +
+                    parseFloat(slug.top),
+                height: parseFloat(slug.height),
             },
             rail: article.dataset.rail ?? "",
             reach: parseFloat(
@@ -130,22 +135,30 @@ section("Annotation", () => {
 
         /**
          * The stamp and the notes are both set in the right margin, by two
-         * different hands, and neither may be written over the other.
+         * different hands, and neither may be written over the other. They
+         * begin at the same edge, so they clear each other down the margin
+         * rather than across it.
          */
         test("the rail slug clears the frame and the notes", async ({
             page,
         }) => {
             const { slug, reach } = await drawn(page);
             const article = (await page.locator("article").boundingBox())!;
-            const note = (await page
+            const notes = await page
                 .locator("article small[role='note']")
-                .first()
-                .boundingBox())!;
+                .evaluateAll((all) =>
+                    all.map((note) => note.getBoundingClientRect()),
+                );
 
             expect(slug.left).toBeGreaterThanOrEqual(
                 article.x + article.width + reach,
             );
-            expect(slug.left + slug.width).toBeLessThanOrEqual(note.x);
+            expect(notes.length).toBeGreaterThan(0);
+            for (const note of notes)
+                expect(
+                    note.top >= slug.top + slug.height ||
+                        note.bottom <= slug.top,
+                ).toBe(true);
         });
     });
 

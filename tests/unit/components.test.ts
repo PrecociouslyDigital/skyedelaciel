@@ -18,7 +18,7 @@ import type {
 /**
  * The complement to the "illegal to misuse" work in the components themselves:
  * the types prove the props are well-formed, and these prove the markup that
- * comes out of them is what design.mdx describes.
+ * comes out of them is what fixtures/design.mdx describes.
  *
  * `experimental_AstroContainer` is still experimental in Astro 6 and may break
  * in a minor release; if it does, these move to Playwright and the rest of the

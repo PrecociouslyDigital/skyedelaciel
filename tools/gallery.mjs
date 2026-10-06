@@ -17,15 +17,20 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "playwright";
 import { openProfilePage, resolveBaseUrl } from "./browser/context.mjs";
-import { profileNames, profiles, repoRoot } from "./browser/profiles.mjs";
+import {
+    pages,
+    profileNames,
+    profiles,
+    repoRoot,
+} from "./browser/profiles.mjs";
 
 /** @typedef {import("playwright").Page} Page */
 /** @typedef {{ x: number, y: number, width: number, height: number }} Region */
 
 const OUT = join(repoRoot, ".gallery");
 const PAGES = {
-    design: "/fixtures/design/",
-    fixture: "/fixtures/kitchen-sink/",
+    design: pages.spec,
+    fixture: pages.kitchenSink,
 };
 
 /** Breathing room around a cropped component, so it is not cut to the pixel. */

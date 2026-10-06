@@ -413,7 +413,7 @@ $blossom-reach: 0;
 
    That depends on which container renders the list, not on viewport width:
    on the right of the words in the sidebar, which sits to the left of the
-   article, and on their left inline. See design.mdx, Table of contents. */
+   article, and on their left inline. See fixtures/design.mdx, Table of contents. */
 @mixin vine-side($side) {
     $mirror: none;
     @if $side == right {

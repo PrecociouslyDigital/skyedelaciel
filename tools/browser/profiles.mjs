@@ -1,8 +1,8 @@
 // @ts-check
 /**
- * Everything the browse client, the browse daemon and playwright.config.ts
- * must agree on: which browsers exist, where the daemon lives, and how to tell
- * a running daemon apart from a stale one.
+ * Everything the browse client, the browse daemon, the gallery and the test
+ * suite must agree on: which browsers exist, which pages they read, where the
+ * daemon lives, and how to tell a running daemon apart from a stale one.
  *
  * Kept in one file because the failure it prevents is silent: a matrix that
  * drifts between the browser I drive by hand and the browser the suite drives
@@ -13,6 +13,7 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SCHEDULED_PREFIX } from "../../src/content/schedule.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -31,7 +32,7 @@ export const repoRoot = resolve(here, "../..");
 
 /**
  * The four browsers, taken from the "Wide viewports / Narrow viewports / Print"
- * subheadings that structure src/content/design.mdx, plus the one place the
+ * subheadings that structure src/content/fixtures/design.mdx, plus the one place the
  * spec says a behaviour must survive without JavaScript.
  *
  * The widths straddle the two breakpoints in
@@ -93,6 +94,40 @@ export const testPort = 4323;
  * drive the suite's server if that is what is up.
  */
 export const serverPorts = [devPort, previewPort, testPort];
+
+// ─── The pages ───────────────────────────────────────────────────────────────
+
+/** A fixture piece dated so far ahead that it is only ever built as scheduled. */
+const scheduled = "/fixtures/shelf/scheduled/";
+
+/**
+ * The pages of a fixture build that get read, not merely linked.
+ *
+ * The spec page is the spec rendering itself, so tests check it against that.
+ * The kitchen sink covers what that page happens not to
+ * exercise: a bibliography, all four popover styles, crowded sidenotes. The
+ * shelf is a section (src/content/fixtures/shelf/) whose page links one of its
+ * pieces and not the other. The Tumblr pages are the theme filled in with the
+ * sample blog in src/content/fixtures/tumblr.ts.
+ */
+export const pages = {
+    spec: "/fixtures/design/",
+    kitchenSink: "/fixtures/kitchen-sink/",
+    shelf: {
+        page: "/fixtures/shelf/",
+        linked: "/fixtures/shelf/linked/",
+        unlinked: "/fixtures/shelf/unlinked/",
+        scheduled: {
+            title: "Scheduled Piece",
+            path: scheduled,
+            preview: `/${SCHEDULED_PREFIX}${scheduled}`,
+        },
+    },
+    tumblr: {
+        index: "/fixtures/tumblr/",
+        post: "/fixtures/tumblr/post/",
+    },
+};
 
 // ─── The wire protocol ───────────────────────────────────────────────────────
 

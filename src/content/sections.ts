@@ -3,7 +3,7 @@ import { internalId } from "~/components/mdx/links/resolve";
 /**
  * A section is a directory with an `index.mdx`: that file is the section's
  * page, at the directory's path, and every article under the directory is
- * one of the section's pieces. See design.mdx, Section pages.
+ * one of the section's pieces. See fixtures/design.mdx, Section pages.
  */
 
 /** As much of an article as a list of pieces reads. */

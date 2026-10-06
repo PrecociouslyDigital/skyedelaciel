@@ -234,8 +234,12 @@ function fitted(pigment: string, ground: string, ratio: number) {
  * no further from the ground than it has to.
  */
 describe("a fitted chroma stands exactly as far from its ground as asked", () => {
-    const PIGMENTS = ["#645c9a", "oklch(50% 0.11 145)", "#907f93", "#a8321e"];
-    const GROUNDS = ["#fff", "#f8f6f3", "#1b1e21", "#2f3235"];
+    const PIGMENTS = [
+        "#645c9a",
+        "oklch(50% 0.11 145deg)",
+        "oklch(62% 0.079 321.6deg)",
+    ];
+    const GROUNDS = ["#fff", "#fbfbfa", "#1b1e21", "#222529"];
     for (const pigment of PIGMENTS) {
         for (const ground of GROUNDS) {
             for (const ratio of [4.5, 6.5, 9]) {

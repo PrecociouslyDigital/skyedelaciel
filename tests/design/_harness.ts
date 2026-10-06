@@ -1,40 +1,15 @@
 import { test as base, expect, type Page } from "@playwright/test";
 import type { Profile, ProfileName } from "../../tools/browser/profiles.mjs";
-import { profiles } from "../../tools/browser/profiles.mjs";
+import { pages, profiles } from "../../tools/browser/profiles.mjs";
 
 export { expect };
 
-/**
- * The two pages the suite reads.
- *
- * The spec page is the spec rendering itself, which is the most honest thing to
- * check it against. The fixture covers what that page happens not to exercise —
- * a bibliography, all four popover styles, crowded sidenotes.
- */
-export const SPEC_PAGE = "/fixtures/design/";
-export const FIXTURE_PAGE = "/fixtures/kitchen-sink/";
-
-/**
- * A section: src/content/fixtures/shelf/. Its page links one of its pieces and
- * not the other, and a third is scheduled so far ahead it is never out.
- */
-export const SHELF = {
-    page: "/fixtures/shelf/",
-    linked: "/fixtures/shelf/linked/",
-    unlinked: "/fixtures/shelf/unlinked/",
-    scheduled: {
-        title: "Scheduled Piece",
-        path: "/fixtures/shelf/scheduled/",
-        preview: "/scheduled/fixtures/shelf/scheduled/",
-    },
-} as const;
-
-/**
- * The Tumblr theme, filled in with the sample blog in
- * src/content/fixtures/tumblr.ts: an index page, and one post's own page.
- */
-export const TUMBLR_INDEX = "/fixtures/tumblr/";
-export const TUMBLR_POST = "/fixtures/tumblr/post/";
+export const {
+    spec: SPEC_PAGE,
+    kitchenSink: FIXTURE_PAGE,
+    shelf: SHELF,
+    tumblr: { index: TUMBLR_INDEX, post: TUMBLR_POST },
+} = pages;
 
 export const test = base.extend<{
     profileName: ProfileName;
@@ -60,11 +35,11 @@ export const test = base.extend<{
 });
 
 /**
- * Name the design.mdx section this file enforces.
+ * Name the fixtures/design.mdx section this file enforces.
  *
  * The name is the join between spec and suite: spec-coverage.spec.ts reads
  * these calls out of the test sources and checks them against the headings of
- * design.mdx in both directions, so neither can move without the other.
+ * fixtures/design.mdx in both directions, so neither can move without the other.
  */
 export function section(name: string, body: () => void) {
     test.describe(name, body);

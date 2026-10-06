@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 /**
  * The spec and the suite are joined by section name, and this is the joint.
  *
- * `.claude/CLAUDE.md` asks in prose that design.mdx "should always be
+ * `.claude/CLAUDE.md` asks in prose that fixtures/design.mdx "should always be
  * accurate". Prose cannot enforce itself: a section renamed in the spec, or one
  * added with no test behind it, is exactly the drift that goes unnoticed. This
  * test makes both of those go red.

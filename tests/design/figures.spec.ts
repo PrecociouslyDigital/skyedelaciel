@@ -217,11 +217,12 @@ section("Figures", () => {
                 ),
             );
             expect(tables.length).toBeGreaterThan(0);
-            tables.forEach((table, i) => {
+            // Which number each carries is checked under Numbering, below.
+            for (const table of tables) {
                 expect(table.id).toMatch(/^tab-/);
-                expect(table.label).toBe(`Table ${i + 1}`);
+                expect(table.label).toMatch(/^Table \d+(\.\d+)?$/);
                 expect(table.caption).toBeLessThanOrEqual(table.table);
-            });
+            }
         });
 
         test("every table in the prose is a numbered figure", async ({

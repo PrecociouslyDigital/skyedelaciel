@@ -61,7 +61,7 @@ const internal: Source = {
     claims: (url) => url.hostname === SITE_HOST,
     // The section mark: another part of the same work.
     mark: "§",
-    // design.mdx, Internal Pages: title, abstract and site name, nothing else.
+    // fixtures/design.mdx, Internal Pages: title, abstract and site name, nothing else.
     meta: ({ csl }) => [csl["container-title"]],
     citable: false,
     image: false,

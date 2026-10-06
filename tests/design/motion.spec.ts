@@ -16,8 +16,8 @@ const GROW_LIMIT_MS = 600;
 /**
  * Every transition the page declares, and every keyframed animation that runs
  * on the clock rather than on the scroll, wherever it was declared, and
- * whether it is paced — a table of contents growing, or anything resolving,
- * the things here that take a brush's time.
+ * whether it is paced — a table of contents growing, the mark being
+ * rewritten, or anything resolving, the things here that take a brush's time.
  *
  * Read off the rendered page rather than off the stylesheets, because that is
  * the only reading that covers Astro's scoped rules, Svelte's scoped rules and
@@ -30,7 +30,8 @@ const running = (page: Page) =>
         const found: { where: string; ms: number; growing: boolean }[] = [];
 
         for (const element of document.querySelectorAll("*")) {
-            const growing = element.closest(".toc, .receipt-word") !== null;
+            const growing =
+                element.closest(".toc, .receipt-word, .logo") !== null;
             const name = element.className || element.tagName;
             for (const pseudo of [
                 "",

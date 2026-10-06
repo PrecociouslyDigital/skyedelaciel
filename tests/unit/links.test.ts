@@ -125,7 +125,7 @@ describe("buildPreview", () => {
                 summary: { type: "text", content: "A summary." },
             });
 
-        // design.mdx, Internal Pages: title, abstract and site name, nothing
+        // fixtures/design.mdx, Internal Pages: title, abstract and site name, nothing
         // else — so meta contributes only the site name here. The title and
         // abstract belong to resolveInternalLinks, below.
         expect(preview("internal")?.meta).toEqual([

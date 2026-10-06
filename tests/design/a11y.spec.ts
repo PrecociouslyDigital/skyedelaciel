@@ -9,7 +9,7 @@ import {
 } from "./_harness";
 
 /**
- * Not tied to a section of design.mdx: the spec asks throughout for screen
+ * Not tied to a section of fixtures/design.mdx: the spec asks throughout for screen
  * reader support "with aria tags where appropriate", and the repo has
  * hand-written aria-label, role="doc-noteref" and role="tooltip" that nothing
  * else checks.

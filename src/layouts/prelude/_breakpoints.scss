@@ -47,7 +47,7 @@ $wide-sidebar: 80rem;
 
 /// Where the rail slug is set: the wide screen the frame needs, and paper as
 /// well, whatever the width of the sheet. It is the one mark of the machine's
-/// that survives the press — see design.mdx, Annotation — so it is gated on
+/// that survives the press — see fixtures/design.mdx, Annotation — so it is gated on
 /// its own query rather than riding along with `framed-article`.
 @mixin stamped {
     @media screen and (min-width: $wide), print {

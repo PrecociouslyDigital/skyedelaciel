@@ -439,7 +439,7 @@ section("Links", () => {
         });
 
         /**
-         * design.mdx, Typography: "every font file a page loads should come
+         * fixtures/design.mdx, Typography: "every font file a page loads should come
          * from this site's own origin, so that reading a page announces the
          * reader to nobody else." An image in a popover is the same promise.
          */
@@ -499,7 +499,7 @@ section("Links", () => {
         /**
          * "A link with an entry in the Bibliography should be inline-cited in
          * MLA format: e.g. (Author, Year). A link without one should print its
-         * full address in plaintext instead" — design.mdx, Links › Print.
+         * full address in plaintext instead" — fixtures/design.mdx, Links › Print.
          *
          * Which branch a link falls into is decided the way the site decides
          * it: an internal link is a page of this site rather than a work, so

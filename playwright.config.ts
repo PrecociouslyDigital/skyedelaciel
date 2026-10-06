@@ -1,5 +1,5 @@
 import { defineConfig } from "@playwright/test";
-import { profiles, testPort } from "./tools/browser/profiles.mjs";
+import { pages, profiles, testPort } from "./tools/browser/profiles.mjs";
 
 /**
  * One project per profile, out of the same table `tools/browse` drives, so a
@@ -40,10 +40,12 @@ export default defineConfig({
 
     // Fixtures are only routable in a build that asked for them, so the suite
     // makes its own, on a port of its own. `reuseExistingServer` keeps repeat
-    // runs quick.
+    // runs quick. The variable goes through `env` because npm runs scripts
+    // under cmd.exe on Windows, which cannot read `VAR=1 command`.
     webServer: {
-        command: `npm run build:fixtures && npx astro preview --port ${testPort}`,
-        url: `http://localhost:${testPort}/design/`,
+        command: `npx astro build && npx astro preview --port ${testPort}`,
+        env: { INCLUDE_FIXTURES: "1" },
+        url: `http://localhost:${testPort}${pages.spec}`,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
     },

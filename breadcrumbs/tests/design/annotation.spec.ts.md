@@ -15,3 +15,10 @@ article's padding box, which is where an absolutely positioned child begins —
 is added to the article's own box. That is what lets the wide test assert the
 stamp clears both the frame and the notes, and the print test assert it stands
 beside the text block rather than over it.
+
+## 2026-10-06 — the slug and the notes clear each other vertically
+
+Since `--margin-gap` (see breadcrumbs/src/layouts/prelude/prelude.scss.md) the
+slug and the notes begin at the same left edge, so the old check, that the
+slug ends before the first note begins, could only fail. The test now asks
+that no note's box shares any height with the slug's.

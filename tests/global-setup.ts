@@ -1,4 +1,4 @@
-import { testPort } from "../tools/browser/profiles.mjs";
+import { pages, testPort } from "../tools/browser/profiles.mjs";
 
 /**
  * Refuse to run against a server that is not serving the fixture build.
@@ -11,7 +11,7 @@ import { testPort } from "../tools/browser/profiles.mjs";
  * One reachability check turns that into one legible sentence.
  */
 export default async function globalSetup() {
-    const url = `http://localhost:${testPort}/fixtures/kitchen-sink/`;
+    const url = `http://localhost:${testPort}${pages.kitchenSink}`;
     const response = await fetch(url).catch(() => null);
 
     if (!response?.ok) {

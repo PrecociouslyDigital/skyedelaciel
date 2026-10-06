@@ -130,6 +130,12 @@ describe("figures and statements, for every page of them", () => {
         });
     };
 
+    /** `thing` with its name taken away, if its kind may go without one. */
+    const unnamed = (thing: Apparatus): Apparatus =>
+        thing.kind === "table" || thing.kind === "definition"
+            ? thing
+            : { kind: thing.kind, section: thing.section };
+
     test("each track is numbered 1 to n within each section, after the section", () => {
         for (const seed of SEEDS) {
             const numbered = numberApparatus(page(seed));
@@ -159,12 +165,7 @@ describe("figures and statements, for every page of them", () => {
 
     test("an unnamed thing's id is its number, and it cannot be cited", () => {
         for (const seed of SEEDS) {
-            const things = page(seed).map((thing) =>
-                thing.kind === "table" || thing.kind === "definition"
-                    ? thing
-                    : { ...thing, name: undefined },
-            );
-            const numbered = numberApparatus(things);
+            const numbered = numberApparatus(page(seed).map(unnamed));
             for (const thing of numbered.filter(({ name }) => !name)) {
                 expect(thing.id).toBe(
                     `${KINDS[thing.kind].prefix}-${thing.number.replaceAll(".", "-")}`,
