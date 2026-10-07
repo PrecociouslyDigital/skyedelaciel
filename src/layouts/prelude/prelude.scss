@@ -733,7 +733,7 @@ figcaption {
         @include typography.stamp;
         /* A Han character fills its square, so it is set larger than the
            stamp's capitals to stand as tall as a capital of the prose. */
-        font-size: 1rem;
+        font-size: 0.9rem;
         line-height: 1;
     }
 }
