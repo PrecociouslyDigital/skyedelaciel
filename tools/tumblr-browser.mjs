@@ -1,17 +1,18 @@
 // @ts-check
 /**
- * A Chrome window on Tumblr's theme editor, logged in, for tumblr-upload.mjs
- * to put the theme on the blog with.
+ * A Chrome window on Tumblr's theme editor, logged in, for the scripts that
+ * work there: tumblr-upload.mjs, which puts the theme on the blog, and
+ * tumblr-session.mjs, which hands the session on to CI.
  *
  * The browser keeps its profile outside the repository and is shown rather
  * than headless, so later runs reuse the session. CI has no profile, and a
  * fresh login from a datacenter is turned away at Tumblr's second step, so it
- * brings TUMBLR_SESSION instead: a logged-in browser's tumblr.com cookies, as
- * the JSON of Playwright's `context.cookies()`. With no session, the script
- * logs in with the TUMBLR_EMAIL, TUMBLR_PASSWORD and TUMBLR_TOTP (the
- * authenticator's base32 secret) from the environment or the repository's
- * .env, if either has all three; otherwise, or if Tumblr's login page has
- * changed, by hand in the window the script opened.
+ * brings TUMBLR_SESSION instead: the tumblr.com cookies tumblr-session.mjs
+ * stored, as the JSON of Playwright's `context.cookies()`. With no session,
+ * the script logs in with the TUMBLR_EMAIL, TUMBLR_PASSWORD and TUMBLR_TOTP
+ * (the authenticator's base32 secret) from the environment or the
+ * repository's .env, if either has all three; otherwise, or if Tumblr's login
+ * page has changed, by hand in the window the script opened.
  */
 
 import { chromium } from "@playwright/test";

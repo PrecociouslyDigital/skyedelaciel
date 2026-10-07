@@ -85,3 +85,7 @@ The login moved to `tools/tumblr-browser.mjs` (`withEditor`), which now:
 A script to store a local session as the secret (`gh secret set`) was
 written but blocked by auto mode as a secret-store write, so producing
 TUMBLR_SESSION is currently the user's to do by hand.
+
+Later the same day: the user approved it. `npm run tumblr:session`
+(tools/tumblr-session.mjs) opens the editor through `withEditor`, and pipes
+the tumblr.com cookies into `gh secret set TUMBLR_SESSION`, never printing them.

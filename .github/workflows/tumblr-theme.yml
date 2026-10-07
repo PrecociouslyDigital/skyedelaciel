@@ -3,7 +3,8 @@
 # themes, so the upload drives Tumblr's editor in Chrome, with the session in
 # the TUMBLR_SESSION secret, or failing that logging in with the other
 # TUMBLR_* secrets; see tools/tumblr-browser.mjs. If a run goes red, the fix
-# is `npm run tumblr:upload` from an attended machine, and a re-run.
+# is `npm run tumblr:upload` from an attended machine, and a re-run; if it
+# went red because the session expired, `npm run tumblr:session` as well.
 name: Tumblr theme
 
 on:
