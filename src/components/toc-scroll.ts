@@ -130,8 +130,9 @@ function keepInView() {
 /**
  * Once everything the last change set growing or folding has come to rest,
  * measure again and bring the current entry into view. Only what runs on the
- * clock is waited for: the contents' fading ends run on their own scroll, and
- * never finish.
+ * clock and on something drawn is waited for: the contents' fading ends run on
+ * their own scroll, and a folded section's entries are never drawn, so their
+ * unresolving never advances. Neither would ever finish.
  */
 let settling = 0;
 async function settle() {
@@ -139,7 +140,12 @@ async function settle() {
     await new Promise(requestAnimationFrame);
     const moving = toc!
         .getAnimations({ subtree: true })
-        .filter((animation) => animation.timeline === document.timeline);
+        .filter(
+            ({ timeline, effect }) =>
+                timeline === document.timeline &&
+                effect instanceof KeyframeEffect &&
+                effect.target?.checkVisibility(),
+        );
     await Promise.allSettled(moving.map(({ finished }) => finished));
     if (turn !== settling) return;
 

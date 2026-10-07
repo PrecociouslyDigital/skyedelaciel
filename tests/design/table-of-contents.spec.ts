@@ -220,26 +220,24 @@ section("Table of contents", () => {
 
             /** Where the box's sides are, against the list's own edge. */
             const tracker = (page: Page) =>
-                page.evaluate(() => {
-                    const list = document.querySelector<HTMLElement>(
-                        ".toc-sidebar .toc-root",
-                    )!;
-                    const range = document.createRange();
-                    range.selectNodeContents(
-                        list.querySelector("a[data-current]")!,
-                    );
-                    const read = (name: string) =>
-                        parseFloat(list.style.getPropertyValue(name));
-                    const edge = list.getBoundingClientRect();
-                    const left = edge.left + read("--toc-tracker-left");
-                    const words = range.getBoundingClientRect();
-                    return {
-                        left,
-                        right: left + read("--toc-tracker-width"),
-                        edge: edge.right,
-                        words: { left: words.left, right: words.right },
-                    };
-                });
+                page
+                    .locator(".toc-sidebar a[data-current]")
+                    .evaluate((link) => {
+                        const list = link.closest<HTMLElement>(".toc-root")!;
+                        const range = document.createRange();
+                        range.selectNodeContents(link);
+                        const read = (name: string) =>
+                            parseFloat(list.style.getPropertyValue(name));
+                        const edge = list.getBoundingClientRect();
+                        const left = edge.left + read("--toc-tracker-left");
+                        const words = range.getBoundingClientRect();
+                        return {
+                            left,
+                            right: left + read("--toc-tracker-width"),
+                            edge: edge.right,
+                            words: { left: words.left, right: words.right },
+                        };
+                    });
 
             /**
              * Scrolling back up past where a section begins returns the reader
