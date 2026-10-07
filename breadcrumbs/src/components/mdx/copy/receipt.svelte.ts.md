@@ -11,3 +11,11 @@ idle at once, which matches what the boolean did. Its stylesheet reads
 
 `LEAVE_MS` restates receipt.scss's `$leave` for the tests, which have to wait
 it out; Sass cannot export it.
+
+## 2026-10-07 — both receipts leave through a word
+
+CopyCode now writes COPIED too, so every receipt has a word to wait out.
+`receipt()` no longer takes a `leaving` callback; it exposes `word`, an
+attachment, and Copied.svelte (the word plus the status line) attaches it.
+CopyLink and CopyCode both render `<Copied>` straight after their control,
+since receipt.scss reaches the word with `[data-receipt] + .receipt-word`.

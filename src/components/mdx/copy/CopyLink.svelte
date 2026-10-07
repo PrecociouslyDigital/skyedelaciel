@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { receipt as receiptOf } from "./receipt.svelte";
+    import Copied from "./Copied.svelte";
+    import { receipt as receiptOf, type Placement } from "./receipt.svelte";
 
     /**
      * A link to a place on this page, for a heading's `§ 5.4` or a figure's
      * `Fig. 2`, that copies the place's address rather than going there.
      * Without scripting it is a plain link and goes there.
      *
-     * The machine answers a copy with a receipt (see receipt.svelte.ts),
-     * which leaves as its word unresolves. receipt.scss draws the box and the
-     * word from `data-receipt`, and a screen reader hears "Link copied".
+     * The machine answers a copy with a receipt (see receipt.svelte.ts), and
+     * a screen reader hears "Link copied".
      */
 
     let {
@@ -18,13 +18,11 @@
     }: {
         href: `#${string}`;
         label: string;
-        /** Where COPIED goes: beside the box, or under its right corner. */
-        placement?: "beside" | "below";
+        placement?: Placement;
     } = $props();
 
     let mounted = $state(false);
-    let word: HTMLElement | undefined = $state();
-    const receipt = receiptOf(() => word?.getAnimations() ?? []);
+    const receipt = receiptOf();
 
     $effect(() => {
         mounted = true;
@@ -52,11 +50,4 @@
 
 <a {href} class="copy-link" data-receipt={receipt.state} onclick={copy}
     >{label}</a
->{#if mounted}<span
-        bind:this={word}
-        class="receipt-word"
-        data-placement={placement}
-        aria-hidden="true">copied</span
-    ><span class="said" role="status"
-        >{receipt.state === "shown" ? "Link copied" : ""}</span
-    >{/if}
+>{#if mounted}<Copied {receipt} {placement} heard="Link copied" />{/if}

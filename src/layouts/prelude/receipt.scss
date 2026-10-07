@@ -5,11 +5,11 @@
 @use "toc";
 @use "typography";
 
-/// The receipt for a copied address. Global, because CopyLink.svelte is set
-/// inside whichever component holds the thing it names: Heading.astro's box,
-/// and a figure's.
+/// The receipt for a copy: of an address, or of a block's code. Global,
+/// because the copy controls are set inside whichever component holds the
+/// thing they copy: Heading.astro's box, and a figure's.
 ///
-/// The link's container is its `.receipt-box`. While the link's
+/// The control's container is its `.receipt-box`. While the control's
 /// `data-receipt` is `shown`, the machine draws corner ticks round the box
 /// and writes its one word, COPIED, which resolves in as a table-of-contents
 /// entry does (see _resolve.scss). When the receipt is `leaving`, the ticks
@@ -50,7 +50,7 @@ $leave: 260ms;
         pointer-events: none;
     }
 
-    &:has(.copy-link[data-receipt="shown"])::before {
+    &:has([data-receipt="shown"])::before {
         @include ornaments.corner-ticks(0.6rem, 1.5px);
     }
 }
@@ -67,10 +67,12 @@ $leave: 260ms;
 
     @include resolve.resolvable(-0.15em 0);
 
-    /* The default, for narrow measures with no room beside the box: the word
-       stands over the box's right-hand corner, in the heading's own margin.
-       Under it would be a top-level heading's vine, and then the text. */
-    &[data-placement="beside"] {
+    /* Over the box's right-hand corner, in the margin above it. This is also
+       where a word set beside goes on a narrow measure, with no room beside
+       the box: under a heading would be a top-level heading's vine, and then
+       the text. */
+    &[data-placement="beside"],
+    &[data-placement="above"] {
         right: 0;
         bottom: calc(100% + 0.3rem);
     }
@@ -89,12 +91,12 @@ $leave: 260ms;
     }
 }
 
-.copy-link[data-receipt="shown"] + .receipt-word {
+[data-receipt="shown"] + .receipt-word {
     @include resolve.resolving(toc.$drop);
     visibility: visible;
 }
 
-.copy-link[data-receipt="leaving"] + .receipt-word {
+[data-receipt="leaving"] + .receipt-word {
     @include resolve.unresolving($leave);
     visibility: visible;
 

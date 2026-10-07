@@ -382,6 +382,43 @@ section("Figures", () => {
             ).toHaveText("Code copied");
         });
 
+        test("Copy boxes the block, and writes COPIED over its corner", async ({
+            page,
+            context,
+            profileName,
+        }) => {
+            test.skip(
+                !["wide", "narrow"].includes(profileName),
+                "needs a script and a screen",
+            );
+            await context.grantPermissions(["clipboard-write"]);
+            await page.locator(CODE).scrollIntoViewIfNeeded();
+            const button = page.locator(`${CODE} .copy-code`);
+            await button.click();
+            const word = page.locator(`${CODE} .copy-code + .receipt-word`);
+            await expect(word).toBeVisible();
+
+            const { box, ticked, written } = await page.evaluate((selector) => {
+                const figure = document.querySelector(selector)!;
+                const before = getComputedStyle(figure, "::before");
+                const rect = figure.getBoundingClientRect();
+                return {
+                    box: {
+                        top: rect.top + parseFloat(before.top),
+                        right: rect.right - parseFloat(before.right),
+                    },
+                    ticked: before.backgroundImage !== "none",
+                    written: figure
+                        .querySelector(".copy-code + .receipt-word")!
+                        .getBoundingClientRect()
+                        .toJSON(),
+                };
+            }, CODE);
+            expect(ticked).toBe(true);
+            expect(written.bottom, "over the box").toBeLessThanOrEqual(box.top);
+            expect(written.right).toBeLessThanOrEqual(box.right);
+        });
+
         test("without a script there is no Copy to press", async ({
             page,
             profileName,

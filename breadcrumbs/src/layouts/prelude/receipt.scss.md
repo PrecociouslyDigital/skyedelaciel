@@ -14,3 +14,11 @@ does this file.
 
 The box is the `.receipt-box`'s `::before`, drawn just outside it, so that
 drawing it never reflows anything.
+
+## 2026-10-07 — any control, and `above`
+
+The selectors key on `[data-receipt]` rather than `.copy-link`, so the code
+figure's Copy button gets the same ticks and word. Its word is placed
+`above`, over the figure's top-right corner, which is the narrow-screen spot
+for `beside`: under the corner would put it at the foot of a long block,
+often off screen, far from the button that was pressed.
