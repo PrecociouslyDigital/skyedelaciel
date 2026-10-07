@@ -105,11 +105,10 @@ section("Annotation", () => {
         });
 
         /**
-         * The rail dates the copy: published, edited, revision. Only the first
-         * is always there — an unedited page has no second date, and a build
-         * outside a git checkout has no revision — so the shape is asserted
-         * whole rather than segment by segment. Nothing else may join it,
-         * which is what pins the regex at both ends.
+         * The rail dates the copy in Han numerals: published, then edited if
+         * it has been. The shape is asserted whole rather than segment by
+         * segment. Nothing else may join it, which is what pins the regex at
+         * both ends.
          */
         test("the rail slug dates the page", async ({ page }) => {
             const { slug, rail } = await drawn(page);
@@ -117,9 +116,9 @@ section("Annotation", () => {
             expect(slug.content).not.toBe("none");
             expect(slug.colour).toBe(await token(page, "signal"));
 
-            expect(rail).toMatch(
-                /^\d{4}-\d{2}-\d{2}( · ed \d{4}-\d{2}-\d{2})?( · rev [0-9a-f]+)?$/,
-            );
+            const date =
+                "[零一二三四五六七八九]{4}年[一二三四五六七八九十]{1,3}月[一二三四五六七八九十]{1,3}日";
+            expect(rail).toMatch(new RegExp(`^${date}( · ed ${date})?$`));
         });
 
         /**

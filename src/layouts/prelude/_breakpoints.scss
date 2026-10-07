@@ -21,6 +21,14 @@ $wide-sidebar: 80rem;
     }
 }
 
+/// The complement of `wide`: where the column is too narrow to scroll code
+/// sideways to any use.
+@mixin narrow {
+    @media not all and (min-width: $wide) {
+        @content;
+    }
+}
+
 @mixin wide-sidebar {
     @media (min-width: $wide-sidebar) {
         @content;

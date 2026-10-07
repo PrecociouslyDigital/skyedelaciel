@@ -1,5 +1,4 @@
 // @ts-check
-import { execSync } from "node:child_process";
 import { defineConfig } from "astro/config";
 import * as R from "ramda";
 import { match } from "ts-pattern";
@@ -57,24 +56,6 @@ const extractLinks: RemarkPlugin = () => async (tree, file) => {
     });
 };
 
-/**
- * Which revision this build was made from, for the rail slug on every page.
- *
- * Not every build runs inside a git checkout, and that is never a reason to
- * fail one: the stamp degrades to nothing instead, and md.astro drops the
- * empty segment.
- */
-function revision(): string {
-    try {
-        return execSync("git rev-parse --short HEAD", {
-            encoding: "utf8",
-            stdio: ["ignore", "pipe", "ignore"],
-        }).trim();
-    } catch {
-        return "";
-    }
-}
-
 /** What every page of prose is put through, Markdown and MDX alike. */
 const remarkPlugins = [extractLinks];
 const rehypePlugins = [rehypeSlug, rehypeCodeBlocks, rehypeTaskLists];
@@ -121,13 +102,6 @@ export default defineConfig({
         // URL comes from resolving the link, never from a visitor, so any
         // https host is allowed.
         remotePatterns: [{ protocol: "https" }],
-    },
-    vite: {
-        // A build fact, not a runtime one: baked in here so that a page can
-        // carry it without every layout reaching for a shell.
-        define: {
-            __GIT_REVISION__: JSON.stringify(revision()),
-        },
     },
     markdown: {
         // The theme names each token's kind instead of colouring it; the

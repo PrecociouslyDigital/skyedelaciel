@@ -445,23 +445,14 @@ $frame-within: $frame-gap + $frame-inner;
 /// The texture of a scheme's ground, painted in `$grain`, which is its colour
 /// at the strength of its thickest patch. A transparent grain is no texture.
 ///
-/// `chalk` is what an eraser leaves on a blackboard: broad sideways sweeps
-/// where it went, scored with the faint streaks its felt dragged along.
-/// `paper` is a sheet's own: a faint mottle where its fibres lie thicker,
-/// under an even tooth.
-@function texture($kind, $grain) {
+/// It is a sheet's own: a faint mottle where its fibres lie thicker, under an
+/// even tooth.
+@function texture($grain) {
     @if color.alpha($grain) == 0 {
         @return none;
     }
-    @if $kind == "chalk" {
-        @return noise($grain, 0.0025 0.009, 4, 1, -0.3, 1024px),
-            noise($grain, 0.01 0.16, 3, 1, -0.6, 512px);
-    }
-    @if $kind == "paper" {
-        @return noise($grain, 0.02, 3, 1, -0.45, 512px),
-            noise($grain, 0.7, 3, 2.5, -1.2, 256px);
-    }
-    @error "there is no #{$kind} texture.";
+    @return noise($grain, 0.02, 3, 1, -0.45, 512px),
+        noise($grain, 0.7, 3, 2.5, -1.2, 256px);
 }
 
 /// How far the glass stops short of its element's box. Anything set into the

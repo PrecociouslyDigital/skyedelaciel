@@ -20,6 +20,25 @@ export type Day = string;
  */
 export const day = (date: Date): Day => date.toISOString().slice(0, 10);
 
+const HAN_DIGITS = "零一二三四五六七八九";
+
+/** 1–31 in Han numerals: 五, 十, 十一, 二十, 二十五, 三十一. */
+const hanCount = (n: number): string => {
+    const tens = Math.floor(n / 10);
+    const ones = n % 10;
+    return (
+        (tens === 0 ? "" : (tens > 1 ? HAN_DIGITS[tens] : "") + "十") +
+        (ones === 0 ? "" : HAN_DIGITS[ones])
+    );
+};
+
+/** A day as the rail writes it, the year digit by digit: 二零二六年九月五日. */
+export const hanDay = (date: Date): string => {
+    const [year, month, dayOfMonth] = day(date).split("-").map(Number);
+    const digits = [...String(year)].map((digit) => HAN_DIGITS[+digit]);
+    return `${digits.join("")}年${hanCount(month!)}月${hanCount(dayOfMonth!)}日`;
+};
+
 /** `en-CA` is the locale that formats a date as `YYYY-MM-DD`. */
 const calendar = new Intl.DateTimeFormat("en-CA", {
     timeZone: PUBLISHING_ZONE,

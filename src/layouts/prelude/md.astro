@@ -9,7 +9,7 @@ import { RAIL_SEPARATOR } from "./rail";
 import TableOfContents from "~/components/TableOfContents.astro";
 import Bibliography from "~/components/mdx/links/Bibliography.astro";
 import type { LinkMeta } from "~/components/mdx/links/types";
-import { day } from "~/content/schedule";
+import { hanDay } from "~/content/schedule";
 
 export interface Props {
     /** The page's own frontmatter, plus what the remark plugins added to it. */
@@ -24,16 +24,14 @@ const { frontmatter, headings } = Astro.props;
 const author = frontmatter.author ?? AUTHOR;
 
 /**
- * What identifies this copy of the page: when it was published, when it was
- * last revised if it has been, and the revision it was built from.
- * prelude.scss sets it down the right rail — see fixtures/design.mdx, Annotation.
- * Either of the last two may be absent — an unedited page, a build outside a
- * git checkout — and simply drops out.
+ * What identifies this copy of the page: when it was published, and when it was
+ * last revised if it has been. prelude.scss sets it down the right rail — see
+ * fixtures/design.mdx, Annotation. An unedited page has no second date and
+ * simply drops it.
  */
 const rail = [
-    day(frontmatter.published),
-    frontmatter.updated && `ed ${day(frontmatter.updated)}`,
-    __GIT_REVISION__ && `rev ${__GIT_REVISION__}`,
+    hanDay(frontmatter.published),
+    frontmatter.updated && `ed ${hanDay(frontmatter.updated)}`,
 ]
     .filter(Boolean)
     .join(RAIL_SEPARATOR);

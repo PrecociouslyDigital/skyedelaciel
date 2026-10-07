@@ -386,7 +386,8 @@ ins {
 
 /* A code block is framed thick-outside, thin-inside, on a raised ground. The
    frame is inset shadows on the block itself, so it holds still while the
-   code scrolls sideways. */
+   code scrolls sideways. On a narrow screen a long line wraps instead,
+   hanging under its own number. */
 pre {
     $frame: ornaments.$frame-within;
 
@@ -416,6 +417,17 @@ pre {
         text-align: right;
         color: var(--color-muted);
         user-select: none;
+    }
+
+    @include breakpoints.narrow {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+
+        .line {
+            display: block;
+            padding-left: 3.6ch;
+            text-indent: -3.6ch;
+        }
     }
 }
 
