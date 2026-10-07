@@ -423,6 +423,13 @@ pre {
         white-space: pre-wrap;
         overflow-wrap: anywhere;
 
+        /* The newlines between the lines would each be a blank line once the
+           lines are blocks; a flex container discards them. */
+        code {
+            display: flex;
+            flex-direction: column;
+        }
+
         .line {
             display: block;
             padding-left: 3.6ch;
