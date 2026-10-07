@@ -1,12 +1,18 @@
-# Builds the Tumblr theme from the site, offers it as an artifact, and fails
-# while the blog is wearing an older one. Tumblr has no API for themes, so the
-# fix for a red run is `npm run tumblr:upload` and a re-run of this workflow.
+# Builds the Tumblr theme from the site, offers it as an artifact, and puts it
+# on the blog if the blog is wearing an older one. Tumblr has no API for
+# themes, so the upload drives Tumblr's editor in Chrome, logging in with the
+# TUMBLR_* secrets; see tools/tumblr-upload.mjs. If a run goes red, the fix is
+# `npm run tumblr:upload` from an attended machine, and a re-run.
 name: Tumblr theme
 
 on:
     push:
         branches: [release]
     workflow_dispatch:
+
+# One upload at a time, so two pushes cannot race to save the theme.
+concurrency:
+    group: tumblr-theme
 
 jobs:
     theme:
@@ -23,4 +29,14 @@ jobs:
               with:
                   name: tumblr-theme
                   path: dist-tumblr/theme.html
-            - run: npm run tumblr:check
+            # The runner's own Chrome, shown on a virtual display rather than
+            # headless, as if at a desk: Tumblr turns away a login from a
+            # browser that looks automated. The upload checks the live stamp
+            # itself, so a theme that does not take still fails the run.
+            - run: npx playwright install-deps chromium
+            - name: Upload the theme if the blog's is older
+              run: npm run tumblr:check || xvfb-run --auto-servernum npm run tumblr:upload
+              env:
+                  TUMBLR_EMAIL: ${{ secrets.TUMBLR_EMAIL }}
+                  TUMBLR_PASSWORD: ${{ secrets.TUMBLR_PASSWORD }}
+                  TUMBLR_TOTP: ${{ secrets.TUMBLR_TOTP }}

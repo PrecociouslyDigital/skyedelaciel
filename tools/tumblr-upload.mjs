@@ -12,9 +12,10 @@
  * The browser keeps its profile outside the repository and is shown rather
  * than headless, so later runs reuse the session. When there is no session
  * yet, the script logs in with the TUMBLR_EMAIL, TUMBLR_PASSWORD and
- * TUMBLR_TOTP (the authenticator's base32 secret) in the repository's .env,
- * if it has all three; otherwise, or if Tumblr's login page has changed, by
- * hand in the window the script opened.
+ * TUMBLR_TOTP (the authenticator's base32 secret) from the environment or the
+ * repository's .env, if either has all three; otherwise, or if Tumblr's login
+ * page has changed, by hand in the window the script opened. CI has no one
+ * to do that, and no session to reuse, so the script logs in every time.
  */
 
 import { chromium } from "@playwright/test";
@@ -28,8 +29,13 @@ import { totp } from "./totp.mjs";
 const PROFILE = join(homedir(), ".cache", "skyedelaciel-tumblr");
 const EDITOR = "https://www.tumblr.com/customize/skyedelaciel";
 
+/**
+ * Whether someone is at the window to finish a login the script could not.
+ * In CI no one is, so a failed login fails at once.
+ */
+const ATTENDED = !process.env.CI;
 /** Long enough to log in by hand, on the first run. */
-const LOGIN = 10 * 60_000;
+const LOGIN = ATTENDED ? 10 * 60_000 : 30_000;
 /** Tumblr caches a blog's pages briefly after its theme is saved. */
 const SETTLE = 2 * 60_000;
 /** How long each field of the login may take to appear. */
@@ -89,12 +95,17 @@ try {
     await page.goto(EDITOR);
     if (!page.url().startsWith(EDITOR)) {
         const login = credentials();
+        if (!login && !ATTENDED)
+            throw new Error(
+                "No TUMBLR_EMAIL, TUMBLR_PASSWORD and TUMBLR_TOTP to log in with.",
+            );
         if (login) {
-            await logIn(page, login).catch(() =>
+            await logIn(page, login).catch((error) => {
+                if (!ATTENDED) throw error;
                 console.error(
                     "Could not log in from .env; finish logging in in the browser window.",
-                ),
-            );
+                );
+            });
         }
         await page.waitForURL((url) => !/login|register/.test(url.pathname), {
             timeout: LOGIN,

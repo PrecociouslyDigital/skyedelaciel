@@ -52,3 +52,15 @@ The theme editor, probed with the session logged in:
 
 Tumblr refuses to save a theme with `http://` anywhere in it, even the SVG
 namespace inside a data URI; see `src/integrations/tumblr-theme.ts`.
+
+## 2026-10-07 — CI uploads too, unverified from GitHub
+
+`.github/workflows/tumblr-theme.yml` runs `tumblr:check || xvfb-run
+tumblr:upload` with the TUMBLR_* repository secrets: headed, in the runner's
+preinstalled Chrome, since Tumblr turned away the automated-looking browser at
+login. With `CI` set nothing waits for a person: no credentials, or a login
+step that does not appear, fails the run within about 30s. CI has no saved
+session, so every upload logs in afresh from a datacenter address. Whether
+Tumblr challenges that (a new-device email, a captcha) was not known when
+this was written; if it does, the run goes red and the fix is the local
+upload, as before.
