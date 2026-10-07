@@ -24,13 +24,19 @@ const label = `${v("Month")} ${v("DayOfMonth")}${block(
 <TocList depth={1}>
     <Block name="Posts">
         <Block name="IndexPage">
-            <TocEntry href={`#${POST_ID}`} text={label} depth={1}>
+            <TocEntry
+                href={`#${POST_ID}`}
+                text={label}
+                depth={1}
+                index="counted"
+            >
                 <TocList depth={2}>
                     <Block name="Tags">
                         <TocEntry
                             href={v("TagURL")}
                             text={`#${v("Tag")}`}
                             depth={2}
+                            index="counted"
                         />
                     </Block>
                 </TocList>
@@ -38,7 +44,12 @@ const label = `${v("Month")} ${v("DayOfMonth")}${block(
         </Block>
         <Block name="PermalinkPage">
             <Block name="Tags">
-                <TocEntry href={v("TagURL")} text={`#${v("Tag")}`} depth={1} />
+                <TocEntry
+                    href={v("TagURL")}
+                    text={`#${v("Tag")}`}
+                    depth={1}
+                    index="counted"
+                />
             </Block>
         </Block>
     </Block>

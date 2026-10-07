@@ -221,8 +221,8 @@ $blossom-reach: 0;
 
 /* — A section — */
 
-/* A section whose length was not known when the site was built grows a long
-   vine, faded out where its entries end. */
+/* A section grows a long vine, faded out where its entries end, unless the
+   rules below know its length and give it a vine drawn to fit. */
 .toc-list li[data-depth="1"] {
     --section-vine: var(--vine-toc-long);
     --section-hang: var(--vine-hang-long);
@@ -230,8 +230,20 @@ $blossom-reach: 0;
     --n: #{ornaments.$toc-counted};
 }
 
+/* A counted entry (see TocEntry.astro) takes its place from its siblings, and
+   a section of them takes its length from their number. */
+@for $k from 1 through ornaments.$toc-counted {
+    .toc-list li[data-counted]:nth-child(#{$k}) {
+        --i: #{$k - 1};
+    }
+}
+
 @for $n from 1 through ornaments.$toc-counted {
-    .toc-list li[data-entries="#{$n}"] {
+    .toc-list li[data-entries="#{$n}"],
+    .toc-list
+        li[data-depth="1"]:has(
+            > details > .toc-list > li[data-counted]:last-child:nth-child(#{$n})
+        ) {
         --section-vine: var(--vine-toc-#{$n});
         --section-hang: var(--vine-hang-#{$n});
         --section-fade: 0px;

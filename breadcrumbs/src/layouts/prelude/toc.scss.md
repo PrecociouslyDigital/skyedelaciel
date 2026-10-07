@@ -78,3 +78,12 @@ The bare fractions of `$unfold`/`$fold`/`$drop` (0.56, 0.75, 0.49, 0.5, 0.7,
 is `1 - $feather-share`, which is the 0.7 it was). The tracker's 110ms is
 `$tracker-move`. The receipt's 320ms arrival was the same figure as `$drop`
 and is now `toc.$drop`.
+
+## 2026-10-07 — counted entries
+
+Entries marked `data-counted` (Tumblr's, see breadcrumbs for TocEntry.astro)
+take `--i` from `:nth-child`, and a section of them takes `--n` and its
+counted vine from a `:has(... :last-child:nth-child(n))` selector in the same
+loop as `data-entries`. Both stop at `$toc-counted`. Past that, a section
+falls back to the long vine and `--n: $toc-counted`, as a main-site section
+past that length always has.

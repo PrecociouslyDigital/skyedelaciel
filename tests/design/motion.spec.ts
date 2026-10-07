@@ -7,6 +7,7 @@ import {
     section,
     SPEC_PAGE,
     test,
+    TUMBLR_INDEX,
 } from "./_harness";
 
 /** The design's own limits, from src/layouts/prelude/_motion.scss. */
@@ -202,6 +203,40 @@ section("Motion", () => {
                 page.locator("article [role=status]").first(),
             ).toHaveText("Link copied");
             expect(await running(page)).toEqual([]);
+        });
+    }
+
+    /**
+     * An entry arrives when the growing tip reaches it, which the stylesheet
+     * works out from the entry's place in its section and the section's length.
+     * Both must hold for contents built from a page's headings and for those
+     * built from tags Tumblr fills in.
+     */
+    for (const path of [FIXTURE_PAGE, TUMBLR_INDEX]) {
+        test(`a section's entries arrive one after another, down it (${path})`, async ({
+            page,
+        }) => {
+            await page.goto(path);
+
+            const sections = await page.evaluate(() => {
+                const custom = (element: Element, name: string) =>
+                    getComputedStyle(element).getPropertyValue(name).trim();
+                const root = document.querySelector(".toc-root")!;
+                return [...root.querySelectorAll('li[data-depth="1"]')]
+                    .map((section) => ({
+                        length: custom(section, "--n"),
+                        places: [...section.querySelectorAll("li")].map(
+                            (entry) => custom(entry, "--i"),
+                        ),
+                    }))
+                    .filter(({ places }) => places.length > 0);
+            });
+
+            expect(sections.length).toBeGreaterThan(0);
+            for (const { length, places } of sections) {
+                expect(length).toBe(String(places.length));
+                expect(places).toEqual(places.map((_, k) => String(k)));
+            }
         });
     }
 });

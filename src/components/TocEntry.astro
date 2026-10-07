@@ -17,8 +17,13 @@ type Props = {
      * An entry's place in what it arrives with, which is when it arrives: a
      * top-level entry's among the top level, as the whole list drops open on
      * a narrow page, and any other's in its top-level section, as that grows.
+     *
+     * Entries filled in when the page is served, as Tumblr fills in a post's
+     * tags, have no place at build time. Mark these `counted`: the stylesheet
+     * takes each one's place from its siblings, and its section's length from
+     * how many there are.
      */
-    index?: number;
+    index: number | "counted";
 } & (
     | {
           depth: 1;
@@ -37,7 +42,8 @@ const { href, text, depth, entries, index } = Astro.props;
 <li
     data-depth={depth}
     data-entries={entries}
-    style={index === undefined ? undefined : `--i: ${index}`}
+    data-counted={index === "counted" ? "" : undefined}
+    style={index === "counted" ? undefined : `--i: ${index}`}
 >
     <a href={href}>{text}</a>
     {
