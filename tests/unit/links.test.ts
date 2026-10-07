@@ -13,6 +13,7 @@ import {
 } from "~/components/mdx/links/resolve";
 import type { CslData, LinkEntry } from "~/components/mdx/links/types";
 import { linkEntry, linkFrontmatter } from "~/components/mdx/links/types";
+import { SITE_NAME, SITE_URL } from "~/site";
 
 /** One `csl` per link kind, shaped the way each resolver leaves it. */
 const csl = {
@@ -30,7 +31,7 @@ const csl = {
         id: "/design",
         URL: "/design",
         title: "Design Specification",
-        "container-title": "Skye De La Ciel",
+        "container-title": SITE_NAME,
     },
     wikipedia: {
         type: "webpage",
@@ -293,7 +294,7 @@ describe("resolveInternalLinks", () => {
                 id: "/design",
                 URL: "/design",
                 title: "Design Specification",
-                "container-title": "Skye De La Ciel",
+                "container-title": SITE_NAME,
             },
             summary: { type: "text", content: "The abstract." },
         });
@@ -331,7 +332,7 @@ describe("internalId", () => {
             "/fiction/piece#part",
             "/fiction/piece?ref=1",
             "/fiction/piece/?ref=1#part",
-            "https://skyedelaciel.com/fiction/piece",
+            `${SITE_URL}/fiction/piece`,
         ]) {
             expect(internalId(url), url).toBe("fiction/piece");
         }

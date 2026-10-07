@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
+    APPARATUS,
     copyLink,
     expect,
     FIGURES,
@@ -375,7 +376,7 @@ section("Figures", () => {
                     ),
                 )
                 .toBe(code);
-            await expect(button).toHaveAttribute("data-copied");
+            await expect(button).toHaveAttribute("data-receipt", "shown");
             await expect(
                 page.locator(`${CODE} [role=status]`).last(),
             ).toHaveText("Code copied");
@@ -416,34 +417,33 @@ section("Figures", () => {
         test("a link to a figure or a statement reads as its number", async ({
             page,
         }) => {
-            const references = await page.evaluate(() =>
-                [
-                    ...document.querySelectorAll(
-                        ["fig", "tab", "def", "lem", "thm"]
-                            .map(
-                                (prefix) =>
-                                    `article a.content-link[href^='#${prefix}-']`,
-                            )
-                            .join(", "),
-                    ),
-                ].map((link) => {
-                    const target = document.querySelector(
-                        link.getAttribute("href")!,
-                    )!;
-                    return {
-                        says: link.firstChild!.textContent!.trim(),
-                        number: target.querySelector(".copy-link")!
-                            .textContent!,
-                    };
-                }),
+            const references = await page.evaluate(
+                (selector) =>
+                    [...document.querySelectorAll(selector)].map((link) => {
+                        const target = document.querySelector(
+                            link.getAttribute("href")!,
+                        )!;
+                        return {
+                            says: link.firstChild!.textContent!.trim(),
+                            number: target.querySelector(".copy-link")!
+                                .textContent!,
+                        };
+                    }),
+                APPARATUS.map(
+                    ({ prefix }) =>
+                        `article a.content-link[href^='#${prefix}-']`,
+                ).join(", "),
             );
             expect(references.length).toBeGreaterThanOrEqual(4);
+            // A caption's "Fig. 3.2" is read in the text as "Figure 3.2".
+            const asRead = (number: string) => {
+                const kind = APPARATUS.find(({ short }) =>
+                    number.startsWith(`${short} `),
+                )!;
+                return `${kind.label}${number.slice(kind.short.length)}`;
+            };
             for (const { says, number } of references)
-                expect(says).toBe(
-                    number
-                        .replace(/^Fig\. /, "Figure ")
-                        .replace(/^Def\. /, "Definition "),
-                );
+                expect(says).toBe(asRead(number));
         });
 
         test("no two things on the page share an id", async ({ page }) => {

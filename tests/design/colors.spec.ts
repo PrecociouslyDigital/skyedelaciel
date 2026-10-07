@@ -6,6 +6,7 @@ import {
     section,
     SPEC_PAGE,
     test,
+    token,
 } from "./_harness";
 import type { Page } from "@playwright/test";
 
@@ -116,11 +117,7 @@ section("Colors", () => {
                 await page.goto(SPEC_PAGE);
 
                 const { background, text } = await palette(page);
-                const muted = await page.evaluate(() =>
-                    getComputedStyle(document.documentElement)
-                        .getPropertyValue("--color-muted")
-                        .trim(),
-                );
+                const muted = await token(page, "muted");
 
                 expect(
                     contrast(muted, background),

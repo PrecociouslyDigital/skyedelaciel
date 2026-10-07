@@ -1,4 +1,4 @@
-import { expect, onlyIn, section, SPEC_PAGE, test } from "./_harness";
+import { box, expect, onlyIn, section, SPEC_PAGE, test } from "./_harness";
 
 /**
  * Does the first selector's element come before the second's?
@@ -126,8 +126,8 @@ section("Front Matter", () => {
         onlyIn("wide", "print", "nojs");
 
         test("the author shares the title's line", async ({ page }) => {
-            const title = (await page.locator(".title").boundingBox())!;
-            const author = (await page.locator(".author").boundingBox())!;
+            const title = await box(page.locator(".title"));
+            const author = await box(page.locator(".author"));
             expect(author.y).toBeLessThan(title.y + title.height);
         });
     });
@@ -136,8 +136,8 @@ section("Front Matter", () => {
         onlyIn("narrow");
 
         test("the author wraps to its own line", async ({ page }) => {
-            const title = (await page.locator(".title").boundingBox())!;
-            const author = (await page.locator(".author").boundingBox())!;
+            const title = await box(page.locator(".title"));
+            const author = await box(page.locator(".author"));
             expect(author.y).toBeGreaterThanOrEqual(title.y + title.height);
         });
     });

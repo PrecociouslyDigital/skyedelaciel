@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { repoRoot } from "../../tools/root.mjs";
 
 /**
  * The spec and the suite are joined by section name, and this is the joint.
@@ -15,12 +16,12 @@ import { fileURLToPath } from "node:url";
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SPEC = join(here, "../../src/content/fixtures/design.mdx");
+const SPEC = join(repoRoot, "src/content/fixtures/design.mdx");
 
 /** The `##` headings — one level down from the spec's structural `#` parts. */
 function specSections(): string[] {
     const body = readFileSync(SPEC, "utf8").replace(
-        /^---\n[\s\S]*?\n---\n/,
+        /^---\r?\n[\s\S]*?\r?\n---\r?\n/,
         "",
     );
     return [...body.matchAll(/^## (?!#)(.+)$/gm)].map((match) =>

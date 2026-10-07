@@ -16,7 +16,7 @@
 import { createServer } from "node:net";
 import { mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
-import { chromium } from "playwright";
+import { chromium } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { logPath, pidfilePath, socketPath, sourceHash } from "./profiles.mjs";
 import { isUp, openProfilePage, resolveBaseUrl } from "./context.mjs";
@@ -41,17 +41,17 @@ class UsageError extends Error {}
 
 /**
  * @typedef {object} Session
- * @property {import("playwright").BrowserContext} context
- * @property {import("playwright").Page} page
+ * @property {import("@playwright/test").BrowserContext} context
+ * @property {import("@playwright/test").Page} page
  * @property {number} scale     deviceScaleFactor this context was built with
  * @property {Entry[]} console
  * @property {Entry[]} errors
  * @property {Entry[]} net
  */
 
-/** @type {import("playwright").BrowserServer} */
+/** @type {import("@playwright/test").BrowserServer} */
 let browserServer;
-/** @type {import("playwright").Browser} */
+/** @type {import("@playwright/test").Browser} */
 let browser;
 
 /** @type {Map<ProfileName, Session>} */

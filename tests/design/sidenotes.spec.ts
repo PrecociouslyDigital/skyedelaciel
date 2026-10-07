@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { Box } from "./_harness";
 import {
+    box,
     expect,
     FIXTURE_PAGE,
     onlyIn,
@@ -55,7 +56,7 @@ section("Sidenotes", () => {
         test("they are displayed to the right of the content", async ({
             page,
         }) => {
-            const article = (await page.locator("article").boundingBox())!;
+            const article = await box(page.locator("article"));
             for (const note of await noteBoxes(page)) {
                 expect(note).not.toBeNull();
                 expect(note!.x).toBeGreaterThanOrEqual(

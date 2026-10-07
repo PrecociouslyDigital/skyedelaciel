@@ -1,4 +1,5 @@
 import {
+    box,
     expect,
     FIXTURE_PAGE,
     onlyIn,
@@ -93,11 +94,10 @@ section("Annotation", () => {
 
         test("a sidenote still begins outside them", async ({ page }) => {
             const { reach } = await drawn(page);
-            const article = (await page.locator("article").boundingBox())!;
-            const note = (await page
-                .locator("article small[role='note']")
-                .first()
-                .boundingBox())!;
+            const article = await box(page.locator("article"));
+            const note = await box(
+                page.locator("article small[role='note']").first(),
+            );
 
             expect(note.x).toBeGreaterThanOrEqual(
                 article.x + article.width + reach,
@@ -143,7 +143,7 @@ section("Annotation", () => {
             page,
         }) => {
             const { slug, reach } = await drawn(page);
-            const article = (await page.locator("article").boundingBox())!;
+            const article = await box(page.locator("article"));
             const notes = await page
                 .locator("article small[role='note']")
                 .evaluateAll((all) =>
@@ -251,7 +251,7 @@ section("Annotation", () => {
          */
         test("the stamp does", async ({ page }) => {
             const { slug } = await drawn(page);
-            const article = (await page.locator("article").boundingBox())!;
+            const article = await box(page.locator("article"));
 
             expect(slug.content).not.toBe("none");
             expect(slug.writingMode).toMatch(/^vertical/);

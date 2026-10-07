@@ -20,3 +20,9 @@ wrote exactly the code; the OS changed the line endings.
 "a table's caption stands above it" expected `Table ${i + 1}`, from before
 tables were numbered within their top-level section ("Table 3.3"). It now
 checks only the label's shape; Numbering checks which number each carries.
+
+## 2026-10-06 — Copy's receipt is `data-receipt`
+
+"Copy puts exactly the code on the clipboard" still looked for `data-copied`,
+which CopyCode dropped when it took the shared receipt (receipt.svelte.ts). It
+now expects `data-receipt="shown"`.

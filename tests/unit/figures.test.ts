@@ -2,7 +2,11 @@ import { compile } from "@mdx-js/mdx";
 import { fileURLToPath } from "node:url";
 import remarkGfm from "remark-gfm";
 import { describe, expect, test } from "vitest";
-import remarkFigures, { drawnSize } from "../../src/plugins/remark-figures";
+import remarkFigures, {
+    drawnSize,
+    MAX_HEIGHT,
+    MAX_WIDTH,
+} from "../../src/plugins/remark-figures";
 import remarkSections from "../../src/plugins/remark-sections";
 import { chance } from "../../src/layouts/prelude/chance.mjs";
 
@@ -158,11 +162,11 @@ describe("the size a figure is drawn at", () => {
         };
     });
 
-    test("is never wider than 640, taller than 720, or larger than the image", () => {
+    test("is never wider or taller than the page allows, or larger than the image", () => {
         for (const natural of sizes) {
             const { width, height } = drawnSize(natural);
-            expect(width).toBeLessThanOrEqual(640);
-            expect(height).toBeLessThanOrEqual(720);
+            expect(width).toBeLessThanOrEqual(MAX_WIDTH);
+            expect(height).toBeLessThanOrEqual(MAX_HEIGHT);
             expect(width).toBeLessThanOrEqual(natural.width);
         }
     });
@@ -171,7 +175,7 @@ describe("the size a figure is drawn at", () => {
         for (const natural of sizes) {
             const { width, height } = drawnSize(natural);
             const exact = (width * natural.height) / natural.width;
-            if (exact <= 720)
+            if (exact <= MAX_HEIGHT)
                 expect(Math.abs(height - exact)).toBeLessThanOrEqual(0.5);
         }
     });

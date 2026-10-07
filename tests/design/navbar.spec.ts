@@ -1,4 +1,5 @@
-import { expect, onlyIn, section, SPEC_PAGE, test } from "./_harness";
+import { profiles } from "../../tools/browser/profiles.mjs";
+import { box, expect, onlyIn, section, SPEC_PAGE, test } from "./_harness";
 import type { Page } from "@playwright/test";
 
 /** The navbar's three parts, in the order the spec lists them. */
@@ -31,9 +32,9 @@ const arrangement = (parts: readonly string[]) => {
  * title, and as wide as it.
  */
 async function inTheBand(page: Page) {
-    const navbar = (await page.locator(".navbar").boundingBox())!;
-    const title = (await page.locator(".title").boundingBox())!;
-    const article = (await page.locator("article").boundingBox())!;
+    const navbar = await box(page.locator(".navbar"));
+    const title = await box(page.locator(".title"));
+    const article = await box(page.locator("article"));
 
     expect(navbar.y + navbar.height).toBeLessThanOrEqual(title.y);
     expect(await page.evaluate(arrangement, PARTS)).toBe("side-by-side");
@@ -91,8 +92,8 @@ section("Navbar", () => {
         test("it sits beside the content, arranged vertically", async ({
             page,
         }) => {
-            const navbar = (await page.locator(".navbar").boundingBox())!;
-            const article = (await page.locator("article").boundingBox())!;
+            const navbar = await box(page.locator(".navbar"));
+            const article = await box(page.locator("article"));
 
             // Beside, not above: it ends before the content begins.
             expect(navbar.x + navbar.width).toBeLessThanOrEqual(article.x);
@@ -141,16 +142,14 @@ section("Navbar", () => {
         }) => inTheBand(page));
 
         /** The phone widths the band is drawn for, narrowest last. */
-        for (const width of [420, 375, 340]) {
+        for (const width of [profiles.narrow.viewport.width, 375, 340]) {
             test(`every link is a fingertip tall, on one band (${width}px)`, async ({
                 page,
             }) => {
                 await page.setViewportSize({ width, height: 800 });
                 const links = page.locator(".navbar .nav-links a");
                 for (const link of await links.all())
-                    expect(
-                        (await link.boundingBox())!.height,
-                    ).toBeGreaterThanOrEqual(44);
+                    expect((await box(link)).height).toBeGreaterThanOrEqual(44);
 
                 // One band: the logo, the links and the toggle side by side.
                 expect(await page.evaluate(arrangement, PARTS)).toBe(
@@ -181,9 +180,7 @@ section("Navbar", () => {
         test("the scheme toggle answers a fingertip all round it", async ({
             page,
         }) => {
-            const icon = (await page
-                .locator(".theme-toggle .toggle-icon")
-                .boundingBox())!;
+            const icon = await box(page.locator(".theme-toggle .toggle-icon"));
             const [x, y] = [icon.x + icon.width / 2, icon.y + icon.height / 2];
             const reach = 20;
             const hits = await page.evaluate(
@@ -212,7 +209,7 @@ section("Navbar", () => {
         }) => {
             await expect(page.locator(".navbar")).toBeHidden();
 
-            const article = (await page.locator("article").boundingBox())!;
+            const article = await box(page.locator("article"));
             expect(article.x).toBe(0);
         });
     });

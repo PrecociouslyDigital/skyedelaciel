@@ -3,8 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { outputs, renderLogo } from "../../tools/logo.mjs";
-
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+import { repoRoot } from "../../tools/root.mjs";
 
 /**
  * The mark is generated, and a generated file that has been edited by hand is

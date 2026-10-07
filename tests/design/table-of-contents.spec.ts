@@ -1,5 +1,6 @@
+import { profiles } from "../../tools/browser/profiles.mjs";
 import type { Page } from "@playwright/test";
-import { expect, FIXTURE_PAGE, onlyIn, section, test } from "./_harness";
+import { box, expect, FIXTURE_PAGE, onlyIn, section, test } from "./_harness";
 
 /** Where a section's collapse control sits relative to the link it controls. */
 async function indicatorSide(page: Page, toc: string) {
@@ -81,9 +82,9 @@ section("Table of contents", () => {
         test("it sits left of the content, under the navbar", async ({
             page,
         }) => {
-            const toc = (await page.locator(".toc-sidebar").boundingBox())!;
-            const navbar = (await page.locator(".navbar").boundingBox())!;
-            const article = (await page.locator("article").boundingBox())!;
+            const toc = await box(page.locator(".toc-sidebar"));
+            const navbar = await box(page.locator(".navbar"));
+            const article = await box(page.locator("article"));
 
             expect(toc.x + toc.width).toBeLessThanOrEqual(article.x);
             expect(toc.y).toBeGreaterThanOrEqual(navbar.y + navbar.height);
@@ -98,9 +99,9 @@ section("Table of contents", () => {
             const toc = page.locator(".toc-sidebar");
             const scroll = 1200;
 
-            const before = (await toc.boundingBox())!;
+            const before = await box(toc);
             await page.evaluate((by) => window.scrollBy(0, by), scroll);
-            const after = (await toc.boundingBox())!;
+            const after = await box(toc);
 
             // It moved up by less than the page scrolled, and stayed on screen.
             expect(after.y).toBeGreaterThanOrEqual(0);
@@ -171,9 +172,7 @@ section("Table of contents", () => {
             await openSection(page, "#heading-1");
             const link = 'a[href="#heading-3"]';
             const shoot = await drawing(page, `.toc-sidebar li:has(> ${link})`);
-            const list = (await page
-                .locator(".toc-sidebar .toc-root")
-                .boundingBox())!;
+            const list = await box(page.locator(".toc-sidebar .toc-root"));
 
             expect(shoot.image).toMatch(/^url\(/);
             expect(shoot.left).toBeGreaterThan(
@@ -321,8 +320,11 @@ section("Table of contents", () => {
             test("the contents scroll on their own in a short window", async ({
                 page,
             }) => {
-                await page.setViewportSize({ width: 1600, height: 450 });
-                const navbar = (await page.locator(".navbar").boundingBox())!;
+                await page.setViewportSize({
+                    width: profiles.wide.viewport.width,
+                    height: 450,
+                });
+                const navbar = await box(page.locator(".navbar"));
                 await readAt(page, 13, 10);
 
                 await expect
@@ -342,7 +344,7 @@ section("Table of contents", () => {
                         }),
                     )
                     .toBe(true);
-                const after = (await page.locator(".navbar").boundingBox())!;
+                const after = await box(page.locator(".navbar"));
                 expect(after.y).toBeCloseTo(navbar.y, 0);
             });
         });

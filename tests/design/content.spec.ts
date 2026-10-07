@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import {
+    APPARATUS,
     expect,
     FIXTURE_PAGE,
     section,
@@ -351,13 +352,15 @@ section("Content", () => {
                     };
                 }),
             );
-            const KIND = { def: "Def.", lem: "Lemma", thm: "Theorem" };
+            const KIND = Object.fromEntries(
+                APPARATUS.map(({ prefix, short }) => [prefix, short]),
+            );
             expect(statements.length).toBeGreaterThanOrEqual(4);
             expect(statements).toEqual(
                 statements.map(({ id }) => ({
                     id,
                     href: `#${id}`,
-                    kind: KIND[id.split("-")[0] as keyof typeof KIND],
+                    kind: KIND[id.split("-")[0]!],
                     last: true,
                 })),
             );

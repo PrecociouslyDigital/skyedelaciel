@@ -16,10 +16,9 @@
  */
 
 import { writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+import { repoRoot } from "./root.mjs";
 
 // ─── Points ──────────────────────────────────────────────────────────────────
 

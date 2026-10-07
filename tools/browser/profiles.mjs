@@ -11,15 +11,13 @@
 
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BLOG, PERMALINK } from "../../src/content/fixtures/tumblr.ts";
 import { SCHEDULED_PREFIX } from "../../src/content/schedule.ts";
+import { repoRoot } from "../root.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-
-/** The repository root — `tools/browser/` is two levels down from it. */
-export const repoRoot = resolve(here, "../..");
 
 // ─── The matrix ──────────────────────────────────────────────────────────────
 

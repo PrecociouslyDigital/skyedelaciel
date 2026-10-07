@@ -44,3 +44,17 @@ The nojs test deliberately clicks the raw locator.
 
 Moved here from annotation.spec and content.spec, which each had a copy,
 once figures.spec needed a third.
+
+## 2026-10-06 — tests read their truths from the source
+
+`box(locator)` replaces about thirty `(await x.boundingBox())!`, and the copy
+links.spec.ts had of it; a missing box now fails naming the locator rather
+than as a TypeError on `null`. `APPARATUS` is numbering.ts's `KINDS`, and
+`FIGURES`/`STATEMENTS`, content.spec's labels and figures.spec's
+"Fig. → Figure" reading are all built from it instead of restating prefixes
+and labels. Elsewhere: headings.spec waits out `HOLD_MS` and `LEAVE_MS` from
+receipt.svelte.ts, home/links/sources/tumblr tests take the site's name and
+URL from src/site.ts, tumblr.test generates templates with `chance` over
+`BLOCKS` and stamps with `THEME_HASH_PLACEHOLDER`, figures.test checks
+against `MAX_WIDTH`/`MAX_HEIGHT`, and the navbar and contents specs take
+widths from the browse profiles.

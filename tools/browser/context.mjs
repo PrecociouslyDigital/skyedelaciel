@@ -17,7 +17,7 @@ import { profiles, serverPorts } from "./profiles.mjs";
  * `deviceScaleFactor` is fixed when a context is built rather than when a
  * screenshot is taken, which is why it belongs here and not at the call site.
  *
- * @param {import("playwright").Browser} browser
+ * @param {import("@playwright/test").Browser} browser
  * @param {ProfileName} name
  * @param {number} scale
  */

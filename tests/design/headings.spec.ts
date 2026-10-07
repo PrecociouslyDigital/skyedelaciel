@@ -1,5 +1,9 @@
 import type { Page } from "@playwright/test";
 import {
+    HOLD_MS,
+    LEAVE_MS,
+} from "../../src/components/mdx/copy/receipt.svelte";
+import {
     CONTENT_HEADINGS,
     copyLink,
     expect,
@@ -13,8 +17,8 @@ import {
 /** A short heading of the fixture, well clear of the top of the page. */
 const HEADING = "#default-style";
 
-/** How long the receipt holds before it lifts, from CopyLink.svelte. */
-const HOLD_MS = 1500;
+/** Time for the page to catch up with the receipt's own timer. */
+const SLACK_MS = 300;
 
 const geometry = (page: Page) =>
     page.evaluate((selector) => {
@@ -167,7 +171,7 @@ section("Headings", () => {
                 .poll(async () => (await geometry(page)).shown)
                 .toBe("visible");
 
-            await page.waitForTimeout(HOLD_MS + 600);
+            await page.waitForTimeout(HOLD_MS + LEAVE_MS + SLACK_MS);
             const { shown, ticked } = await geometry(page);
             expect(shown).toBe("hidden");
             expect(ticked).toBe(false);
@@ -190,7 +194,7 @@ section("Headings", () => {
                     .evaluate((el) => el.getAnimations().length),
             ).toBe(0);
 
-            await page.waitForTimeout(HOLD_MS + 100);
+            await page.waitForTimeout(HOLD_MS + SLACK_MS);
             expect((await geometry(page)).shown).toBe("hidden");
         });
     });

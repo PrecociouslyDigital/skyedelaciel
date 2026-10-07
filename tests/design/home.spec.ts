@@ -1,4 +1,5 @@
-import { expect, onlyIn, section, SHELF, test } from "./_harness";
+import { SITE_NAME } from "../../src/site";
+import { box, expect, onlyIn, section, SHELF, test } from "./_harness";
 
 section("Home", () => {
     test.beforeEach(async ({ page }) => {
@@ -7,7 +8,7 @@ section("Home", () => {
 
     test("opens with the site's name and an introduction", async ({ page }) => {
         await expect(page.locator(".front-matter .title")).toHaveText(
-            "Skye De La Ciel",
+            SITE_NAME,
         );
         await expect(page.locator(".front-matter .abstract")).not.toBeEmpty();
     });
@@ -40,8 +41,8 @@ section("Home", () => {
 
         test("a piece's date sits beside its title", async ({ page }) => {
             const piece = page.locator(".pieces li").first();
-            const title = (await piece.locator(".piece-title").boundingBox())!;
-            const date = (await piece.locator("time").boundingBox())!;
+            const title = await box(piece.locator(".piece-title"));
+            const date = await box(piece.locator("time"));
             expect(date.x).toBeGreaterThan(title.x + title.width);
             expect(date.y).toBeLessThan(title.y + title.height);
         });

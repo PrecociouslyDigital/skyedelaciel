@@ -24,10 +24,10 @@ import {
     pidfilePath,
     profileNames,
     profiles,
-    repoRoot,
     socketPath,
     sourceHash,
 } from "./profiles.mjs";
+import { repoRoot } from "../root.mjs";
 
 const DAEMON = fileURLToPath(new URL("./daemon.mjs", import.meta.url));
 

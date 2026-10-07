@@ -6,6 +6,7 @@ import {
 } from "../../src/components/mdx/links/geometry";
 import type { Box } from "./_harness";
 import {
+    box,
     expect,
     FIXTURE_PAGE,
     onlyIn,
@@ -47,12 +48,18 @@ const BANNER = STYLES["Default Style"].href;
 /** A banner whose text runs long enough to scroll. */
 const LONG_BANNER = "https://en.wikipedia.org/wiki/Mount_Fuji";
 
-/** Hover the first link to `href`, and return its popover once it is up. */
-async function open(page: Page, href: string): Promise<Locator> {
-    const wrapper = page
-        .locator(".link-wrapper")
-        .filter({ has: page.locator(`a[href="${href}"]`) })
-        .first();
+/**
+ * Hover a link, the first to `link` if it is an address or else the one the
+ * wrapper `link` holds, and return its popover once it is up.
+ */
+async function open(page: Page, link: string | Locator): Promise<Locator> {
+    const wrapper =
+        typeof link === "string"
+            ? page
+                  .locator(".link-wrapper")
+                  .filter({ has: page.locator(`a[href="${link}"]`) })
+                  .first()
+            : link;
     await wrapper.locator("a.content-link").hover();
     const popover = wrapper.locator(".link-popover");
     await expect(popover).toBeVisible();
@@ -104,13 +111,6 @@ const bannerHeight = (popover: Locator): Promise<number> =>
         ({ image }) => image.height,
     );
 
-/** A visible element's rectangle. */
-async function box(locator: Locator): Promise<Box> {
-    const rect = await locator.boundingBox();
-    if (!rect) throw new Error("expected a rendered box");
-    return rect;
-}
-
 section("Links", () => {
     test.beforeEach(async ({ page }) => {
         await page.goto(FIXTURE_PAGE);
@@ -151,17 +151,12 @@ section("Links", () => {
             page,
         }) => {
             const wrapper = page.locator(".link-wrapper").first();
-            const popover = wrapper.locator(".link-popover");
+            await expect(wrapper.locator(".link-popover")).toBeHidden();
+            const popover = await open(page, wrapper);
 
-            await expect(popover).toBeHidden();
-            await wrapper.locator("a.content-link").hover();
-            await expect(popover).toBeVisible();
-
-            const link = (await wrapper
-                .locator("a.content-link")
-                .boundingBox())!;
-            const box = (await popover.boundingBox())!;
-            expect(box.y + box.height).toBeLessThanOrEqual(link.y + 1);
+            const link = await box(wrapper.locator("a.content-link"));
+            const pane = await box(popover);
+            expect(pane.y + pane.height).toBeLessThanOrEqual(link.y + 1);
 
             // "A fixed maximum size, and can be scrolled if its contents are
             // long" — so the cap has to actually bind the rendered box, and
@@ -193,26 +188,21 @@ section("Links", () => {
                 .locator(".link-wrapper")
                 .filter({ hasText: "OpenGraph Link" })
                 .first();
-            await wrapper.locator("a.content-link").hover();
+            const popover = await open(page, wrapper);
 
-            const popover = wrapper.locator(".link-popover");
-            await expect(popover).toBeVisible();
-
-            const link = (await wrapper
-                .locator("a.content-link")
-                .boundingBox())!;
-            const box = (await popover.boundingBox())!;
+            const link = await box(wrapper.locator("a.content-link"));
+            const pane = await box(popover);
 
             await page.mouse.move(
                 link.x + link.width / 2,
-                (box.y + box.height + link.y) / 2,
+                (pane.y + pane.height + link.y) / 2,
             );
             await page.waitForTimeout(FADE_OUT);
             await expect(popover).toBeVisible();
 
             await page.mouse.move(
-                box.x + box.width / 2,
-                box.y + box.height / 2,
+                pane.x + pane.width / 2,
+                pane.y + pane.height / 2,
             );
             await page.waitForTimeout(FADE_OUT);
             await expect(popover).toBeVisible();
@@ -266,7 +256,7 @@ section("Links", () => {
                 .locator(".link-wrapper")
                 .filter({ hasText: "OpenGraph Link" })
                 .first();
-            await wrapper.locator("a.content-link").hover();
+            await open(page, wrapper);
 
             const order = await wrapper
                 .locator(".link-popover-text")

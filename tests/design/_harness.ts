@@ -1,4 +1,10 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import {
+    test as base,
+    expect,
+    type Locator,
+    type Page,
+} from "@playwright/test";
+import { KINDS, type Track } from "../../src/plugins/numbering";
 import type { Profile, ProfileName } from "../../tools/browser/profiles.mjs";
 import { pages, profiles } from "../../tools/browser/profiles.mjs";
 
@@ -76,6 +82,13 @@ export const CONTENT_HEADINGS = "article > :is(h1,h2,h3,h4,h5,h6)";
 /** Rectangles as `boundingBox()` gives them, or null for a hidden element. */
 export type Box = { x: number; y: number; width: number; height: number };
 
+/** The rendered rectangle of `locator`; throws if it is not drawn. */
+export async function box(locator: Locator): Promise<Box> {
+    const drawn = await locator.boundingBox();
+    if (!drawn) throw new Error(`${locator} is not drawn.`);
+    return drawn;
+}
+
 /** Do two rendered rectangles share any area at all? */
 export const overlaps = (a: Box, b: Box) =>
     a.x < b.x + b.width &&
@@ -132,10 +145,18 @@ export const token = (page: Page, name: string) =>
         `--color-${name}`,
     );
 
+/** Every kind of apparatus defined in numbering.ts. */
+export const APPARATUS = Object.values(KINDS);
+
+/** The ids of everything on one track: `[id^='fig-'], [id^='tab-']`. */
+const onTrack = (track: Track) =>
+    APPARATUS.filter((kind) => kind.track === track)
+        .map(({ prefix }) => `[id^='${prefix}-']`)
+        .join(", ");
+
 /** Everything numbered on the figures' track, and on the statements'. */
-export const FIGURES = "article figure:is([id^='fig-'], [id^='tab-'])";
-export const STATEMENTS =
-    "article :is([id^='def-'], [id^='lem-'], [id^='thm-'])";
+export const FIGURES = `article figure:is(${onTrack("figures")})`;
+export const STATEMENTS = `article :is(${onTrack("statements")})`;
 
 /**
  * The numbers one track's addresses carry, in document order, beside the

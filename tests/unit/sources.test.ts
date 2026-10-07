@@ -7,6 +7,7 @@ import {
 } from "~/components/mdx/links/sources";
 import type { LinkEntry, LinkKind } from "~/components/mdx/links/types";
 import { linkKind } from "~/components/mdx/links/types";
+import { SITE_URL } from "~/site";
 
 /**
  * Which source owns which URL, including the edge cases that a predicate
@@ -17,7 +18,7 @@ const OWNERSHIP: Record<string, LinkKind> = {
     "/design": "internal",
     "/design#popover": "internal",
     "#section": "internal",
-    "https://skyedelaciel.com/design": "internal",
+    [`${SITE_URL}/design`]: "internal",
 
     "https://doi.org/10.1038/s41586-021-03819-2": "doi",
     "https://dx.doi.org/10.1145/3442188.3445922": "doi",

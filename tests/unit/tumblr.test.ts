@@ -1,36 +1,31 @@
 import { describe, expect, test } from "vitest";
 import { hrefFor, isCurrent, navLinks, type Host } from "~/components/nav";
+import { chance, type Chance } from "~/layouts/prelude/chance.mjs";
+import { SITE_URL } from "~/site";
 import { parse, render } from "~/tumblr/render";
-import { readStamp, stamp, themeHash } from "~/tumblr/stamp.mjs";
-
-/**
- * A small deterministic generator, so that the properties below quantify over
- * many templates without a dependency, and a failure reproduces exactly.
- */
-function random(seed: number) {
-    return () => {
-        seed = (seed * 1_103_515_245 + 12_345) % 2 ** 31;
-        return seed / 2 ** 31;
-    };
-}
-
-const NAMES = ["Posts", "Text", "Title", "Tags", "Caption"];
+import {
+    readStamp,
+    stamp,
+    THEME_HASH_PLACEHOLDER,
+    themeHash,
+} from "~/tumblr/stamp.mjs";
+import { BLOCKS } from "~/tumblr/tags";
 
 /** A well-formed template: blocks nested properly, text between them. */
-function template(next: () => number, depth = 0): string {
+function template(r: Chance, depth = 0): string {
     const parts: string[] = [];
-    while (next() < 0.7 && parts.length < 4) {
-        const name = NAMES[Math.floor(next() * NAMES.length)]!;
+    while (r.odds(0.7) && parts.length < 4) {
+        const name = r.pick(BLOCKS);
         parts.push(
-            depth < 3 && next() < 0.6
-                ? `{block:${name}}${template(next, depth + 1)}{/block:${name}}`
+            depth < 3 && r.odds(0.6)
+                ? `{block:${name}}${template(r, depth + 1)}{/block:${name}}`
                 : `<p>{${name}}</p>`,
         );
     }
     return parts.join("");
 }
 
-const templates = Array.from({ length: 200 }, (_, n) => template(random(n)));
+const templates = Array.from({ length: 200 }, (_, n) => template(chance(n)));
 
 describe("parse", () => {
     test("accepts every properly nested template", () => {
@@ -86,7 +81,7 @@ describe("render", () => {
 
 describe("stamp", () => {
     const theme = (body: string) =>
-        `<head><meta name="theme-hash" content="__THEME_HASH__"></head>${body}`;
+        `<head><meta name="theme-hash" content="${THEME_HASH_PLACEHOLDER}"></head>${body}`;
 
     test("stamping is idempotent, and carries the theme's own hash", () => {
         for (const source of templates.slice(0, 50)) {
@@ -104,7 +99,7 @@ describe("stamp", () => {
 });
 
 describe("navbar links", () => {
-    const site = new URL("https://skyedelaciel.com");
+    const site = new URL(SITE_URL);
     const hosts: Host[] = ["site", "tumblr"];
 
     test("off the site, every link names its host", () => {
