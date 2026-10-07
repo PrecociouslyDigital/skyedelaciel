@@ -24,74 +24,6 @@ export const cslDate = z
         "The CSL input model supports two different date representations: an EDTF string (preferred), and a more structured alternative.",
     );
 
-export type CslCitation = z.infer<typeof cslCitation>;
-export const cslCitation = z
-    .object({
-        schema: z.literal(
-            "https://resource.citationstyles.org/schema/latest/input/json/csl-citation.json",
-        ),
-        citationID: z.union([z.string(), z.number()]),
-        citationItems: z
-            .array(
-                z
-                    .object({
-                        id: z.union([z.string(), z.number()]),
-                        itemData: z.any().optional(),
-                        prefix: z.string().optional(),
-                        suffix: z.string().optional(),
-                        locator: z.string().optional(),
-                        label: z
-                            .enum([
-                                "act",
-                                "appendix",
-                                "article-locator",
-                                "book",
-                                "canon",
-                                "chapter",
-                                "column",
-                                "elocation",
-                                "equation",
-                                "figure",
-                                "folio",
-                                "issue",
-                                "line",
-                                "note",
-                                "opus",
-                                "page",
-                                "paragraph",
-                                "part",
-                                "rule",
-                                "scene",
-                                "section",
-                                "sub-verbo",
-                                "supplement",
-                                "table",
-                                "timestamp",
-                                "title-locator",
-                                "verse",
-                                "version",
-                                "volume",
-                            ])
-                            .optional(),
-                        "suppress-author": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        "author-only": z
-                            .union([z.string(), z.number(), z.boolean()])
-                            .optional(),
-                        uris: z.array(z.string()).optional(),
-                    })
-                    .strict(),
-            )
-            .optional(),
-        properties: z
-            .object({ noteIndex: z.number().optional() })
-            .strict()
-            .optional(),
-    })
-    .strict()
-    .describe("JSON schema for CSL citation objects");
-
 export type CslName = z.infer<typeof cslName>;
 
 /** A CSL name object, as used by every contributor field below. */
@@ -321,7 +253,6 @@ export const resolvedLink = z.object({
  * A link we failed to look up. It still carries a `csl` — enough for a
  * bare-URL bibliography entry — but nothing a popover could be built from.
  */
-export type UnresolvedLink = z.infer<typeof unresolvedLink>;
 export const unresolvedLink = z.object({
     resolution: z.literal("unresolved"),
     kind: linkKind,
@@ -347,7 +278,6 @@ export const linkMeta = z.record(z.string(), linkEntry);
  * That channel is a JSON round-trip, so the far side re-parses rather than
  * trusting what comes out of it.
  */
-export type LinkFrontmatter = z.infer<typeof linkFrontmatter>;
 export const linkFrontmatter = z.object({
     links: z.array(z.string()).default([]),
     linkMeta: linkMeta.default({}),

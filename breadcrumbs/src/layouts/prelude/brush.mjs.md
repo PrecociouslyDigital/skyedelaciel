@@ -32,3 +32,10 @@ dev server and approved them.
 
 The size of a plate was `width + 2 * PLATE_PAD` in remark-figures.ts (twice)
 and Figure.astro. `plated(length)` says it once.
+
+## 2026-10-06 — internals unexported
+
+`END`, `PLATE` and `pathData` were exported but only read inside brush.mjs.
+The same went for geometry.ts's `PANE_*`/`COLUMN_*`/`BANNERED_*` and `Fit`,
+cite.ts's `cslYear`, sections.ts's `newestFirst` and tools/logo.mjs's
+`LOGO`/`FAVICON`.

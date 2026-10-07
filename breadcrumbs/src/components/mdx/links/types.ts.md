@@ -18,3 +18,10 @@ The site's own link model (`LinkKind`, `Summary`, `LinkEntry`, `LinkMeta`) sits
 at the *bottom* of the file, below `cslData`. That is a runtime constraint, not
 a style choice: these are `const` schemas that reference `cslData`, so they
 cannot be declared above it.
+
+## 2026-10-06 — dead types removed
+
+`cslCitation`/`CslCitation` (the CSL citation schema) had no reader. The
+`LinkFrontmatter` and `UnresolvedLink` types went too; their schemas stay,
+because render.ts parses with `linkFrontmatter` and `linkEntry` is built from
+`unresolvedLink`.

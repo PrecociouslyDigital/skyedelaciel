@@ -17,7 +17,7 @@ export const isIn = (section: string, id: string) =>
     id.startsWith(`${section}/`);
 
 /** Latest first; the order every list of pieces on the site is in. */
-export const newestFirst = <P extends Piece>(pieces: P[]): P[] =>
+const newestFirst = <P extends Piece>(pieces: P[]): P[] =>
     pieces.toSorted(
         (a, b) => b.data.published.getTime() - a.data.published.getTime(),
     );

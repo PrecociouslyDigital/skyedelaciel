@@ -110,7 +110,7 @@ export const authorLine = (csl: CslData): string | undefined => {
 };
 
 /** The year alone, at whatever granularity the date happens to carry. */
-export const cslYear = (date: CslDate | undefined): string | undefined => {
+const cslYear = (date: CslDate | undefined): string | undefined => {
     const year = date?.["date-parts"]?.[0]?.[0];
     if (year !== undefined) return String(year);
     return (date?.literal ?? date?.raw)?.match(/\d{4}/)?.[0];

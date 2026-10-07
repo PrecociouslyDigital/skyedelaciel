@@ -507,7 +507,7 @@ const num = (v) => v.toFixed(1).replace(/\.0$/, "");
 /* SVG path data for paint and holes. Solids are wound one way, so that where
    they overlap they union under the nonzero rule, and holes the other. */
 /** @param {Point[][]} solids @param {Point[][]} holes */
-export function pathData(solids, holes) {
+function pathData(solids, holes) {
     /** @type {(winding: number) => (polygon: Point[]) => [Point[], number]} */
     const wound = (winding) => (polygon) => [polygon, winding];
     return [...solids.map(wound(1)), ...holes.map(wound(-1))]
@@ -541,7 +541,7 @@ const svg = (box, d) =>
    running left to right or downward. Each end is three bands long. */
 const BAND = 40;
 const LENGTH = 1200;
-export const END = 3 * BAND;
+const END = 3 * BAND;
 
 /** @type {Record<"head" | "body" | "tail", [number, number]>} */
 const PIECES = {
@@ -615,7 +615,7 @@ export function strokePiece({ seed, axis, piece, ruled = false }) {
    hexagon, and a fine one inside it, with a channel of ground between; each
    as far in from the plate's edge as `inset` px, and carried `past` units
    beyond the corner where it ends. */
-export const PLATE = {
+const PLATE = {
     outer: { inset: 7, width: 19.5, past: 34 },
     inner: { inset: 14, width: 6.5, past: 20 },
 };

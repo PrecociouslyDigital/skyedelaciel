@@ -399,7 +399,7 @@ const hexBrush = (/** @type {number} */ weight) => (/** @type {number} */ t) =>
  */
 
 /** What `public/logo.svg` is drawn with. */
-export const LOGO = {
+const LOGO = {
     radius: 171.8,
     hexRadius: 253.8,
     petalWeight: 15,
@@ -419,7 +419,7 @@ export const LOGO = {
  * specks that fills the gaps between the petals and turns the whole mark into a
  * blot; the rosette alone still reads as a flower.
  */
-export const FAVICON = {
+const FAVICON = {
     ...LOGO,
     petalWeight: 26,
     waist: 0.2,

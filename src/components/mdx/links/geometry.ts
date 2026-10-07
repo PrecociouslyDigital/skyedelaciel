@@ -2,7 +2,7 @@
  * The popover's measurements, in rem. The stylesheet reads them from here, so
  * the boxes an image is placed by are the boxes it is drawn in.
  */
-export const PANE_WIDTH = 26;
+const PANE_WIDTH = 26;
 export const MAX_HEIGHT = 16;
 
 /**
@@ -11,8 +11,8 @@ export const MAX_HEIGHT = 16;
  * to bottom whole. It stops a rem short of the pane's cap to leave room for
  * that inset.
  */
-export const COLUMN_WIDTH = 9;
-export const COLUMN_HEIGHT = MAX_HEIGHT - 1;
+const COLUMN_WIDTH = 9;
+const COLUMN_HEIGHT = MAX_HEIGHT - 1;
 
 /**
  * A banner at rest, and what it gives way to as the text below it scrolls. It
@@ -22,7 +22,7 @@ export const BANNER_HEIGHT = 7.5;
 export const BANNER_MIN_HEIGHT = 5.25;
 
 /** A pane with a banner is taller, so the banner doesn't crowd the text. */
-export const BANNERED_MAX_HEIGHT = 20;
+const BANNERED_MAX_HEIGHT = 20;
 
 /** The same measurements as custom properties, for the pane's style. */
 export const geometryStyle = {
@@ -40,7 +40,7 @@ export type Placement = "column" | "banner";
  * How an image meets its box: shrunk to fit inside it whole, or cropped to
  * fill it.
  */
-export type Fit = "contain" | "cover";
+type Fit = "contain" | "cover";
 
 export interface Box {
     width: number;
