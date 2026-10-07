@@ -1,8 +1,9 @@
 # Builds the Tumblr theme from the site, offers it as an artifact, and puts it
 # on the blog if the blog is wearing an older one. Tumblr has no API for
-# themes, so the upload drives Tumblr's editor in Chrome, logging in with the
-# TUMBLR_* secrets; see tools/tumblr-upload.mjs. If a run goes red, the fix is
-# `npm run tumblr:upload` from an attended machine, and a re-run.
+# themes, so the upload drives Tumblr's editor in Chrome, with the session in
+# the TUMBLR_SESSION secret, or failing that logging in with the other
+# TUMBLR_* secrets; see tools/tumblr-browser.mjs. If a run goes red, the fix
+# is `npm run tumblr:upload` from an attended machine, and a re-run.
 name: Tumblr theme
 
 on:
@@ -40,3 +41,13 @@ jobs:
                   TUMBLR_EMAIL: ${{ secrets.TUMBLR_EMAIL }}
                   TUMBLR_PASSWORD: ${{ secrets.TUMBLR_PASSWORD }}
                   TUMBLR_TOTP: ${{ secrets.TUMBLR_TOTP }}
+                  TUMBLR_SESSION: ${{ secrets.TUMBLR_SESSION }}
+            # What Tumblr was showing when the upload gave up, its fields
+            # blanked. Kept briefly: the repository's artifacts are public.
+            - uses: actions/upload-artifact@v4
+              if: failure()
+              with:
+                  name: tumblr-failure
+                  path: dist-tumblr/failure.png
+                  if-no-files-found: ignore
+                  retention-days: 3

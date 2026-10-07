@@ -64,3 +64,24 @@ session, so every upload logs in afresh from a datacenter address. Whether
 Tumblr challenges that (a new-device email, a captcha) was not known when
 this was written; if it does, the run goes red and the fix is the local
 upload, as before.
+
+## 2026-10-07 — CI is turned away at the second step; reuse a session
+
+Every CI run today filled the email and password, then waited out the 30s for
+the authenticator field, which never came. The same browser logs in fine from
+home, so the likely difference is a fresh login from a datacenter address.
+What Tumblr showed instead was not recorded.
+
+The login moved to `tools/tumblr-browser.mjs` (`withEditor`), which now:
+
+- adds the cookies in `TUMBLR_SESSION` (tumblr.com cookies, as Playwright's
+  `context.cookies()` JSON) before opening the editor, falling back to the
+  credential login if they don't get it in;
+- on any failure in CI, prints the page's origin and path (no query, which
+  may carry tokens) and screenshots it to `dist-tumblr/failure.png` with every
+  input masked. The workflow keeps that as the `tumblr-failure` artifact for 3
+  days. The repo is public, so its artifacts are too.
+
+A script to store a local session as the secret (`gh secret set`) was
+written but blocked by auto mode as a secret-store write, so producing
+TUMBLR_SESSION is currently the user's to do by hand.
