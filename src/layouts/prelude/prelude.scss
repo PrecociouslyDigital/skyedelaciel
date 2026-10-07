@@ -731,6 +731,9 @@ figcaption {
            characters rather than between letters of a word, which is why it
            is set much tighter than a horizontal line of small caps would be. */
         @include typography.stamp;
+        /* A Han character fills its square, so it is set larger than the
+           stamp's capitals to stand as tall as a capital of the prose. */
+        font-size: 0.8rem;
         line-height: 1;
     }
 }
