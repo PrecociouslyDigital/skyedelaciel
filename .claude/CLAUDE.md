@@ -12,3 +12,5 @@ The website is intended to be served as a static bundle by Astro. You have an MC
 It should always be accurate. Use your best judgement about whether to update the specification or the code.
 ## Misc
 Prettier is available and configured. Use it to ensure that your code is well formatted.
+## Git
+Commit early and often: each finished change gets its own commit, rather than piling up in the working tree.
