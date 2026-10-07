@@ -222,3 +222,17 @@ sidenote's left edge. `corner-ticks` defaults its colour to `signal`, which
 every caller passed; the colour moved after the lengths. `vine-rule` sets
 `content: ""` itself, but only when it is drawn on a pseudo-element (it reads
 `&`), because `hr` and the Tumblr post's break use it on a real element.
+
+## 2026-10-07 — the chalk lost its speckle and its seam
+
+**Seam.** `stitchTiles` wraps the noise at the filter region's edges, and the
+region defaults to -10%/120% of the element, so the 1024px sweep tile's noise
+had a period of ~1229px while the image repeated every 1024: a hard horizontal
+line every 1024px down the article. `noise()` now pins the region to the tile.
+Paper's tiles had the same fault, just less visible at 6%.
+
+**Speckle.** The 256px high-frequency layer (`0.8`, gain 4, offset -2.4) read
+as grit, or asphalt, rather than slate. Replaced by fine sideways streaks
+(`0.01 0.16`, gain 1, offset -0.6, 512px): the eraser's felt dragging. Tried
+on the way, by eye at 2x: `0.015 0.35` gain 1.6 (brushed metal) and
+`0.012 0.22` gain 1 (wood grain).

@@ -425,6 +425,10 @@ $frame-within: $frame-gap + $frame-inner;
 /// The colour is baked into the image because an image cannot read a custom
 /// property. Filters blend in linear light unless told otherwise, which would
 /// lighten the colour written here, hence `color-interpolation-filters`.
+///
+/// `stitchTiles` makes the noise wrap at the edges of the filter's region, and
+/// that region defaults to 10% past the tile on every side; it is pinned to the
+/// tile so the noise wraps where the image repeats, rather than leaving a seam.
 @function noise($color, $frequency, $octaves, $gain, $offset, $tile) {
     $alpha: color.alpha($color);
     $rgb: "";
@@ -435,22 +439,23 @@ $frame-within: $frame-gap + $frame-inner;
 
     $matrix: "#{$rgb}#{$gain * $alpha} 0 0 0 #{$offset * $alpha}";
 
-    @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='#{$tile}' height='#{$tile}'%3E%3Cfilter id='n' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='#{$frequency}' numOctaves='#{$octaves}' stitchTiles='stitch'/%3E%3CfeColorMatrix values='#{$matrix}'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    @return url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='#{$tile}' height='#{$tile}'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='#{$frequency}' numOctaves='#{$octaves}' stitchTiles='stitch'/%3E%3CfeColorMatrix values='#{$matrix}'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /// The texture of a scheme's ground, painted in `$grain`, which is its colour
 /// at the strength of its thickest patch. A transparent grain is no texture.
 ///
 /// `chalk` is what an eraser leaves on a blackboard: broad sideways sweeps
-/// where it went, over a fine speckle of what it missed. `paper` is a sheet's
-/// own: a faint mottle where its fibres lie thicker, under an even tooth.
+/// where it went, scored with the faint streaks its felt dragged along.
+/// `paper` is a sheet's own: a faint mottle where its fibres lie thicker,
+/// under an even tooth.
 @function texture($kind, $grain) {
     @if color.alpha($grain) == 0 {
         @return none;
     }
     @if $kind == "chalk" {
         @return noise($grain, 0.0025 0.009, 4, 1, -0.3, 1024px),
-            noise($grain, 0.8, 2, 4, -2.4, 256px);
+            noise($grain, 0.01 0.16, 3, 1, -0.6, 512px);
     }
     @if $kind == "paper" {
         @return noise($grain, 0.02, 3, 1, -0.45, 512px),
