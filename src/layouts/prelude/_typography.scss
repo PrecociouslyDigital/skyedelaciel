@@ -13,13 +13,20 @@
 /// furniture. Named once because several rules below are about all of them.
 $prose-blocks: "p, li, blockquote, dd, dt, figcaption, .abstract";
 
+/// The size running text is set at.
+$body-size: 1.0625rem;
+
+/// How wide Source Serif 4's figures are, in ems, at the body's optical size:
+/// what `1ch` comes to in the prose face once it has loaded.
+$figure-advance: 0.5145;
+
 @mixin tokens {
     --font-prose:
         "Source Serif 4 Variable", "Georgia", "Times New Roman", serif;
     --font-display: "Cormorant Variable", "Georgia", "Times New Roman", serif;
     --font-mono: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
 
-    --text-body: 1.0625rem;
+    --text-body: #{$body-size};
     --text-title: 2.75rem;
     --text-h1: 2.125rem;
     --text-h2: 1.625rem;

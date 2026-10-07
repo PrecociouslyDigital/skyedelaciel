@@ -1,8 +1,15 @@
 /// The measures the page is laid out by. Variables only, so that a component
 /// can `@use` them without emitting anything.
 
-/// The longest a line of the article runs.
-$measure: 80ch;
+@use "typography";
+
+/// The longest a line of the article runs: eighty of the prose face's figures.
+///
+/// Not `80ch`, because a `ch` is measured in whichever face has loaded, and
+/// the grid is built on this width. A fallback and Source Serif measure `ch`
+/// differently, so the page would shift when the face swaps in.
+/// tests/design/content.spec.ts checks that eighty still fit.
+$measure: 80 * typography.$figure-advance * typography.$body-size;
 
 /// The widest a column of sidenotes is, and the sidebar matched to it.
 $sidenote-width: 14rem;

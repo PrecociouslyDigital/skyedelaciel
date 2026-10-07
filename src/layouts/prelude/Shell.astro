@@ -10,6 +10,15 @@ import "@fontsource-variable/source-serif-4/standard-italic.css";
 import "@fontsource-variable/cormorant";
 import "@fontsource-variable/cormorant/wght-italic.css";
 
+/* Those four Latin files, preloaded: the stylesheets only name them, so
+   without this they are not fetched until the page has been laid out, and
+   the first frame is painted in the fallback. */
+import serifRoman from "@fontsource-variable/source-serif-4/files/source-serif-4-latin-standard-normal.woff2?url";
+import serifItalic from "@fontsource-variable/source-serif-4/files/source-serif-4-latin-standard-italic.woff2?url";
+import displayRoman from "@fontsource-variable/cormorant/files/cormorant-latin-wght-normal.woff2?url";
+import displayItalic from "@fontsource-variable/cormorant/files/cormorant-latin-wght-italic.woff2?url";
+const faces = [serifRoman, serifItalic, displayRoman, displayItalic];
+
 import Navbar from "~/components/Navbar.astro";
 import type { Host } from "~/components/nav";
 import { THEME_KEY } from "~/components/theme";
@@ -54,6 +63,17 @@ const { title, description, author = AUTHOR, host } = Astro.props;
         </script>
         <script src="~/components/toc-scroll.ts"></script>
         <meta charset="utf-8" />
+        {
+            faces.map((href) => (
+                <link
+                    rel="preload"
+                    href={href}
+                    as="font"
+                    type="font/woff2"
+                    crossorigin
+                />
+            ))
+        }
         <meta name="color-scheme" content="light dark" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" href="/favicon.ico" />
