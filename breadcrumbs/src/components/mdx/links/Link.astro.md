@@ -244,3 +244,9 @@ around the img alone, which has no animation. It still keeps lazy images from
 being fetched with the page. motion.spec checks the arrangement (nothing that
 resolves sits in skipped content), not the clock. That check fails 4/4 on the
 old arrangement.
+
+## 2026-10-06 — props are an anchor's
+
+`Props` was `{ href: string; [key: string]: any }`. It is now
+`HTMLAttributes<"a">` with a required `href`, since everything else MDX passes
+is spread onto the `<a>`.

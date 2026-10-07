@@ -1,4 +1,6 @@
 ---
+import type { TocLevel } from "./toc";
+
 /**
  * One entry of a table of contents, with its section's own TocList, if it has
  * one, as the slot.
@@ -8,22 +10,26 @@
  * Below that, an entry's section is always shown with it.
  *
  */
-interface Props {
+type Props = {
     href: string;
     text: string;
-    depth: number;
-    /**
-     * How many entries a top-level section unfolds, where that is known when
-     * the site is built, so that its vine can be drawn to their length.
-     */
-    entries?: number;
     /**
      * An entry's place in what it arrives with, which is when it arrives: a
      * top-level entry's among the top level, as the whole list drops open on
      * a narrow page, and any other's in its top-level section, as that grows.
      */
     index?: number;
-}
+} & (
+    | {
+          depth: 1;
+          /**
+           * How many entries its section unfolds, where that is known when
+           * the site is built, so that its vine can be drawn to their length.
+           */
+          entries?: number;
+      }
+    | { depth: Exclude<TocLevel, 1>; entries?: never }
+);
 
 const { href, text, depth, entries, index } = Astro.props;
 ---

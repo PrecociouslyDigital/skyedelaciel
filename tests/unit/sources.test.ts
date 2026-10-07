@@ -72,7 +72,7 @@ describe("the registry", () => {
      */
     test("the only source that is not fetched is this site's own", () => {
         const unfetched = linkKind.options.filter(
-            (kind) => sourceOf(kind).resolve === undefined,
+            (kind) => !("resolve" in sourceOf(kind)),
         );
         expect(unfetched).toEqual(["internal"]);
     });
@@ -129,12 +129,7 @@ describe("isResolved", () => {
 describe("the DOI ladder", () => {
     const DOI_URL = "https://doi.org/10.48550/arXiv.1706.03762";
 
-    /** The DOI source's resolver, which the registry types as optional. */
-    const resolveDoi = (url: string) => {
-        const { resolve } = sourceOf("doi");
-        if (!resolve) throw new Error("the DOI source lost its resolver");
-        return resolve(url);
-    };
+    const resolveDoi = sourceOf("doi").resolve;
 
     const answered = () =>
         Promise.resolve(
@@ -249,11 +244,7 @@ vi.mock("open-graph-scraper", () => ({
  * something the title doesn't already say.
  */
 describe("an external page's image", () => {
-    const resolveExternal = (url: string) => {
-        const { resolve } = sourceOf("external");
-        if (!resolve) throw new Error("the external source lost its resolver");
-        return resolve(url);
-    };
+    const resolveExternal = sourceOf("external").resolve;
 
     /** Each case gets its own origin: homepage lookups last the build. */
     const serve = (origin: string, page: string, homepage?: string) => {

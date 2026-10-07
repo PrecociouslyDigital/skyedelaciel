@@ -1,4 +1,9 @@
-import { VARIABLES } from "./tags";
+import {
+    BLOCKS,
+    VARIABLES,
+    type TumblrBlock,
+    type TumblrVariable,
+} from "./tags";
 
 /**
  * Enough of Tumblr's renderer to fill the theme in with sample posts, so the
@@ -13,10 +18,20 @@ import { VARIABLES } from "./tags";
  * a brace that is not one of Tumblr's is left as it is.
  */
 
-export type Value = string | boolean | Scope[];
-export interface Scope {
-    [name: string]: Value;
-}
+type Name = TumblrVariable | TumblrBlock;
+
+/**
+ * What a page gives each name: a variable a string, a block whether to keep
+ * it or the list it repeats for. A name that is both, as `Quote` is, may be
+ * given either.
+ */
+export type Scope = {
+    [N in Name]?:
+        | (N extends TumblrVariable ? string : never)
+        | (N extends TumblrBlock ? boolean | Scope[] : never);
+};
+
+type Value = NonNullable<Scope[Name]>;
 
 type Node =
     | string
@@ -25,6 +40,8 @@ type Node =
 
 const TAG = /\{(\/?block:)?([A-Za-z][\w-]*)\}/g;
 const KNOWN: ReadonlySet<string> = new Set(VARIABLES);
+const NAMES: ReadonlySet<string> = new Set([...VARIABLES, ...BLOCKS]);
+const isName = (name: string): name is Name => NAMES.has(name);
 
 /** The template as a tree, or an error naming the first misplaced block. */
 export function parse(template: string): Node[] {
@@ -64,6 +81,7 @@ export function parse(template: string): Node[] {
 }
 
 function lookup(name: string, scopes: Scope[]): Value | undefined {
+    if (!isName(name)) return undefined;
     return scopes.findLast((scope) => name in scope)?.[name];
 }
 

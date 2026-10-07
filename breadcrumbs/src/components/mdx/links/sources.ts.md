@@ -138,3 +138,12 @@ to it.
 Site logos are what a site puts on every page that has no image of its own. A
 logo is recognised as the page's image being identical, once made absolute, to
 the homepage's. That costs one extra `ogs` call per origin per build, memoised.
+
+## 2026-10-06 — `Source` is internal | remote
+
+`resolve` was optional on every source, so each caller had to ask whether it
+was there (`NonNullable<Source["resolve"]>` in resolve.ts, a throw in two
+tests). Only this site's own pages go unfetched, and that is now the type:
+`InternalSource` has no `resolve`, `RemoteSource` always does, and `kind`
+discriminates them. `byKind` is `satisfies Record<LinkKind, Source>` rather
+than annotated with it, so `sourceOf("doi")` is a `RemoteSource`.

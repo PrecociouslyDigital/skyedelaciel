@@ -20,8 +20,8 @@ export const SITE_DESCRIPTION =
  * resolution, the popover, and the bibliography each dispatch by reading
  * this instead of testing `kind` themselves.
  */
-export interface Source {
-    readonly kind: LinkKind;
+interface Common<K extends LinkKind> {
+    readonly kind: K;
 
     /** Does this source own the URL? The registry's order breaks ties. */
     readonly claims: (url: URL) => boolean;
@@ -33,12 +33,6 @@ export interface Source {
      */
     readonly mark: string;
 
-    /**
-     * Look the link up. Absent for a source that is not fetched — this site's
-     * own pages are resolved from the page collection instead.
-     */
-    readonly resolve?: (url: string) => Promise<ResolvedLink>;
-
     /** The popover's metadata line, in order. Undefined entries are dropped. */
     readonly meta: (entry: ResolvedLink) => (string | undefined)[];
 
@@ -49,6 +43,20 @@ export interface Source {
     readonly image: boolean;
 }
 
+/**
+ * This site's own pages, which are not fetched: they are resolved from the
+ * page collection instead.
+ */
+type InternalSource = Common<"internal">;
+
+/** A source whose links are looked up over the network. */
+export interface RemoteSource extends Common<Exclude<LinkKind, "internal">> {
+    /** Look the link up. */
+    readonly resolve: (url: string) => Promise<ResolvedLink>;
+}
+
+export type Source = InternalSource | RemoteSource;
+
 /** The full apparatus of a published work: who, where, when. */
 const workMeta = ({ csl }: ResolvedLink) => [
     authorLine(csl),
@@ -56,7 +64,7 @@ const workMeta = ({ csl }: ResolvedLink) => [
     formatCslDate(csl.issued),
 ];
 
-const internal: Source = {
+const internal: InternalSource = {
     kind: "internal",
     claims: (url) => url.hostname === SITE_HOST,
     // The section mark: another part of the same work.
@@ -104,7 +112,7 @@ function extractDoi(url: string): string {
     return url.match(/doi\.org\/(.+)/)?.[1]?.replace(/[?#].*$/, "") ?? url;
 }
 
-const doi: Source = {
+const doi: RemoteSource = {
     kind: "doi",
     // DOIs always begin with the "10." prefix.
     claims: (url) =>
@@ -177,7 +185,7 @@ const leadImage = ({
         ? originalimage.source
         : thumbnail?.source;
 
-const wikipedia: Source = {
+const wikipedia: RemoteSource = {
     kind: "wikipedia",
     claims: (url) => url.hostname.endsWith(".wikipedia.org"),
     mark: "W",
@@ -275,7 +283,7 @@ async function pageImage(
     return image;
 }
 
-const external: Source = {
+const external: RemoteSource = {
     kind: "external",
     // The fallback: whatever no other source claimed.
     claims: () => true,
@@ -324,12 +332,12 @@ const external: Source = {
  * Every source, keyed by kind. `Record<LinkKind, Source>` makes a kind
  * missing here, or one that no longer exists, a compile error.
  */
-const byKind: Record<LinkKind, Source> = {
+const byKind = {
     internal,
     doi,
     wikipedia,
     external,
-};
+} satisfies Record<LinkKind, Source>;
 
 /**
  * Claiming order, most specific first. `external` claims every URL, so it is
@@ -355,7 +363,8 @@ export function sourceFor(url: string): Source {
     return claimants.find((source) => source.claims(parsed)) ?? external;
 }
 
-export const sourceOf = (kind: LinkKind): Source => byKind[kind];
+export const sourceOf = <K extends LinkKind>(kind: K): (typeof byKind)[K] =>
+    byKind[kind];
 
 /**
  * Whether a link points to a citable work rather than a page of this site.

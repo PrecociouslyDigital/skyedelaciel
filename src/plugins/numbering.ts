@@ -154,7 +154,8 @@ export function numberApparatus<T extends Apparatus>(
         const n = (counts.get(counter) ?? 0) + 1;
         counts.set(counter, n);
         const number = item.section ? `${item.section}.${n}` : `${n}`;
-        const id: IdOf<T["kind"]> = `${prefix}-${slug(item.name ?? number.replaceAll(".", "-"))}`;
+        const id: IdOf<T["kind"]> =
+            `${prefix}-${slug(item.name ?? number.replaceAll(".", "-"))}`;
         if (ids.has(id)) throw new DuplicateId(index, id);
         ids.add(id);
         // The id is made from this item's own kind, which is what Numbered

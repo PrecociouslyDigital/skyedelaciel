@@ -1,4 +1,6 @@
 ---
+import type { TocLevel } from "./toc";
+
 /**
  * One level of a table of contents: a list of TocEntry, all at `depth`.
  *
@@ -8,7 +10,7 @@
  * builds the tree.
  */
 interface Props {
-    depth: number;
+    depth: TocLevel;
 }
 
 const { depth } = Astro.props;

@@ -1,4 +1,5 @@
 ---
+import type { HTMLAttributes } from "astro/types";
 import { formatInlineCitation } from "./cite";
 import { geometryStyle } from "./geometry";
 import { placeImage } from "./image";
@@ -6,10 +7,7 @@ import { isCitable, isResolved, sourceFor } from "./sources";
 import { getLinkMeta, hasBibliography } from "./store";
 import { buildPreview } from "./preview";
 
-export interface Props {
-    href: string;
-    [key: string]: any;
-}
+export type Props = HTMLAttributes<"a"> & { href: string };
 
 const { href, ...rest } = Astro.props;
 

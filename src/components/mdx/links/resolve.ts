@@ -1,7 +1,7 @@
 import type { LinkEntry, LinkKind, LinkMeta } from "./types";
 import { getCached, setCached } from "./cache";
 import { todayParts } from "./cite";
-import type { Source } from "./sources";
+import type { RemoteSource } from "./sources";
 import { SITE_HOST, SITE_NAME, sourceFor } from "./sources";
 
 /** A page of this site, as far as a link to it is concerned. */
@@ -21,7 +21,7 @@ const unresolved = (url: string, kind: LinkKind): LinkEntry => ({
 interface RemoteLink {
     url: string;
     kind: LinkKind;
-    resolve: NonNullable<Source["resolve"]>;
+    resolve: RemoteSource["resolve"];
 }
 
 /** Resolve one remote URL, using the cache when it holds a fresh entry. */
@@ -45,14 +45,15 @@ async function resolveRemote({
 }
 
 /**
- * Resolve every link in a document that has to be fetched. Skips sources
- * with no `resolve`; those are this site's own pages, handled separately by
- * `resolveInternalLinks`.
+ * Resolve every link in a document that has to be fetched: all but this
+ * site's own pages, which `resolveInternalLinks` handles.
  */
 export async function resolveRemoteLinks(urls: string[]): Promise<LinkMeta> {
     const remote = [...new Set(urls)].flatMap((url): RemoteLink[] => {
-        const { kind, resolve } = sourceFor(url);
-        return resolve ? [{ url, kind, resolve }] : [];
+        const source = sourceFor(url);
+        return source.kind === "internal"
+            ? []
+            : [{ url, kind: source.kind, resolve: source.resolve }];
     });
     return Object.fromEntries(
         await Promise.all(
