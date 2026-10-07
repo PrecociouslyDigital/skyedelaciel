@@ -9,21 +9,8 @@ const sections = (await sectionPages()).toSorted((a, b) =>
 );
 ---
 
-<Shell title="Not found" description="There is no page here." host="site">
+<Shell title="Nothing Here" description="There is no page here." host="site">
     <article class="not-found">
-        <FrontMatter
-            title="Not found"
-            abstract="There is no page at this address."
-        />
-        <p>Try one of the sections, or <a href="/">the home page</a>.</p>
-        <ul>
-            {
-                sections.map(({ id, data }) => (
-                    <li>
-                        <a href={pageHref(id)}>{data.title}</a>: {data.abstract}
-                    </li>
-                ))
-            }
-        </ul>
+        <FrontMatter title="Nothing Here" abstract="right now at least" />
     </article>
 </Shell>

@@ -1,7 +1,6 @@
 ---
 import Shell from "~/layouts/prelude/Shell.astro";
-import FrontMatter from "~/layouts/prelude/FrontMatter.astro";
-import PieceList from "~/components/PieceList.astro";
+import under_construction from "~/assets/under_construction.webp";
 import { SITE_DESCRIPTION, SITE_NAME } from "~/site";
 import { publishedArticles, sectionPages } from "~/content/corpus";
 import { sectioned } from "~/content/sections";
@@ -17,14 +16,6 @@ const latest = sectioned(await publishedArticles(), await sectionPages()).slice(
 
 <Shell title={SITE_NAME} description={SITE_DESCRIPTION} host="site">
     <article class="home">
-        <FrontMatter title={SITE_NAME} abstract={SITE_DESCRIPTION} />
-        {
-            latest.length > 0 && (
-                <section class="latest" aria-labelledby="latest">
-                    <h2 id="latest">Latest</h2>
-                    <PieceList pieces={latest} />
-                </section>
-            )
-        }
+        <img src={under_construction.src} />
     </article>
 </Shell>

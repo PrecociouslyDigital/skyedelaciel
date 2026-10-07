@@ -5,7 +5,8 @@
  */
 export type Host = "site" | "tumblr";
 
-export const TUMBLR = "https://skyedelaciel.tumblr.com/";
+export const TUMBLR =
+    "https://skyedelaciel.tumblr.com/tagged/for%20public%20consumption";
 
 /**
  * A navbar entry: a page of this site, named by its path, or an address
