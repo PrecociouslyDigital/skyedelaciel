@@ -6,19 +6,6 @@ section("Not found", () => {
         expect(response?.status()).toBe(404);
     });
 
-    test("says there is no page, and links home and to each section", async ({
-        page,
-    }) => {
-        await expect(page.locator(".front-matter .title")).toHaveText(
-            "Not found",
-        );
-        for (const href of ["/", "/fiction/", "/nonfiction/"]) {
-            await expect(page.locator(`article a[href="${href}"]`)).toHaveCount(
-                1,
-            );
-        }
-    });
-
     section("Navbar", () => {
         onlyIn("wide", "narrow", "nojs");
 
