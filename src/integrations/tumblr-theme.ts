@@ -3,8 +3,10 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { pages as fixtures } from "../content/fixtures/tumblr";
+import { INCLUDE_FIXTURES } from "../content/included";
 import { parse, render } from "../tumblr/render";
 import { stamp } from "../tumblr/stamp.mjs";
+import { WORD } from "../tumblr/tags";
 
 /**
  * Builds the Tumblr theme out of the site.
@@ -39,7 +41,7 @@ const HAZARDS: [(html: string) => string | undefined, string][] = [
     [
         (html) =>
             [...html.matchAll(/<(script|style)\b[^>]*>([\s\S]*?)<\/\1>/g)]
-                .map(([, , body]) => /\{[A-Za-z][\w-]*\}/.exec(body!)?.[0])
+                .map(([, , body]) => WORD.exec(body!)?.[0])
                 .find(Boolean),
         "a {Word} inside a script or stylesheet, which Tumblr would replace",
     ],
@@ -100,9 +102,9 @@ export default function tumblrTheme(): AstroIntegration {
                 );
                 await rm(page, { recursive: true });
 
-                if (process.env.INCLUDE_FIXTURES) {
+                if (INCLUDE_FIXTURES) {
                     for (const [path, scope] of Object.entries(fixtures)) {
-                        const out = new URL(`fixtures/${path}index.html`, dir);
+                        const out = new URL(`.${path}index.html`, dir);
                         await mkdir(dirname(fileURLToPath(out)), {
                             recursive: true,
                         });

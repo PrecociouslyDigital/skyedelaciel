@@ -140,7 +140,7 @@
         outline-offset: 2px;
     }
 
-    &[data-copied] {
+    &[data-receipt="shown"] {
         color: var(--color-signal);
     }
 }

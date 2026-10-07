@@ -1,4 +1,8 @@
-import type { Scope } from "~/tumblr/render";
+// Relative, with extensions, so that plain Node can read the paths below:
+// tools/browser/profiles.mjs takes the design suite's Tumblr pages from them.
+import { SITE_NAME } from "../../site.ts";
+import type { Scope } from "../../tumblr/render.ts";
+import { FIXTURES_DIR } from "../included.ts";
 
 /**
  * A blog to fill the Tumblr theme in with, for the design suite: an index page
@@ -9,8 +13,9 @@ import type { Scope } from "~/tumblr/render";
  * them.
  */
 
-const BLOG = "/fixtures/tumblr/";
-const PERMALINK = "/fixtures/tumblr/post/";
+/** Where the sample blog's index page is built, and its one permalink page. */
+export const BLOG = `/${FIXTURES_DIR}/tumblr/`;
+export const PERMALINK = `${BLOG}post/`;
 
 const prose = (subject: string, paragraphs: number) =>
     Array.from(
@@ -95,14 +100,15 @@ const posts: Scope[] = [
 ];
 
 const blog: Scope = {
-    Title: "Skye De La Ciel",
+    Title: SITE_NAME,
     Description: "<p>Notes, reblogs, and the occasional brush stroke.</p>",
     MetaDescription: "Notes, reblogs, and the occasional brush stroke.",
     RSS: `${BLOG}rss`,
 };
 
+/** Each page of the sample blog, by the path it is built at. */
 export const pages: Record<string, Scope> = {
-    "tumblr/": {
+    [BLOG]: {
         ...blog,
         IndexPage: true,
         PermalinkPage: false,
@@ -110,7 +116,7 @@ export const pages: Record<string, Scope> = {
         Pagination: true,
         NextPage: `${BLOG}page/2`,
     },
-    "tumblr/post/": {
+    [PERMALINK]: {
         ...blog,
         IndexPage: false,
         PermalinkPage: true,

@@ -13,6 +13,7 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { BLOG, PERMALINK } from "../../src/content/fixtures/tumblr.ts";
 import { SCHEDULED_PREFIX } from "../../src/content/schedule.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -123,10 +124,7 @@ export const pages = {
             preview: `/${SCHEDULED_PREFIX}${scheduled}`,
         },
     },
-    tumblr: {
-        index: "/fixtures/tumblr/",
-        post: "/fixtures/tumblr/post/",
-    },
+    tumblr: { index: BLOG, post: PERMALINK },
 };
 
 // ─── The wire protocol ───────────────────────────────────────────────────────

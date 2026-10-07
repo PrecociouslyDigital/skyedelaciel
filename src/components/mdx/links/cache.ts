@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as z from "zod";
 import type { LinkEntry, ResolvedLink } from "./types";
 import { linkEntry, resolvedLink } from "./types";
+import { FIXTURES_DIR, INCLUDE_FIXTURES } from "../../../content/included";
 
 const MANUAL_CACHE = "manual-links.json";
 
@@ -10,7 +11,7 @@ const MANUAL_CACHE = "manual-links.json";
  * needs no network and doesn't change when those pages do. Only a fixture
  * build reads them: an article linking the same URL gets it fresh.
  */
-const FIXTURE_CACHE = "src/content/fixtures/links.json";
+const FIXTURE_CACHE = `src/content/${FIXTURES_DIR}/links.json`;
 const CACHE_PATH = ".link-cache.json";
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -53,7 +54,7 @@ const loadManual = (path: string): z.infer<typeof manualFile> =>
 export function loadCache(): void {
     manual = {
         ...loadManual(MANUAL_CACHE),
-        ...(process.env.INCLUDE_FIXTURES ? loadManual(FIXTURE_CACHE) : {}),
+        ...(INCLUDE_FIXTURES ? loadManual(FIXTURE_CACHE) : {}),
     };
     cache = loadDisposable();
 }

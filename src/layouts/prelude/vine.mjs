@@ -12,10 +12,10 @@
    src/integrations/vines.ts. */
 
 import { chance } from "./chance.mjs";
+import { arcLengths, lerp, nth, smoothstep, svgOf, TAU } from "./pen.mjs";
 
 /** @typedef {import("./chance.mjs").Chance} Chance */
-
-/** @typedef {[number, number]} Point */
+/** @typedef {import("./pen.mjs").Point} Point */
 
 /**
  * A path traced through points, measured along its length.
@@ -60,38 +60,14 @@ const H = 40;
 
 /* — Geometry — */
 
-const TAU = 2 * Math.PI;
 /** @type {(p: Point, θ: number, r: number) => Point} */
 const toward = ([x, y], θ, r) => [x + r * Math.cos(θ), y + r * Math.sin(θ)];
-/** @type {(a: number, b: number, t: number) => number} */
-const lerp = (a, b, t) => a + (b - a) * t;
-/** @type {(a: number, b: number, x: number) => number} */
-const smoothstep = (a, b, x) => {
-    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-    return t * t * (3 - 2 * t);
-};
-
-/**
- * The `i`th of `list`, which the caller knows is there.
- *
- * @template T
- * @param {readonly T[]} list
- * @param {number} i
- * @returns {T}
- */
-const nth = (list, i) => /** @type {T} */ (list[i]);
 
 /* A path traced through points, measured so that anything can be placed on
    it by distance along it. Headings follow the chords between samples. */
 /** @param {Point[]} points @returns {Traced} */
 function trace(points) {
-    const lengths = [0];
-    for (let i = 1; i < points.length; i++) {
-        const [p, q] = [nth(points, i - 1), nth(points, i)];
-        lengths.push(
-            nth(lengths, i - 1) + Math.hypot(q[0] - p[0], q[1] - p[1]),
-        );
-    }
+    const lengths = arcLengths(points);
     const length = nth(lengths, lengths.length - 1);
     /** @param {number} d */
     const at = (d) => {
@@ -627,26 +603,22 @@ function grow(width, r, { weight, vigour, centred, blooms }) {
     /** @type {(path: Traced, d: number, side: number) => boolean} */
     const sprig = (path, d, side) => {
         const { p, θ } = path.at(d);
-        const stalk = trace(
-            walk(
-                p,
-                θ + side * r.between(0.6, 1.25),
-                r.between(1.6, 3),
-                () => side * 0.08,
-                0.8,
-            ),
-        );
-        const end = stalk.at(stalk.length);
+        const angle = side * r.between(0.6, 1.25);
+        const length = r.between(1.6, 3);
         const size = r.between(4.6, 6.4) * lerp(0.75, 1, strength(path, d));
-        const heading = end.θ + r.between(-0.35, 0.35);
+        const turn = r.between(-0.35, 0.35);
+        const { stalk, leaf, marks } = stalkedLeaf(p, θ + angle, length, size, {
+            side,
+            step: 0.8,
+            turn,
+        });
         const blade = {
-            p: toward(end.p, heading, 0.45 * size),
+            p: toward(leaf.p, leaf.θ, 0.45 * size),
             r: 0.42 * size + 0.4,
         };
         return place(
             [...discs(stalk, WEIGHT.stalk, Infinity), blade],
-            line(stalk, WEIGHT.stalk),
-            mark("leaf", "dab", ivy(end.p, heading, size)),
+            ...marks,
         );
     };
 
@@ -829,7 +801,7 @@ function picture(marks, box, inks, id, r) {
             : "";
     };
     const viewBox = box.map((v) => +v.toFixed(3)).join(" ");
-    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${viewBox}'><defs>${defs}</defs>${layers.map(paint).join("")}</svg>`;
+    return svgOf(viewBox, `<defs>${defs}</defs>${layers.map(paint).join("")}`);
 }
 
 /* Marks moved by [dx, dy], or turned a quarter clockwise, so that a vine
@@ -898,15 +870,37 @@ export function vine({
 /** @param {number} seed */
 const vineStart = (seed) => H / 2 - chance(seed).between(-2, 2);
 
-/* A leaf at the end of a short stalk. */
-/** @param {Point} p @param {number} θ @param {number} stalk @param {number} size */
-function stalkedLeaf(p, θ, stalk, size, side = 1) {
-    const path = trace(walk(p, θ, stalk, () => side * 0.08, 0.5));
+/**
+ * A leaf at the end of a short stalk, `stalk` units long from `p`, heading
+ * `θ`: its marks, the stalk's path, and the leaf's base and heading.
+ *
+ * @param {Point} p
+ * @param {number} θ
+ * @param {number} stalk
+ * @param {number} size
+ * @param {object} [how]
+ * @param {number} [how.side] Which way the stalk curls, as a scroll turns.
+ * @param {number} [how.step] How finely the stalk is drawn.
+ * @param {number} [how.turn] How far the leaf turns off the stalk's end.
+ */
+function stalkedLeaf(
+    p,
+    θ,
+    stalk,
+    size,
+    { side = 1, step = 0.5, turn = 0 } = {},
+) {
+    const path = trace(walk(p, θ, stalk, () => side * 0.08, step));
     const end = path.at(path.length);
-    return [
-        mark("leaf", "line", ribbon(path, WEIGHT.stalk)),
-        mark("leaf", "dab", ivy(end.p, end.θ, size)),
-    ];
+    const heading = end.θ + turn;
+    return {
+        stalk: path,
+        leaf: { p: end.p, θ: heading },
+        marks: [
+            mark("leaf", "line", ribbon(path, WEIGHT.stalk)),
+            mark("leaf", "dab", ivy(end.p, heading, size)),
+        ],
+    };
 }
 
 /* The box round some marks, `pad` units clear of them. */
@@ -1005,23 +999,16 @@ export function shoot({ reach, radius, seed, leaf }) {
             run * ((k + 0.6) / (count + 0.4)) +
             r.between(-1.5, 1.5);
         const { p, θ } = path.at(d);
-        const stalk = trace(
-            walk(
-                p,
-                θ + side * r.between(0.7, 1.1),
-                r.between(1.6, 2.4),
-                () => side * 0.08,
-                0.6,
-            ),
-        );
-        const tip = stalk.at(stalk.length);
+        const angle = side * r.between(0.7, 1.1);
+        const length = r.between(1.6, 2.4);
+        const turn = r.between(-0.3, 0.3);
+        const size = r.between(5.5, 7);
         marks.push(
-            mark("leaf", "line", ribbon(stalk, WEIGHT.stalk)),
-            mark(
-                "leaf",
-                "dab",
-                ivy(tip.p, tip.θ + r.between(-0.3, 0.3), r.between(5.5, 7)),
-            ),
+            ...stalkedLeaf(p, θ + angle, length, size, {
+                side,
+                step: 0.6,
+                turn,
+            }).marks,
         );
         side = -side;
     }
@@ -1198,7 +1185,7 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
         const at = path.at(lead + 3);
         const frame = [
             mark("leaf", "line", ribbon(path, weight)),
-            ...stalkedLeaf(at.p, at.θ + 0.95, 2, r.between(6, 6.8)),
+            ...stalkedLeaf(at.p, at.θ + 0.95, 2, r.between(6, 6.8)).marks,
         ];
 
         /* Two shoots further down, each sprouting once the unrolling stem has
@@ -1215,8 +1202,8 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
                         θ + side * 0.95,
                         lerp(0.8, 2.2, grown),
                         lerp(3, 6.4, grown),
-                        side,
-                    ),
+                        { side },
+                    ).marks,
                 );
             } else {
                 const { path: tendril } = scroll(p, θ + side * 0.45, side, {

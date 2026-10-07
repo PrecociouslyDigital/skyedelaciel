@@ -1,18 +1,19 @@
 import ogs from "open-graph-scraper";
 import type { OgObject } from "open-graph-scraper/types";
 import * as z from "zod";
-import { authorLine, formatCslDate, parseCslDate, todayParts } from "./cite";
+import {
+    authorLine,
+    formatCslDate,
+    parseCslDate,
+    todayParts,
+    webpageEntry,
+} from "./cite";
 import { toCsl } from "./crossref";
 import { documentTitle } from "./html";
 import { infoboxFields } from "./infobox";
 import { memoise } from "./memo";
+import { onSite, SITE_HOST } from "../../../site";
 import type { LinkEntry, LinkKind, ResolvedLink } from "./types";
-
-export const SITE_HOST = "skyedelaciel.com";
-export const SITE_NAME = "Skye De La Ciel";
-// TODO(copy): a placeholder until the introduction is written.
-export const SITE_DESCRIPTION =
-    "Fiction and nonfiction by a writer and software engineer.";
 
 /**
  * Everything true of one kind of link: which URLs it owns, how to resolve
@@ -212,14 +213,11 @@ const wikipedia: RemoteSource = {
         return {
             resolution: "resolved",
             kind: "wikipedia",
-            csl: {
-                type: "webpage",
-                id: url,
-                URL: url,
+            csl: webpageEntry(url, {
                 title: data.title,
                 "container-title": "Wikipedia",
                 ...(data.timestamp && { issued: parseCslDate(data.timestamp) }),
-            },
+            }),
             ...(data.extract_html && {
                 summary: { type: "html", content: data.extract_html },
             }),
@@ -307,16 +305,13 @@ const external: RemoteSource = {
         return {
             resolution: "resolved",
             kind: "external",
-            csl: {
-                type: "webpage",
-                id: url,
-                URL: url,
+            csl: webpageEntry(url, {
                 title,
                 "container-title": result.ogSiteName,
                 ...(author && { author: [{ family: author }] }),
                 ...(date && { issued: parseCslDate(date) }),
                 accessed: todayParts(),
-            },
+            }),
             ...(description && {
                 summary: { type: "text", content: description },
             }),
@@ -354,7 +349,7 @@ const claimants: readonly Source[] = [
 export function sourceFor(url: string): Source {
     let parsed: URL;
     try {
-        parsed = new URL(url, `https://${SITE_HOST}`);
+        parsed = onSite(url);
     } catch {
         // Bare fragments and the like are internal.
         return internal;

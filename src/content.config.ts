@@ -1,6 +1,7 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { cslData } from "~/components/mdx/links/types";
+import { FIXTURES_DIR } from "~/content/included";
 import { partitioned } from "~/content/partitioned";
 import { isPublished } from "~/content/schedule";
 import { z } from "zod";
@@ -34,8 +35,8 @@ interface Scope {
     within: string;
     except: string[];
 }
-const SITE: Scope = { within: "", except: ["fixtures/**"] };
-const FIXTURES: Scope = { within: "fixtures/", except: [] };
+const SITE: Scope = { within: "", except: [`${FIXTURES_DIR}/**`] };
+const FIXTURES: Scope = { within: `${FIXTURES_DIR}/`, except: [] };
 
 /** The files in `scope` called `name`, less any that match `also`. */
 const files = ({ within, except }: Scope, name: string, ...also: string[]) =>

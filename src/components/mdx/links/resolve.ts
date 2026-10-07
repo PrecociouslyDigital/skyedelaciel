@@ -1,8 +1,9 @@
 import type { LinkEntry, LinkKind, LinkMeta } from "./types";
 import { getCached, setCached } from "./cache";
-import { todayParts } from "./cite";
+import { todayParts, webpageEntry } from "./cite";
 import type { RemoteSource } from "./sources";
-import { SITE_HOST, SITE_NAME, sourceFor } from "./sources";
+import { sourceFor } from "./sources";
+import { onSite, SITE_NAME } from "../../../site";
 
 /** A page of this site, as far as a link to it is concerned. */
 export interface InternalPage {
@@ -14,7 +15,7 @@ export interface InternalPage {
 const unresolved = (url: string, kind: LinkKind): LinkEntry => ({
     resolution: "unresolved",
     kind,
-    csl: { type: "webpage", id: url, URL: url, accessed: todayParts() },
+    csl: webpageEntry(url, { accessed: todayParts() }),
 });
 
 /** A link whose source is fetched, carrying the resolver that fetches it. */
@@ -69,11 +70,11 @@ export async function resolveRemoteLinks(urls: string[]): Promise<LinkMeta> {
  */
 export function internalId(url: string): string | undefined {
     if (sourceFor(url).kind !== "internal") return undefined;
-    return new URL(url, `https://${SITE_HOST}`).pathname.replace(
-        /^\/+|\/+$/g,
-        "",
-    );
+    return onSite(url).pathname.replace(/^\/+|\/+$/g, "");
 }
+
+/** The path a content entry is built at: the inverse of `internalId`. */
+export const pageHref = (id: string) => `/${id}/`;
 
 /**
  * Resolve the internal links in a document against this site's own pages.
@@ -91,13 +92,10 @@ export function resolveInternalLinks(
         const entry: LinkEntry = {
             resolution: "resolved",
             kind: "internal",
-            csl: {
-                type: "webpage",
-                id: url,
-                URL: url,
+            csl: webpageEntry(url, {
                 title: page.title,
                 "container-title": SITE_NAME,
-            },
+            }),
             summary: { type: "text", content: page.abstract },
         };
         return [[url, entry] as const];

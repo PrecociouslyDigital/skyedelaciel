@@ -1,7 +1,7 @@
 ---
 import { RAIL_SEPARATOR } from "~/layouts/prelude/rail";
 import Block from "./Block.astro";
-import { block, date, v } from "./tags";
+import { block, date, POST_ID, v } from "./tags";
 
 /**
  * One post, set as an article of the site: framed, stamped down the rail, and
@@ -15,7 +15,7 @@ import { block, date, v } from "./tags";
 const rail = `${date}${block("NoteCount", `${RAIL_SEPARATOR}${v("NoteCountWithLabel")}`)}`;
 ---
 
-<article id={`post-${v("PostID")}`} class="post" data-rail={rail}>
+<article id={POST_ID} class="post" data-rail={rail}>
     <header class="front-matter">
         <div class="title-line">
             <Block name="Text">

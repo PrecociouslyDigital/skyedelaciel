@@ -56,7 +56,7 @@ import { match } from "ts-pattern";
 import { visit } from "unist-util-visit";
 import type { VFile } from "vfile";
 import { store } from "../integrations/drawn";
-import { PLATE_PAD, plate } from "../layouts/prelude/brush.mjs";
+import { plate, plated } from "../layouts/prelude/brush.mjs";
 import { block, importDefault, recast, slot } from "./mdx-nodes";
 import {
     captionLabel,
@@ -70,8 +70,8 @@ import {
 } from "./numbering";
 
 /** The widest a figure is drawn, and the tallest, in px. */
-const MAX_WIDTH = 640;
-const MAX_HEIGHT = 720;
+export const MAX_WIDTH = 640;
+export const MAX_HEIGHT = 720;
 
 /** What the paragraph that captions a table begins with. */
 const TABLE = "Table:";
@@ -417,8 +417,8 @@ const remarkFigures: RemarkPlugin<[{ root: URL }]> =
                     const drawing = store(
                         root,
                         plate({
-                            width: width + 2 * PLATE_PAD,
-                            height: height + 2 * PLATE_PAD,
+                            width: plated(width),
+                            height: plated(height),
                             seed: figure.id,
                         }),
                     );

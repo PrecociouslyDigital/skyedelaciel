@@ -27,6 +27,7 @@ import tumblrTheme, {
     ROUTE as TUMBLR_THEME_ROUTE,
 } from "./src/integrations/tumblr-theme";
 import vines from "./src/integrations/vines";
+import { SITE_URL } from "./src/site";
 import internalLinks from "./src/integrations/internal-links";
 import { SCHEDULED_PREFIX } from "./src/content/schedule";
 
@@ -93,7 +94,7 @@ const mdxRemarkPlugins: PluggableList = [
 
 // https://astro.build/config
 export default defineConfig({
-    site: "https://skyedelaciel.com",
+    site: SITE_URL,
     // Served to the home network as well as this machine, under the name the
     // network knows it by.
     server: {

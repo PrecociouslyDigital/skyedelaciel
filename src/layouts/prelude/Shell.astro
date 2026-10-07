@@ -12,7 +12,8 @@ import "@fontsource-variable/cormorant/wght-italic.css";
 
 import Navbar from "~/components/Navbar.astro";
 import type { Host } from "~/components/nav";
-import { SITE_NAME } from "~/components/mdx/links/sources";
+import { THEME_KEY } from "~/components/theme";
+import { AUTHOR, SITE_NAME } from "~/site";
 
 /**
  * Everything a page of this site has around its text, wherever it is served:
@@ -27,7 +28,7 @@ interface Props {
     host: Host;
 }
 
-const { title, description, author = "Skye De La Ciel", host } = Astro.props;
+const { title, description, author = AUTHOR, host } = Astro.props;
 ---
 
 <html lang="en">
@@ -42,11 +43,12 @@ const { title, description, author = "Skye De La Ciel", host } = Astro.props;
                 `is:inline` is required: without it, Astro bundles this as a
                 deferred `type="module"` script that runs after paint,
                 defeating the point. Being unprocessed, it must be plain
-                browser JS — no TypeScript, no imports.
+                browser JS — no TypeScript, no imports — so what it shares
+                with ThemeToggle comes in through `define:vars`.
             */
         }
-        <script is:inline>
-            if (JSON.parse(localStorage.getItem("theme-override") ?? "false")) {
+        <script is:inline define:vars={{ THEME_KEY }}>
+            if (JSON.parse(localStorage.getItem(THEME_KEY) ?? "false")) {
                 document.documentElement.dataset.themeChecked = "true";
             }
         </script>

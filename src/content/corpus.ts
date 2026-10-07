@@ -1,4 +1,5 @@
 import { getCollection, type CollectionEntry } from "astro:content";
+import { INCLUDE_FIXTURES } from "./included";
 
 /**
  * Which pages are built, and which pages a link can name. Every route reads
@@ -11,14 +12,9 @@ export type Article = CollectionEntry<
 >;
 export type Section = CollectionEntry<"sections" | "fixtureSections">;
 
-/**
- * Fixtures are a test surface rather than content, so a plain `astro build`
- * routes none of them; `npm run build:fixtures` sets INCLUDE_FIXTURES to add
- * them. Read at call time, because a route's getStaticPaths is hoisted out of
- * its module and calls in from there.
- */
+/** The fixtures `load` reads, in a build that includes them. */
 const fixtures = async <T>(load: () => Promise<T[]>): Promise<T[]> =>
-    process.env.INCLUDE_FIXTURES ? load() : [];
+    INCLUDE_FIXTURES ? load() : [];
 
 /** Articles that are out, each built at `/<id>/`. */
 export const publishedArticles = async (): Promise<Article[]> => [

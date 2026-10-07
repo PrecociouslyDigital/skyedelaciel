@@ -1,6 +1,7 @@
 // @ts-expect-error — citeproc has no type declarations
 import CSL from "citeproc";
 import { match, P } from "ts-pattern";
+import { today } from "../../../content/schedule";
 import type { CslData, CslDate, CslName } from "./types";
 import mlaStyle from "./mla.csl?raw";
 import enUSLocale from "./locale-en-US.xml?raw";
@@ -30,13 +31,19 @@ export function formatCitation(csl: CslData): string {
     return csl.URL ? wrapUrl(formatted, csl.URL) : formatted;
 }
 
-/** Today as a CSL date-parts value. */
-export const todayParts = (): CslDate => {
-    const d = new Date();
-    return {
-        "date-parts": [[d.getFullYear(), d.getMonth() + 1, d.getDate()]],
-    };
-};
+/** Today, by the calendar that decides what is published, as a CSL date. */
+export const todayParts = (): CslDate => ({
+    "date-parts": [today().split("-").map(Number)],
+});
+
+/**
+ * A web page's CSL entry: what every page has, its address, and `fields`
+ * over it.
+ */
+export const webpageEntry = (
+    url: string,
+    fields: Omit<CslData, "type" | "id" | "URL"> = {},
+): CslData => ({ type: "webpage", id: url, URL: url, ...fields });
 
 /**
  * Parse a date string into CSL form. Unparseable input is kept as CSL's own

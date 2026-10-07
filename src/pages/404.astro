@@ -1,6 +1,7 @@
 ---
 import Shell from "~/layouts/prelude/Shell.astro";
 import FrontMatter from "~/layouts/prelude/FrontMatter.astro";
+import { pageHref } from "~/components/mdx/links/resolve";
 import { sectionPages } from "~/content/corpus";
 
 const sections = (await sectionPages()).toSorted((a, b) =>
@@ -19,7 +20,7 @@ const sections = (await sectionPages()).toSorted((a, b) =>
             {
                 sections.map(({ id, data }) => (
                     <li>
-                        <a href={`/${id}/`}>{data.title}</a>: {data.abstract}
+                        <a href={pageHref(id)}>{data.title}</a>: {data.abstract}
                     </li>
                 ))
             }

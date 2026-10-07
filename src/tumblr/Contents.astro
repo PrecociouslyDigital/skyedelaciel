@@ -2,7 +2,7 @@
 import TocEntry from "~/components/TocEntry.astro";
 import TocList from "~/components/TocList.astro";
 import Block from "./Block.astro";
-import { block, v } from "./tags";
+import { block, POST_ID, v } from "./tags";
 
 /**
  * The blog's table of contents, which carries tags — see fixtures/design.mdx, Tumblr.
@@ -24,7 +24,7 @@ const label = `${v("Month")} ${v("DayOfMonth")}${block(
 <TocList depth={1}>
     <Block name="Posts">
         <Block name="IndexPage">
-            <TocEntry href={`#post-${v("PostID")}`} text={label} depth={1}>
+            <TocEntry href={`#${POST_ID}`} text={label} depth={1}>
                 <TocList depth={2}>
                     <Block name="Tags">
                         <TocEntry

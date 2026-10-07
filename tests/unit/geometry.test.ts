@@ -6,7 +6,7 @@ import {
     crossover,
     DENSITY,
     drawnWidth,
-    match,
+    suitability,
     placement,
     REM,
     sourceWidth,
@@ -26,15 +26,17 @@ describe("placement", () => {
     test("the chosen box suits the image at least as well as the other would", () => {
         for (const aspect of ASPECTS) {
             const where = placement(aspect, 1);
-            expect(match(aspect, boxAspect(where))).toBeGreaterThanOrEqual(
-                match(aspect, boxAspect(other(where))),
+            expect(
+                suitability(aspect, boxAspect(where)),
+            ).toBeGreaterThanOrEqual(
+                suitability(aspect, boxAspect(other(where))),
             );
         }
     });
 
     test("the crossover is where both boxes suit an image equally", () => {
-        expect(match(crossover, boxAspect("column"))).toBeCloseTo(
-            match(crossover, boxAspect("banner")),
+        expect(suitability(crossover, boxAspect("column"))).toBeCloseTo(
+            suitability(crossover, boxAspect("banner")),
         );
     });
 

@@ -6,6 +6,7 @@
    that Sass can call it while it compiles; see src/integrations/vines.ts. */
 
 import { chance } from "./chance.mjs";
+import { svgOf } from "./pen.mjs";
 
 /**
  * A rectangle of the grid, in cells, and how strongly it is inked.
@@ -131,5 +132,9 @@ export function patchesSvg(patches, cols, rows) {
     const drawn = [...paths]
         .map(([a, d]) => `<path fill-opacity='${a}' d='${d}'/>`)
         .join("");
-    return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${cols} ${rows}' preserveAspectRatio='none' shape-rendering='crispEdges'>${drawn}</svg>`;
+    return svgOf(
+        `0 0 ${cols} ${rows}`,
+        drawn,
+        " preserveAspectRatio='none' shape-rendering='crispEdges'",
+    );
 }

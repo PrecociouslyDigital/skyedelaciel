@@ -1,7 +1,7 @@
 ---
 import type { Written } from "../written";
 import { Image } from "astro:assets";
-import { PLATE_PAD } from "~/layouts/prelude/brush.mjs";
+import { PLATE_PAD, plated } from "~/layouts/prelude/brush.mjs";
 import Caption from "./Caption.astro";
 
 /**
@@ -16,7 +16,7 @@ type Props = Written["Figure"];
 const { id, label, image, alt, plate, width } = Astro.props;
 const geometry = [
     `--plate: url("${plate}")`,
-    `--plate-width: ${width + 2 * PLATE_PAD}`,
+    `--plate-width: ${plated(width)}`,
     `--plate-pad: ${PLATE_PAD}`,
 ].join("; ");
 ---

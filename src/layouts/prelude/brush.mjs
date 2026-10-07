@@ -6,9 +6,10 @@
    so that Sass can call it while it compiles; see src/integrations/vines.ts. */
 
 import { chance } from "./chance.mjs";
+import { arcLengths, last, nth, smoothstep, svgOf, TAU } from "./pen.mjs";
 
 /** @typedef {import("./chance.mjs").Chance} Chance */
-/** @typedef {[number, number]} Point */
+/** @typedef {import("./pen.mjs").Point} Point */
 /** A function of distance along a stroke. @typedef {(s: number) => number} Profile */
 /** One edge of a stroke, or the other. @typedef {-1 | 1} Side */
 /**
@@ -18,27 +19,8 @@ import { chance } from "./chance.mjs";
  * @typedef {{ "-1": T, "1": T }} Ragged
  */
 
-/** @type {(e0: number, e1: number, x: number) => number} */
-const smoothstep = (e0, e1, x) => {
-    const t = Math.min(Math.max((x - e0) / (e1 - e0), 0), 1);
-    return t * t * (3 - 2 * t);
-};
 /** @type {(p: Point, q: Point) => number} */
 const distance = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
-
-/**
- * The `i`th of `list`, which the caller knows is there.
- *
- * @template T
- * @param {readonly T[]} list
- * @param {number} i
- * @returns {T}
- */
-const nth = (list, i) => /** @type {T} */ (list[i]);
-
-/** @type {<T>(list: readonly T[]) => T} */
-const last = (list) => nth(list, list.length - 1);
-const TAU = 2 * Math.PI;
 
 /* — The hand — */
 
@@ -104,11 +86,7 @@ function bleed(r, length, count, height, spread) {
  * @returns {[number[], Point[]]}
  */
 function frame(points) {
-    const lengths = [0];
-    for (let i = 1; i < points.length; i++)
-        lengths.push(
-            nth(lengths, i - 1) + distance(nth(points, i - 1), nth(points, i)),
-        );
+    const lengths = arcLengths(points);
     const normals = points.map((_, i) => {
         const [x0, y0] = nth(points, Math.max(i - 1, 0));
         const [x1, y1] = nth(points, Math.min(i + 1, points.length - 1));
@@ -545,7 +523,11 @@ export function pathData(solids, holes) {
 
 /** @type {(box: number[], d: string) => string} */
 const svg = (box, d) =>
-    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='${box.map(num).join(" ")}' preserveAspectRatio='none'><path d='${d}'/></svg>`;
+    svgOf(
+        box.map(num).join(" "),
+        `<path d='${d}'/>`,
+        " preserveAspectRatio='none'",
+    );
 
 /* — Rules of unknown length — */
 
@@ -641,6 +623,14 @@ export const PLATE = {
 /* How far a plate's frame holds what it frames in from its edge, in px:
    clear of both rules and the channel between them. */
 export const PLATE_PAD = 18;
+
+/**
+ * How long a plate is along a side, in px, that frames an image `length` px
+ * long along it.
+ *
+ * @param {number} length
+ */
+export const plated = (length) => length + 2 * PLATE_PAD;
 
 /* How many of the brush's units a px of plate is drawn in. */
 const UNITS_PER_PX = 3.25;

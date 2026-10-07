@@ -1,5 +1,6 @@
 ---
 import type { MarkdownHeading } from "astro";
+import { AUTHOR } from "~/site";
 import type { CollectionEntry } from "astro:content";
 
 import Shell from "./Shell.astro";
@@ -20,7 +21,7 @@ export interface Props {
 }
 
 const { frontmatter, headings } = Astro.props;
-const author = frontmatter.author ?? "Skye De La Ciel";
+const author = frontmatter.author ?? AUTHOR;
 
 /**
  * What identifies this copy of the page: when it was published, when it was

@@ -67,11 +67,11 @@ export const boxAspect = (where: Placement): number =>
  * share of the box filled. Both come to the same ratio of the two shapes, so
  * one measure compares a cropping placement with one that doesn't crop.
  */
-export const match = (imageAspect: number, box: number): number =>
+export const suitability = (imageAspect: number, box: number): number =>
     Math.min(imageAspect, box) / Math.max(imageAspect, box);
 
 /**
- * The image aspect ratio that suits both placements equally. `match` falls
+ * The image aspect ratio that suits both placements equally. `suitability` falls
  * off in proportion on either side of a box's own aspect, so the two curves
  * cross at the geometric mean of the boxes' aspects.
  */

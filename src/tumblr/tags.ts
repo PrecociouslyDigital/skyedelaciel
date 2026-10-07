@@ -100,5 +100,20 @@ export const v = (name: TumblrVariable) => `{${name}}`;
 export const block = (name: TumblrBlock, inner: string) =>
     `{block:${name}}${inner}{/block:${name}}`;
 
+/** What Tumblr reads as a name between braces: `Title`, `PhotoURL-HighRes`. */
+const NAME = "[A-Za-z][\\w-]*";
+
+/**
+ * Every tag Tumblr reads in a template: `{Name}`, `{block:Name}` and
+ * `{/block:Name}`, with whether it opens or closes a block, and its name.
+ */
+export const TAG = new RegExp(`\\{(\\/?block:)?(${NAME})\\}`, "g");
+
+/** A variable as Tumblr would read it, whether or not it knows the name. */
+export const WORD = new RegExp(`\\{${NAME}\\}`);
+
+/** The id of a post's article, by which the contents link to it. */
+export const POST_ID = `post-${v("PostID")}`;
+
 /** A post's date as the rest of the site writes one. */
 export const date = `${v("Year")}-${v("MonthNumberWithZero")}-${v("DayOfMonthWithZero")}`;

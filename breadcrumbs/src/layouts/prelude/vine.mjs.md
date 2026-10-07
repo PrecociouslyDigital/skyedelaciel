@@ -68,3 +68,12 @@ is there without changing what `list[i]` reads (brush.mjs's `last` replaces
 gives `undefined`). Each rewrite was checked against the built drawings and
 masks, which are byte-identical. `INKS` is exported for vines.ts's kinds, and
 picture's paint layers are typed against it. `chance` gained `pick(list)`.
+
+## 2026-10-06 — one stalked leaf
+
+`grow()`'s `sprig`, `shoot()`'s leaf loop and `hanging()` each drew a leaf on
+a stalk. `stalkedLeaf` takes the differences as options (which way the stalk
+curls, how finely it is drawn, how far the blade turns off its end) and
+returns the stalk and the blade's heading too, which `sprig` needs to claim
+room. Each caller draws its chances in the same order as before, so the
+drawings are byte-identical; the golden hash in vine.test.ts confirms it.

@@ -1,5 +1,6 @@
 import {
     BLOCKS,
+    TAG,
     VARIABLES,
     type TumblrBlock,
     type TumblrVariable,
@@ -38,7 +39,6 @@ type Node =
     | { variable: string; source: string }
     | { block: string; children: Node[] };
 
-const TAG = /\{(\/?block:)?([A-Za-z][\w-]*)\}/g;
 const KNOWN: ReadonlySet<string> = new Set(VARIABLES);
 const NAMES: ReadonlySet<string> = new Set([...VARIABLES, ...BLOCKS]);
 const isName = (name: string): name is Name => NAMES.has(name);

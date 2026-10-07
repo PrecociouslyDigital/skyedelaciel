@@ -5,6 +5,7 @@ import { join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fromHtml } from "hast-util-from-html";
 import { selectAll } from "hast-util-select";
+import { FIXTURES_DIR } from "../content/included";
 import { SCHEDULED_PREFIX } from "../content/schedule";
 
 /** One built page, by its path in the build, and where its links go. */
@@ -33,7 +34,7 @@ export function brokenLinks(
 
     return pages.flatMap(({ file, hrefs }) => {
         const route = file.replace(new RegExp(`^${SCHEDULED_PREFIX}/`), "");
-        if (route.startsWith("fixtures/")) return [];
+        if (route.startsWith(`${FIXTURES_DIR}/`)) return [];
         const isScheduled = route !== file;
         return hrefs
             .filter(rooted)

@@ -1,20 +1,24 @@
+---
+import { THEME_TOGGLE_ID } from "./theme";
+---
+
 <label class="theme-toggle" aria-label="Toggle color scheme">
-    <input type="checkbox" id="theme-toggle" />
+    <input type="checkbox" id={THEME_TOGGLE_ID} />
     <span class="toggle-icon" aria-hidden="true"></span>
 </label>
 
 <script>
+    import { THEME_KEY, THEME_TOGGLE_ID } from "./theme";
+
     // The server renders the box unchecked; a stored choice is applied here.
     // The pre-paint script in Shell.astro has already applied it to the page,
     // through an attribute that the checkbox now takes over from.
-    const toggle = document.querySelector<HTMLInputElement>("#theme-toggle")!;
+    const toggle = document.getElementById(THEME_TOGGLE_ID) as HTMLInputElement;
 
     delete document.documentElement.dataset.themeChecked;
-    toggle.checked = JSON.parse(
-        localStorage.getItem("theme-override") ?? "false",
-    );
+    toggle.checked = JSON.parse(localStorage.getItem(THEME_KEY) ?? "false");
     toggle.addEventListener("change", () => {
-        localStorage.setItem("theme-override", JSON.stringify(toggle.checked));
+        localStorage.setItem(THEME_KEY, JSON.stringify(toggle.checked));
     });
 </script>
 

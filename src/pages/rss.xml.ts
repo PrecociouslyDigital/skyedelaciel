@@ -1,6 +1,7 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
-import { SITE_DESCRIPTION, SITE_NAME } from "~/components/mdx/links/sources";
+import { pageHref } from "~/components/mdx/links/resolve";
+import { SITE_DESCRIPTION, SITE_NAME } from "~/site";
 import { publishedArticles, sectionPages } from "~/content/corpus";
 import { sectioned } from "~/content/sections";
 
@@ -15,7 +16,7 @@ export async function GET({ site }: APIContext) {
             title: data.title,
             description: data.abstract,
             pubDate: data.published,
-            link: `/${id}/`,
+            link: pageHref(id),
         })),
     });
 }

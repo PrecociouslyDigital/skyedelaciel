@@ -1,19 +1,19 @@
 <script lang="ts">
+    import { receipt as receiptOf } from "./receipt.svelte";
+
     /**
      * Copies the code of its figure exactly as written; the stylesheet draws
      * the line numbers, so they are not in the text. It renders only once its
-     * script has loaded, since it does nothing without one.
+     * script has loaded, since it does nothing without one. A copy is
+     * answered with a receipt (see receipt.svelte.ts), which has nothing to
+     * play as it leaves.
      */
-    const HOLD_MS = 1500;
-
     let mounted = $state(false);
-    let copied = $state(false);
     let button: HTMLButtonElement | undefined = $state();
-    let hold: ReturnType<typeof setTimeout> | undefined;
+    const receipt = receiptOf();
 
     $effect(() => {
         mounted = true;
-        return () => clearTimeout(hold);
     });
 
     async function copy() {
@@ -21,9 +21,7 @@
             .closest(".code-figure")!
             .querySelector("pre code")!;
         await navigator.clipboard.writeText(code.textContent ?? "");
-        clearTimeout(hold);
-        copied = true;
-        hold = setTimeout(() => (copied = false), HOLD_MS);
+        receipt.show();
     }
 </script>
 
@@ -31,6 +29,8 @@
         bind:this={button}
         type="button"
         class="copy-code"
-        data-copied={copied || undefined}
+        data-receipt={receipt.state}
         onclick={copy}>Copy</button
-    ><span class="said" role="status">{copied ? "Code copied" : ""}</span>{/if}
+    ><span class="said" role="status"
+        >{receipt.state === "shown" ? "Code copied" : ""}</span
+    >{/if}

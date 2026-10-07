@@ -69,3 +69,7 @@ The cost is that a near-square image picked for the column makes a short pane,
 since the pane is as tall as the image. The Wikipedia logo (120 × 110) would
 make a pane about 8.5rem tall. `tooSmall` now drops it, as a 144px-wide
 drawing would enlarge it.
+
+## 2026-10-06 — `match` is `suitability`
+
+It shadowed ts-pattern's `match` in any module that wanted both.
