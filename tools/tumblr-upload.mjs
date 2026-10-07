@@ -73,9 +73,15 @@ async function logIn(page, { email, password, secret }) {
     );
 }
 
+// Tumblr refuses a login, as though the password were wrong, from a browser
+// that says it is automated, so this is the installed Chrome, not making that
+// claim.
 const context = await chromium.launchPersistentContext(PROFILE, {
+    channel: "chrome",
     headless: false,
     viewport: null,
+    ignoreDefaultArgs: ["--enable-automation"],
+    args: ["--disable-blink-features=AutomationControlled"],
 });
 const page = context.pages()[0] ?? (await context.newPage());
 
@@ -96,13 +102,22 @@ try {
         await page.goto(EDITOR);
     }
 
-    await page.getByRole("button", { name: /edit html/i }).click();
-    const editor = page.locator(".cm-content, .CodeMirror textarea").first();
-    await editor.click();
-    await page.keyboard.press("ControlOrMeta+A");
-    await page.keyboard.insertText(readFileSync(THEME, "utf8"));
-    await page.getByRole("button", { name: /update preview/i }).click();
-    await page.getByRole("button", { name: /^save/i }).click();
+    // The editor is Ace, so the theme goes in through Ace's own API rather than
+    // typing, which Ace would indent and pair brackets in. Its buttons are divs,
+    // disabled until there is something to preview or save, and the panels each
+    // keep a copy of them, hidden but for the one shown.
+    await page.locator("#edit_html_button").click();
+    await page
+        .locator("#editor")
+        .evaluate(
+            (host, html) =>
+                /** @type {any} */ (host).env.editor.setValue(html, -1),
+            readFileSync(THEME, "utf8"),
+        );
+    const button = (/** @type {string} */ action) =>
+        page.locator(`[data-action="${action}"]:not(.disabled):visible`);
+    await button("update_preview").click();
+    await button("save_settings").click();
 
     const built = builtStamp();
     const deadline = Date.now() + SETTLE;

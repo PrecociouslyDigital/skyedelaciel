@@ -30,3 +30,25 @@ has appeared, so it is fresh. Any step not appearing within 30s gives up on
 the automatic login, and the existing 10-minute wait for a manual one takes
 over in the same window. `tools/totp.mjs` is RFC 6238, checked against the
 RFC's own vectors in `tests/unit/totp.test.ts`.
+
+## 2026-10-07 — first real run: what the editor actually is
+
+Logging in from Playwright's bundled Chrome for Testing failed with Tumblr's
+"incorrect login" message, even when the details were typed by hand; the
+installed Chrome (`channel: "chrome"`), without `--enable-automation` and with
+`AutomationControlled` off, logs in fine.
+
+The theme editor, probed with the session logged in:
+
+- "Edit HTML" is `div#edit_html_button`, not a button.
+- The editor is Ace, `#editor`; the theme goes in through
+  `host.env.editor.setValue(html, -1)`, which also wakes Tumblr's change
+  tracking.
+- "Update Preview" and "Save" are `div[data-action="update_preview"]` and
+  `div[data-action="save_settings"]`, `.disabled` until there is something to
+  do, with hidden copies in other panels, hence `:not(.disabled):visible`.
+- A bottom bar offers to submit the theme to Tumblr's garden
+  (`data-action="submit_theme"` / `submit_theme_later`); leave it alone.
+
+Tumblr refuses to save a theme with `http://` anywhere in it, even the SVG
+namespace inside a data URI; see `src/integrations/tumblr-theme.ts`.

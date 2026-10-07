@@ -25,9 +25,9 @@ import { WORD } from "../tumblr/tags";
 export const ROUTE = "tumblr-theme";
 
 /**
- * What would stop the file working once Tumblr serves it, each with the
- * reason. The build fails on any of them rather than shipping a theme that
- * breaks on someone else's domain.
+ * What would stop Tumblr taking the file, or stop it working once Tumblr
+ * serves it, each with the reason. The build fails on any of them rather than
+ * shipping a theme that breaks on someone else's domain.
  */
 const HAZARDS: [(html: string) => string | undefined, string][] = [
     [
@@ -44,6 +44,10 @@ const HAZARDS: [(html: string) => string | undefined, string][] = [
                 .map(([, , body]) => WORD.exec(body!)?.[0])
                 .find(Boolean),
         "a {Word} inside a script or stylesheet, which Tumblr would replace",
+    ],
+    [
+        (html) => /http:\/\/[^\s"')]*/.exec(html)?.[0],
+        "an http:// URL, which would stop Tumblr saving the theme, even one never fetched",
     ],
 ];
 
@@ -73,6 +77,16 @@ async function inline(html: string, dist: URL): Promise<string> {
 /** Root-relative URLs, made to name this site. */
 const absolute = (html: string, site: URL) =>
     html.replace(/(?<=(?:href|src)="|url\()\/(?!\/)/g, site.origin + "/");
+
+/**
+ * An SVG data URI must name the SVG namespace, which is an http:// URL. The
+ * URI is percent-decoded before it is read, so its colon can be escaped
+ * without changing the image.
+ */
+const escapedNamespaces = (html: string) =>
+    html.replace(/data:image\/svg\+xml,[^"]*/g, (uri) =>
+        uri.replaceAll("http://", "http%3A//"),
+    );
 
 export default function tumblrTheme(): AstroIntegration {
     let site: URL;
@@ -112,7 +126,7 @@ export default function tumblrTheme(): AstroIntegration {
                     }
                 }
 
-                const theme = absolute(standalone, site);
+                const theme = escapedNamespaces(absolute(standalone, site));
                 parse(theme); // throws on a block opened or closed out of turn
                 for (const [find, reason] of HAZARDS) {
                     const found = find(theme);
