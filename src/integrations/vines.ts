@@ -81,10 +81,10 @@ const lines = {
             upright: z.boolean().optional(),
             blooms: z.boolean().optional(),
         },
-        ["leaf", "flower"],
+        ["leaf", "flower", "ground"],
         (args) => ({ svg: vine(args) }),
     ),
-    toc: kind({ ratio: z.number(), seed }, ["leaf"], (args) => ({
+    toc: kind({ ratio: z.number(), seed }, ["leaf", "ground"], (args) => ({
         svg: tocVine(args),
     })),
 };
@@ -93,11 +93,15 @@ const lines = {
 const placed = {
     shoot: kind(
         { reach: z.number(), radius: z.number(), seed },
-        ["leaf"],
+        ["leaf", "ground"],
         shoot,
     ),
     blossom: kind({ seed }, ["leaf", "flower", "ground"], blossom),
-    hanging: kind({ seed, rise: z.number() }, ["leaf", "iron", "pot"], hanging),
+    hanging: kind(
+        { seed, rise: z.number() },
+        ["leaf", "iron", "pot", "ground"],
+        hanging,
+    ),
     stroke: kind(
         {
             seed: z.union([z.number(), z.string()]),

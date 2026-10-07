@@ -77,3 +77,34 @@ curls, how finely it is drawn, how far the blade turns off its end) and
 returns the stalk and the blade's heading too, which `sprig` needs to claim
 room. Each caller draws its chances in the same order as before, so the
 drawings are byte-identical; the golden hash in vine.test.ts confirms it.
+
+## 2026-10-07 — painted without SVG filters
+
+Scrolling quickly hitched for up to ~250 ms the first time a section of the
+contents unfolded. A Playwright trace with the macOS Metal shader cache for
+Chrome-for-Testing cleared (`$(getconf DARWIN_USER_CACHE_DIR)/
+com.google.chrome.for.testing.helper/com.apple.metal`) showed Skia Graphite
+compiling pipelines on demand: PerlinNoise, Displacement, LinearMorphology,
+and several blur kernel sizes, all from the paint's `tremor` and `rim`
+filters. Blur kernels and image sampling vary with the scale and tiling a
+drawing is drawn at, so each new size or section could need new pipelines.
+
+A rehearsal (cloning the contents, unfolding them at 1% opacity while idle)
+was tried and dropped: it warmed most pipelines but not the scale- and
+tiling-dependent variants, so 4–16 of ~21 still compiled mid-scroll, and
+the rehearsal itself took 400–850 ms frames.
+
+So the paint is fills and strokes only. `tremor` displaced edges by at most
+±0.15 units (under 0.1 px at the sizes drawn), so it went without a
+replacement. `rim` became a stroke `RIM` wide under an opaque fill of the
+ink mixed `WASH` toward the ground: the fill covers the inner half of the
+stroke, which keeps one rim round overlapping outlines (a rose's petals),
+where a stroke over a translucent fill outlined every petal. The rim now
+lies outside the shape, by `RIM / 2`, rather than inside it.
+
+The fill being opaque made the ground layer under roses redundant, so it is
+gone, and `ground` is no longer an ink a mark can be painted in (`Pigment`);
+every drawing now takes `ground` instead, for the wash to thin toward.
+Every drawing is slightly smaller (~900 bytes of filter defs each). The
+golden hash in vine.test.ts changed on purpose; a test there now fails any
+drawing that contains a filter.

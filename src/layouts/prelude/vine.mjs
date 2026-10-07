@@ -6,8 +6,8 @@
    hairline tendrils curling wherever there is room.
 
    Everything is drawn in a fixed 40-unit-tall space, and the call site scales
-   the whole drawing to its height, so the pen's weight, and the filter
-   lengths that give the paint its edge, never depend on where it is drawn.
+   the whole drawing to its height, so the pen's weight, and the rim that
+   gives the paint its edge, never depend on where it is drawn.
    Plain JS, so that Sass can call it while it compiles; see
    src/integrations/vines.ts. */
 
@@ -41,7 +41,8 @@ import { arcLengths, lerp, nth, smoothstep, svgOf, TAU } from "./pen.mjs";
  * @typedef {{ svg: string, box: { x: number, y: number, w: number, h: number } }} Placed
  */
 
-/** The inks a drawing is painted in, by what they paint. */
+/** The inks a drawing is painted in, by what they paint, and the page's own
+    colour, which is the ground under them all. */
 export const INKS = /** @type {const} */ ([
     "leaf",
     "flower",
@@ -52,9 +53,11 @@ export const INKS = /** @type {const} */ ([
 
 /** @typedef {(typeof INKS)[number]} Ink */
 
+/** An ink a mark is painted in: any but the ground. @typedef {Exclude<Ink, "ground">} Pigment */
+
 /** The two hands a mark is painted in: the pen's line, or a dab of the brush. @typedef {"line" | "dab"} Hand */
 
-/** @typedef {{ ink: Ink, hand: Hand, outlines: Point[][] }} Mark */
+/** @typedef {{ ink: Pigment, hand: Hand, outlines: Point[][] }} Mark */
 
 const H = 40;
 
@@ -242,7 +245,7 @@ function closedPath(points) {
 /* Every mark is painted in one of the two inks and one of two hands: the
    pen's line, or a dab of the brush. A mark may be several overlapping
    outlines, which paint as one shape with one rim. */
-/** @type {(ink: Ink, hand: Hand, ...outlines: Point[][]) => Mark} */
+/** @type {(ink: Pigment, hand: Hand, ...outlines: Point[][]) => Mark} */
 const mark = (ink, hand, ...outlines) => ({ ink, hand, outlines });
 
 /* How wide each kind of stem is drawn, at fraction s of its length: pen
@@ -740,68 +743,68 @@ function grow(width, r, { weight, vigour, centred, blooms }) {
 
 /* — The paint — */
 
-/* A slight tremor at the edge, as a pen or a fine brush leaves on paper. */
-/** @type {(frequency: string, amount: number, seed: number) => string} */
-const tremor = (frequency, amount, seed) => `
-    <feTurbulence type='fractalNoise' baseFrequency='${frequency}' numOctaves='2' seed='${seed}' result='edge'/>
-    <feDisplacementMap in='SourceGraphic' in2='edge' scale='${amount}' xChannelSelector='A' yChannelSelector='G' result='shape'/>`;
+/* Water carries pigment to the wet edge and leaves it there as it dries: a
+   dab keeps full strength at its rim, `RIM` wide, while its interior thins
+   to a wash of `WASH` ink on the ground. A line is too narrow to have an
+   interior, and is solid.
 
-/* Water carries pigment to the wet edge and leaves it there as it dries: the
-   rim keeps full strength while the interior thins. Built on alpha, so it
-   keeps whatever colour the shape was painted in. Lines are narrower than
-   twice the reach, so they have no interior and stay at full strength; leaves
-   and roses get a darker outline round a paler wash. */
-/** @type {(reach: number, thinning: number) => string} */
-const rim = (reach, thinning) => `
-    <feMorphology in='shape' operator='erode' radius='${reach}'/>
-    <feGaussianBlur stdDeviation='0.6'/>
-    <feComponentTransfer result='core'><feFuncA type='linear' slope='${thinning}'/></feComponentTransfer>
-    <feComposite in='shape' in2='core' operator='out'/>`;
+   The rim is stroked under the wash, which is opaque, so that the wash
+   covers the inner half of the stroke. Where a dab's outlines overlap, as a
+   rose's petals do, only their outer edge keeps a rim.
+
+   Only fills and strokes, never SVG filters: a browser readies its GPU for
+   each filter the first time it draws one, and the page stalls while it does. */
+const RIM = 1;
+const WASH = 0.55;
+
+/** `ink` at `strength` on `ground`, as one opaque colour. Both are `#rrggbb`. */
+/** @type {(ink: string, ground: string, strength: number) => string} */
+function onGround(ink, ground, strength) {
+    const rgb = (/** @type {string} */ hex) =>
+        [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const [a, b] = [rgb(ink), rgb(ground)];
+    return `#${a
+        .map((v, k) => Math.round(lerp(nth(b, k), v, strength)))
+        .map((v) => v.toString(16).padStart(2, "0"))
+        .join("")}`;
+}
+
+/** @type {Record<Hand, (ink: string, ground: string) => string>} */
+const HANDS = {
+    line: (ink) => `fill='${ink}'`,
+    dab: (ink, ground) =>
+        `fill='${onGround(ink, ground, WASH)}' stroke='${ink}' stroke-width='${RIM}' stroke-linejoin='round' paint-order='stroke'`,
+};
 
 /* Marks painted as an SVG over `box`, [x, y, width, height] in units. Each
-   ink and hand is one path, so its filter runs once: the plate under
-   everything, then iron, then lines, leaves, and flowers on top, each flower
-   over a ground of the page's own colour so that nothing beneath it shows
-   through its pale middle. Growth never lets two marks of a layer overlap,
-   so painting them as one shape changes nothing. */
+   ink and hand is one path: the plate under everything, then iron, then
+   lines, leaves, and flowers on top. Growth never lets two marks of a layer
+   overlap, so painting them as one shape changes nothing. */
 /**
  * @param {Mark[]} marks
  * @param {Box} box
- * @param {Partial<Record<Ink, string>>} inks
- * @param {string} id
- * @param {Chance} r
+ * @param {Partial<Record<Pigment, string>> & { ground: string }} inks
  */
-function picture(marks, box, inks, id, r) {
-    const noise = () => r.integer(1000);
-    /** @type {(name: Hand, body: string) => string} */
-    const filter = (name, body) =>
-        `<filter id='${id}-${name}' x='-20%' y='-20%' width='140%' height='140%' color-interpolation-filters='sRGB'>${body}</filter>`;
-    const defs = [
-        filter("line", tremor("0.4", 0.3, noise())),
-        filter("dab", tremor("0.4", 0.35, noise()) + rim(0.6, 0.45)),
-    ]
-        .join("")
-        .replace(/\s+/g, " ")
-        .replace(/> </g, "><");
-    /** @type {[Ink, Hand][]} */
+function picture(marks, box, inks) {
+    /** @type {[Pigment, Hand][]} */
     const layers = [
         ["pot", "dab"],
         ["iron", "line"],
         ["leaf", "line"],
         ["leaf", "dab"],
-        ["ground", "line"],
         ["flower", "dab"],
     ];
-    const paint = (/** @type {[Ink, Hand]} */ [which, hand]) => {
+    const paint = (/** @type {[Pigment, Hand]} */ [which, hand]) => {
         const outlines = marks
             .filter((m) => m.ink === which && m.hand === hand)
             .flatMap((m) => m.outlines);
-        return outlines.length
-            ? `<path d='${outlines.map(closedPath).join("")}' fill='${inks[which]}' filter='url(#${id}-${hand})'/>`
-            : "";
+        if (!outlines.length) return "";
+        const ink = inks[which];
+        if (!ink) throw new Error(`${which} was drawn without its ink.`);
+        return `<path d='${outlines.map(closedPath).join("")}' ${HANDS[hand](ink, inks.ground)}/>`;
     };
     const viewBox = box.map((v) => +v.toFixed(3)).join(" ");
-    return svgOf(viewBox, `<defs>${defs}</defs>${layers.map(paint).join("")}`);
+    return svgOf(viewBox, layers.map(paint).join(""));
 }
 
 /* Marks moved by [dx, dy], or turned a quarter clockwise, so that a vine
@@ -826,6 +829,8 @@ const reshaped = (marks, f) =>
  *     tapers to both ends, or set flush left and grows one way.
  * @param {string} vine.leaf The colour of stem, leaf and tendril.
  * @param {string} vine.flower The colour of the roses.
+ * @param {string} vine.ground The page's own colour, which the paint thins
+ *     toward.
  * @param {boolean} [vine.upright] Whether it grows down the page rather than
  *     across it, its ratio then being its height over its width.
  * @param {boolean} [vine.blooms] Whether it bears roses.
@@ -837,6 +842,7 @@ export function vine({
     centred,
     leaf,
     flower,
+    ground,
     upright = false,
     blooms = true,
 }) {
@@ -846,9 +852,7 @@ export function vine({
     return picture(
         upright ? turned(marks) : marks,
         upright ? [0, 0, H, width] : [0, 0, width, H],
-        { leaf, flower },
-        `vine-${hash([ratio, seed, leaf, flower, centred].join())}`,
-        r,
+        { leaf, flower, ground },
     );
 }
 
@@ -929,14 +933,16 @@ const placed = (svg, [x, y, w, h]) => ({
  * @param {number} vine.seed Which vine of that length. The hanging shoot it
  *     grows from is drawn with the same seed, so that the two meet.
  * @param {string} vine.leaf The colour of stem, leaf and tendril.
+ * @param {string} vine.ground The page's own colour.
  * @returns {string}
  */
-export function tocVine({ ratio, seed, leaf }) {
+export function tocVine({ ratio, seed, leaf, ground }) {
     return vine({
         ratio,
         seed,
         leaf,
         flower: leaf,
+        ground,
         centred: false,
         upright: true,
         blooms: false,
@@ -955,9 +961,10 @@ export function tocVine({ ratio, seed, leaf }) {
  * @param {number} shoot.radius The elbow's radius, in vine widths.
  * @param {number} shoot.seed Which shoot of that shape.
  * @param {string} shoot.leaf The colour of stem and leaf.
+ * @param {string} shoot.ground The page's own colour.
  * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number } }}
  */
-export function shoot({ reach, radius, seed, leaf }) {
+export function shoot({ reach, radius, seed, leaf, ground }) {
     const r = chance(seed);
     const bend = radius * H;
     /* How far past the end of its run the closing curl reaches. */
@@ -1014,8 +1021,7 @@ export function shoot({ reach, radius, seed, leaf }) {
     }
 
     const box = boxOf(marks, 1.5);
-    const id = `shoot-${hash([reach, radius, seed, leaf].join())}`;
-    return placed(picture(marks, box, { leaf }, id, r), box);
+    return placed(picture(marks, box, { leaf, ground }), box);
 }
 
 /**
@@ -1029,7 +1035,7 @@ export function shoot({ reach, radius, seed, leaf }) {
  * @param {number} blossom.seed Which blossom.
  * @param {string} blossom.leaf The colour of stalk and leaf.
  * @param {string} blossom.flower The colour of the rose.
- * @param {string} blossom.ground The page's own colour, under the rose.
+ * @param {string} blossom.ground The page's own colour.
  * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number } }}
  */
 export function blossom({ seed, leaf, flower, ground }) {
@@ -1050,12 +1056,10 @@ export function blossom({ seed, leaf, flower, ground }) {
             ribbon(stalk, (f) => lerp(1.6, 1.1, f)),
         ),
         mark("leaf", "dab", ivy(end.p, blade, size)),
-        mark("ground", "line", ...petals),
         mark("flower", "dab", ...petals),
     ];
     const box = boxOf(marks, 1.5);
-    const id = `blossom-${hash([seed, leaf, flower, ground].join())}`;
-    return placed(picture(marks, box, { leaf, flower, ground }, id, r), box);
+    return placed(picture(marks, box, { leaf, flower, ground }), box);
 }
 
 /* One frame of a hanging shoot, `w` by `h` units, with the column its
@@ -1087,9 +1091,10 @@ const HANGING_SHOOTS = [
  * @param {string} hanging.leaf The colour of stem and leaf.
  * @param {string} hanging.iron The colour of the ring and bolt.
  * @param {string} hanging.pot The colour of the plate.
+ * @param {string} hanging.ground The page's own colour.
  * @returns {{ svg: string, box: { x: number, y: number, w: number, h: number }, frames: number }}
  */
-export function hanging({ seed, rise, leaf, iron, pot }) {
+export function hanging({ seed, rise, leaf, iron, pot, ground }) {
     /** @type {Point} */
     const base = [vineStart(seed) + COIL.x, COIL.h + 0.5];
     /* How far round the ring the shoot passes as it comes over it. */
@@ -1223,24 +1228,15 @@ export function hanging({ seed, rise, leaf, iron, pot }) {
         }
         marks.push(...moved([...held, ...frame], [k * COIL.w, 0]));
     }
-    const id = `hanging-${hash([seed, rise, leaf, iron, pot].join())}`;
-    const svg = picture(
-        marks,
-        [0, 0, COIL.w * COIL.frames, COIL.h],
-        { leaf, iron, pot },
-        id,
-        chance(seed),
-    );
+    const svg = picture(marks, [0, 0, COIL.w * COIL.frames, COIL.h], {
+        leaf,
+        iron,
+        pot,
+        ground,
+    });
     const column = COIL.x + H / 2;
     return {
         ...placed(svg, [-column, -COIL.h, COIL.w, COIL.h]),
         frames: COIL.frames,
     };
-}
-
-/** @param {string} text */
-function hash(text) {
-    let h = 5381;
-    for (const c of text) h = (Math.imul(h, 33) ^ c.charCodeAt(0)) >>> 0;
-    return h.toString(36);
 }

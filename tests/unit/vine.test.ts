@@ -23,7 +23,7 @@ const SHAPES = [
     { ratio: 10, centred: true },
 ];
 const SEEDS = [1, 2, 3, 4, 17, 99];
-const INKS = { leaf: "#26642b", flower: "#58508c" };
+const INKS = { leaf: "#26642b", flower: "#58508c", ground: "#ffffff" };
 
 /**
  * A rule's vine is fixed by where it appears: the same place always shows the
@@ -65,7 +65,7 @@ describe("a vine is a whole drawing", () => {
 
             test(`ratio ${shape.ratio}, seed ${seed} has a stem and at least one rose`, () => {
                 expect(svg).toContain(`fill='${INKS.leaf}'`);
-                expect(svg).toContain(`fill='${INKS.flower}'`);
+                expect(svg).toContain(`stroke='${INKS.flower}'`);
             });
         }
     }
@@ -84,11 +84,14 @@ describe("the rules are the drawings they always were", () => {
             [8, 3, true],
             [10, 4, true],
         ] as const) {
-            for (const inks of [INKS, { leaf: "#8dce8e", flower: "#bdb7fc" }])
+            for (const inks of [
+                INKS,
+                { leaf: "#8dce8e", flower: "#bdb7fc", ground: "#1b1e21" },
+            ])
                 hash.update(vine({ ratio, seed, centred, ...inks }));
         }
         expect(hash.digest("hex")).toBe(
-            "15fa2c5f51b0c6572e87195e3389fbe975b19768ccbbfa260aee9e2795b6c16c",
+            "071d1d2f7f4823f91dd6b92c6077d09c578be8874ccd52d8daa9519f9f55f707",
         );
     });
 });
@@ -100,7 +103,6 @@ const TOC_INKS = {
     ...INKS,
     iron: "#0e100f",
     pot: "#565c58",
-    ground: "#ffffff",
 };
 
 /** Each piece of the contents, drawn from a seed. */
@@ -113,6 +115,22 @@ const PIECES = {
     "a hanging shoot": (seed: number) =>
         hanging({ seed, rise: RISE, ...TOC_INKS }).svg,
 };
+
+/**
+ * A browser readies its GPU for each SVG filter the first time it draws one,
+ * and the page stalls while it does, so the drawings are painted without them.
+ */
+describe("a drawing is painted without filters", () => {
+    const drawings = {
+        ...PIECES,
+        "a rule": (seed: number) => vine({ ...SHAPES[2]!, seed, ...INKS }),
+    };
+    for (const [name, draw] of Object.entries(drawings)) {
+        test(`${name} has no filter`, () => {
+            for (const seed of SEEDS) expect(draw(seed)).not.toMatch(/filter/);
+        });
+    }
+});
 
 describe("a piece of the contents is its arguments", () => {
     for (const [name, draw] of Object.entries(PIECES)) {
@@ -160,7 +178,7 @@ describe("a section's vine grows down its column, bare", () => {
                     blooms: false,
                     ...INKS,
                 }),
-            ).not.toContain(`fill='${INKS.flower}'`);
+            ).not.toContain(INKS.flower);
         });
     }
 });

@@ -52,3 +52,16 @@ are cut in. The patch's element is no longer made `position: relative` by the
 mixin, because the receipt's word is absolutely positioned and the entry
 says so itself. The receipt now also gets `pointer-events: none` on its patch,
 which its word already had.
+
+## 2026-10-07 — the words lose their blur
+
+The words' last stage was `filter: blur(1.6px)` easing to none. Interpolated,
+the blur passes through many strengths, and Skia Graphite builds a pipeline
+per blur kernel size (1DBlur4/8/12, 2DBlur12/28 in a trace), in more than one
+sampling variant each: about 8 pipelines compiled on the contents' first
+unfold, ~75 ms each with a cold Metal shader cache. Holding the blur at one
+strength and snapping it off did not help measurably; removing it did, and
+with it the later sections' first unfolds stopped hitching. The words now
+fade in by `-webkit-text-fill-color` alone. The panes' picture blurs (5, 2.5,
+1.2 px) are untouched. See breadcrumbs/src/layouts/prelude/vine.mjs.md for
+the measuring setup.

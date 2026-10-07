@@ -1,8 +1,9 @@
 /// Resolve: words come in as a picture loads at rising resolutions — coarse
-/// blocks, finer blocks, finest blocks, then the words through a moment's
-/// blur — and leave by the same sequence played backwards. The blocks are a
-/// mask on a patch of the words' own ink, swapped three times; nothing filters
-/// the words but the blur, which is cheap for the compositor.
+/// blocks, finer blocks, finest blocks, then the words themselves fading in —
+/// and leave by the same sequence played backwards. The blocks are a mask on a
+/// patch of the words' own ink, swapped three times. Nothing filters the words:
+/// a browser readies its GPU for each strength of blur it draws, and the page
+/// stalls while it does.
 ///
 /// A pane resolves part by part, each part as a picture rather than a line: a
 /// quilt of large blocks laid down patch by patch, then finer blocks over the
@@ -17,7 +18,7 @@
 @use "motion";
 @use "ornaments";
 
-/// Where each resolution gives way to the next, and the words to their blur.
+/// Where each resolution gives way to the next, and the blocks to the words.
 $-coarse-until: 30%;
 $-medium-until: 50%;
 $-fine-until: 66%;
@@ -65,17 +66,10 @@ $strip: 8em;
     0%,
     #{$-fine-until} {
         -webkit-text-fill-color: transparent;
-        filter: none;
-    }
-
-    #{$-shown-from} {
-        -webkit-text-fill-color: transparent;
-        filter: blur(1.6px);
     }
 
     100% {
         -webkit-text-fill-color: currentcolor;
-        filter: none;
     }
 }
 
