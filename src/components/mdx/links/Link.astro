@@ -135,10 +135,10 @@ const resolved = isResolved(href, entry);
        is on it takes to resolve and to unresolve, a beat after the part above
        it. Arriving, the last part is done about 300ms after the first began. */
     $standoff: 0.3s;
-    $fade: 120ms;
+    $fade: motion.$limit;
     $resolve: 180ms;
     $resolve-beat: 35ms;
-    $unresolve: 120ms;
+    $unresolve: motion.$limit;
     $unresolve-beat: 15ms;
 
     /* The parts of the text: its title, meta, summary and ledger. One past
@@ -385,7 +385,7 @@ const resolved = isResolved(href, entry);
             margin: ornaments.$glass-gap ornaments.$glass-gap 0;
             height: var(--banner-height);
 
-            @media (prefers-reduced-motion: no-preference) {
+            @include motion.reduced($asked: false) {
                 @supports (animation-timeline: scroll()) {
                     animation: link-popover-banner-gives-way linear both;
                     animation-timeline: --link-popover-text;
@@ -408,8 +408,12 @@ const resolved = isResolved(href, entry);
        nothing either, so the holder takes its size from the pane. */
     .link-popover-picture {
         display: block;
-        @include motion.snap(content-visibility, $fade, $standoff + $lag);
-        transition-behavior: allow-discrete;
+        @include motion.snap(
+            content-visibility,
+            $fade,
+            $standoff + $lag,
+            $discrete: true
+        );
         content-visibility: hidden;
 
         [data-image="column"] & {
@@ -448,8 +452,7 @@ const resolved = isResolved(href, entry);
     }
 
     .link-popover-title {
-        font-family: var(--font-display);
-        font-weight: 600;
+        @include typography.display-voice;
         font-size: var(--text-h4);
         line-height: 1.2;
     }
@@ -483,7 +486,7 @@ const resolved = isResolved(href, entry);
         column-gap: 0.8rem;
         border-top: 1.5px solid var(--color-text);
         line-height: 1.35;
-        font-variant-numeric: lining-nums tabular-nums;
+        @include typography.numerals;
     }
 
     .link-popover-row {

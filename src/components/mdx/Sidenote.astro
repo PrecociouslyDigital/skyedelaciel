@@ -28,24 +28,14 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
 
 <style lang="scss">
     @use "../../layouts/prelude/breakpoints";
+    @use "../../layouts/prelude/layout";
     @use "../../layouts/prelude/ornaments";
 
     /// A stroke of the brush down a note's left edge, in `$ink`, holding
     /// its column.
     @mixin held($ink) {
         position: relative;
-
-        &::before {
-            @include ornaments.brushed("down");
-            --band: 4px;
-            content: "";
-            position: absolute;
-            inset-block: 0;
-            left: calc(var(--band) / -2);
-            width: var(--band);
-            background-color: $ink;
-            pointer-events: none;
-        }
+        @include ornaments.brushed-edge($ink, 4px);
     }
 
     /**
@@ -60,7 +50,7 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         clear: right;
         box-sizing: border-box;
         /* Size to the right gutter, set by prelude.scss */
-        width: var(--sidenote-width, 14rem);
+        width: var(--sidenote-width, #{layout.$sidenote-width});
         /* How far past the text column a note has to begin to clear
            everything drawn on the article's edge: the frame, the corner ticks
            that reach outside it, and a gap past those. All three lengths are
@@ -68,7 +58,9 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         --standoff: calc(
             -1 * (var(--frame-inset) + var(--tick-reach) + var(--margin-gap))
         );
-        margin-right: calc(var(--standoff) - var(--sidenote-width, 14rem));
+        margin-right: calc(
+            var(--standoff) - var(--sidenote-width, #{layout.$sidenote-width})
+        );
         margin-bottom: 0.5rem;
         padding: 0 0 0 1ch;
         font-size: $size;
@@ -89,14 +81,19 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
         display: none;
     }
 
-    /* — Marker (superscript number) — */
-    label[role="doc-noteref"] {
+    /* — The note's number: its marker in the text, and its dismissal in the
+       note itself on a narrow page. — */
+    label[role="doc-noteref"],
+    small[role="note"] > label {
         cursor: pointer;
         vertical-align: super;
-        font-size: 0.72em;
         line-height: 0;
         font-weight: 600;
         color: var(--color-accent);
+    }
+
+    label[role="doc-noteref"] {
+        font-size: 0.72em;
         counter-increment: sidenote;
 
         &::after {
@@ -113,13 +110,8 @@ const noterefRole: Record<string, string> = { role: "doc-noteref" };
 
         /* Dismiss label (narrow viewports only) */
         > label {
-            cursor: pointer;
             font-size: 0.75em;
-            vertical-align: super;
-            line-height: 0;
             margin-right: 0.35em;
-            font-weight: 600;
-            color: var(--color-accent);
 
             &::after {
                 content: counter(sidenote) ".";

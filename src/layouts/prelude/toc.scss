@@ -2,6 +2,7 @@
 @use "sass:math";
 @use "motion";
 @use "ornaments";
+@use "resolve";
 
 /// A table of contents, built of TocList and TocEntry. Global rather than
 /// scoped to either, because each is slotted into whichever component builds
@@ -31,6 +32,24 @@ $drop: 320ms;
 $lift: 200ms;
 $drop-step: 30ms;
 
+/// How an arrival is shared out among a section's entries. Each entry
+/// resolves over `$resolve-share` of it; their starts are spread over
+/// `$arrival-spread` of it, from the first to the last, which is when the
+/// growing tip reaches each. Folding is shared out alike, quicker.
+$resolve-share: 0.56;
+$arrival-spread: 0.75;
+$unresolve-share: 0.49;
+$departure-spread: 0.5;
+
+/// How much of a section's growth a shoot out to a third-level entry takes,
+/// and the last stretch of it over which the growing tip's feather fades.
+$shoot-share: 0.7;
+$feather-share: 0.3;
+
+/// How long the tracker takes to move to the entry being read: a snap, a
+/// little under the limit, so that it never trails a quick scroll.
+$tracker-move: 110ms;
+
 /// How soft the growing tip is: the last stretch of a section fades out while
 /// it grows, so that the vine and its entries come in rather than being cut.
 $feather: math.min(2.2rem, $pitch * 1.3);
@@ -38,8 +57,8 @@ $feather: math.min(2.2rem, $pitch * 1.3);
 /// How far down its section an entry sits, from 0 at the top to 1 at the
 /// bottom, which is when the growing tip reaches it.
 $along: "min(var(--i) / var(--n), 1)";
-$arrival-delay: calc(#{$along} * #{$unfold * 0.75});
-$departure-delay: calc((1 - #{$along}) * #{$fold * 0.5});
+$arrival-delay: calc(#{$along} * #{$unfold * $arrival-spread});
+$departure-delay: calc((1 - #{$along}) * #{$fold * $departure-spread});
 
 /// The hanging shoot's frames, stepped through at `$duration`, and its ring
 /// settling as it unrolls, or lifting as it curls.
@@ -132,8 +151,8 @@ $blossom-reach: 0;
     position: relative;
 
     &:has(a[data-current])::before {
-        @include ornaments.corner-ticks(var(--color-signal), 0.45rem, 1px);
-        @include motion.snap((transform, width, height), 110ms);
+        @include ornaments.corner-ticks(0.45rem, 1px);
+        @include motion.snap((transform, width, height), $tracker-move);
         content: "";
         position: absolute;
         top: 0;
@@ -279,9 +298,9 @@ $blossom-reach: 0;
     &[open]::details-content {
         @include motion.grow(
             (block-size, content-visibility, --feather),
-            ($unfold, $unfold, $unfold * 0.3),
+            ($unfold, $unfold, $unfold * $feather-share),
             (motion.$brush, motion.$brush, linear),
-            (0s, 0s, $unfold * 0.7)
+            (0s, 0s, $unfold * (1 - $feather-share))
         );
         --feather: 0px;
         block-size: auto;
@@ -335,7 +354,11 @@ $blossom-reach: 0;
     }
 
     li[data-depth="3"]::before {
-        @include motion.grown(toc-shoot, $unfold * 0.7, $arrival-delay);
+        @include motion.grown(
+            toc-shoot,
+            $unfold * $shoot-share,
+            $arrival-delay
+        );
     }
 }
 
@@ -355,58 +378,27 @@ $blossom-reach: 0;
 /* Each entry resolves as it arrives, and folding plays it backwards; see
    _resolve.scss. */
 
-/// An entry's link, with the patch of its own ink its blocks are cut from.
-@mixin resolvable {
+/// An entry's link, resolvable over its line of type, each entry's blocks
+/// shifted from the one before's.
+@mixin resolvable-entry {
     position: relative;
-
-    &::after {
-        content: "";
-        position: absolute;
-        inset: calc((#{$pitch} - #{$line}em) / 2 + 0.22em) 0
-            calc((#{$pitch} - #{$line}em) / 2 + 0.18em);
-        background: currentcolor;
-        mask-size: 8em 100%;
-        mask-repeat: repeat-x;
-        mask-position: calc(var(--i) * -2.7em) 0;
-        opacity: 0;
-        pointer-events: none;
-    }
-}
-
-/// The link resolving in, over `$duration` once `$delay` is out.
-@mixin resolving($duration, $delay) {
-    @include motion.grown(resolve, $duration, $delay, linear);
-
-    &::after {
-        @include motion.grown(resolve-blocks, $duration, $delay, linear);
-    }
-}
-
-/// The link resolving out, and staying gone.
-@mixin unresolving($duration, $delay) {
-    @include motion.grown(unresolve, $duration, $delay, linear, $leaving: true);
-
-    &::after {
-        @include motion.grown(
-            unresolve-blocks,
-            $duration,
-            $delay,
-            linear,
-            $leaving: true
-        );
-    }
+    @include resolve.resolvable(
+        calc((#{$pitch} - #{$line}em) / 2 + 0.22em) 0
+            calc((#{$pitch} - #{$line}em) / 2 + 0.18em),
+        calc(var(--i) * -2.7em) 0
+    );
 }
 
 .toc-list details li > a {
-    @include resolvable;
+    @include resolvable-entry;
 }
 
 .toc-list details[open] li > a {
-    @include resolving($unfold * 0.56, $arrival-delay);
+    @include resolve.resolving($unfold * $resolve-share, $arrival-delay);
 }
 
 .toc-list details:not([open]) li > a {
-    @include unresolving($fold * 0.49, $departure-delay);
+    @include resolve.unresolving($fold * $unresolve-share, $departure-delay);
 }
 
 /* — Which side the vine grows on —

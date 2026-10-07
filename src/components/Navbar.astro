@@ -19,7 +19,7 @@ if (!site) throw new Error("astro.config.mts must set `site`.");
         aria-label="Home"><Mark /></a
     >
 
-    <div class="nav-links" data-count={navLinks.length}>
+    <div class="nav-links">
         {
             navLinks.map((link) => (
                 <a
@@ -43,6 +43,7 @@ if (!site) throw new Error("astro.config.mts must set `site`.");
 <style lang="scss">
     @use "sass:math";
     @use "../layouts/prelude/breakpoints";
+    @use "../layouts/prelude/layout";
     @use "../layouts/prelude/motion";
     @use "../layouts/prelude/typography";
 
@@ -65,7 +66,7 @@ if (!site) throw new Error("astro.config.mts must set `site`.");
         align-items: center;
         gap: min(0.75rem, 2cqi);
         padding: 0.5rem;
-        max-width: 80ch;
+        max-width: layout.$measure;
         margin: 0 auto;
         // The toggle's tap area must not reach past the screen and let the
         // page scroll sideways; at the screen's edge it is not needed.
@@ -120,7 +121,7 @@ if (!site) throw new Error("astro.config.mts must set `site`.");
     /* Each link is a fingertip tall, in centred rows, more on top than below
        and the lower row set between the upper one's, so that no tap zone sits
        straight under another: three as two over one where they will not fit
-       on a line, five as three over two. */
+       on a line. */
     .nav-links {
         flex: 1;
         display: flex;
@@ -131,7 +132,7 @@ if (!site) throw new Error("astro.config.mts must set `site`.");
             @include typography.apparatus($link-size);
             display: grid;
             place-items: center;
-            min-height: 2.75rem;
+            min-height: layout.$fingertip;
             padding-inline: min(0.55rem, 1.6cqi);
             font-size: min($link-size, 4.6cqi);
             color: var(--color-muted);
@@ -145,21 +146,6 @@ if (!site) throw new Error("astro.config.mts must set `site`.");
             // three hands each mean something else.
             &[aria-current="page"] {
                 color: var(--color-text);
-            }
-        }
-
-        &[data-count="5"] {
-            display: grid;
-            grid-template-columns: repeat(6, auto);
-            justify-content: center;
-
-            a {
-                grid-column: span 2;
-                font-size: min($link-size, 4.3cqi);
-            }
-
-            a:nth-child(4) {
-                grid-column: 2 / span 2;
             }
         }
     }
@@ -182,8 +168,7 @@ if (!site) throw new Error("astro.config.mts must set `site`.");
             height: $sidebar-mark;
         }
 
-        .nav-links,
-        .nav-links[data-count="5"] {
+        .nav-links {
             display: flex;
             flex-direction: column;
             align-items: flex-end;

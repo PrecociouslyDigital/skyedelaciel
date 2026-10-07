@@ -195,3 +195,11 @@ the ratio, it goes no further than it must, and it keeps the hue.
 The highlight's swipe is the 橫 brush mark filled with each scheme's accent
 at 20%, the specimen's figure. It is baked into each scheme, print included,
 because it is a background behind text.
+
+## 2026-10-06 — one `$schemes` map
+
+`$grounds`, `$chroma-ratios` and `$textures` were three maps keyed by the same
+scheme names, with a runtime check that each scheme had a texture. They are
+one `$schemes` map built by `-scheme($ground, $chroma-ratio, $texture)`, whose
+required arguments make a missing one a Sass error. The chroma asserts iterate
+`map.keys($pigments)`. `--color-shadow` is gone: nothing read it.

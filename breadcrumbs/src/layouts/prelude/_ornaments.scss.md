@@ -208,3 +208,17 @@ the vine already closes it off.
 The title vine then took a horizontal rule's size (13rem, ratio 8), keeping
 seed 1 so it is still its own drawing. In `$vines`, write comments inside an
 entry: Prettier mis-indents an entry that has a comment above it.
+
+## 2026-10-06 — frame tokens, brushed-edge, focus-ring, ticks in signal
+
+The woodblock frame's widths are `$frame-outer`/`$frame-gap`/`$frame-inner`;
+`frame-heavy($ground)` takes the channel's ground, so `pre` uses it on
+`raised` instead of calling `frame` with the widths restated, and its 4px
+`$frame` is `$frame-within`. The article's `--frame-inset` is
+`2ch + $frame-outer`, the same 3px it was.
+
+`brushed-edge($ink, $band, $nudge)` is the stroke down a blockquote's and a
+sidenote's left edge. `corner-ticks` defaults its colour to `signal`, which
+every caller passed; the colour moved after the lengths. `vine-rule` sets
+`content: ""` itself, but only when it is drawn on a pseudo-element (it reads
+`&`), because `hr` and the Tumblr post's break use it on a real element.

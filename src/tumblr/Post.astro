@@ -166,11 +166,7 @@ const rail = `${date}${block("NoteCount", `${RAIL_SEPARATOR}${v("NoteCountWithLa
         color: var(--color-muted);
 
         a {
-            text-decoration-line: none;
-
-            &:hover {
-                text-decoration-line: underline;
-            }
+            @include typography.link-underline;
         }
     }
 

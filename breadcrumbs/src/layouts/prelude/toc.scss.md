@@ -69,3 +69,12 @@ Then the rail was removed too. It looked fine but felt wrong, so the first
 level is now told apart by weight alone, at full bold (700).
 
 Full bold read as too heavy, so the first level went back to semi-bold (600).
+
+## 2026-10-06 — named shares and the tracker's move
+
+The bare fractions of `$unfold`/`$fold`/`$drop` (0.56, 0.75, 0.49, 0.5, 0.7,
+0.3) are `$resolve-share`, `$arrival-spread`, `$unresolve-share`,
+`$departure-spread`, `$shoot-share` and `$feather-share` (the feather's delay
+is `1 - $feather-share`, which is the 0.7 it was). The tracker's 110ms is
+`$tracker-move`. The receipt's 320ms arrival was the same figure as `$drop`
+and is now `toc.$drop`.

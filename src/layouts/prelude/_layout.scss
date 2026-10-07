@@ -1,0 +1,15 @@
+/// The measures the page is laid out by. Variables only, so that a component
+/// can `@use` them without emitting anything.
+
+/// The longest a line of the article runs.
+$measure: 80ch;
+
+/// The widest a column of sidenotes is, and the sidebar matched to it.
+$sidenote-width: 14rem;
+
+/// The least a tap target is across, so that a fingertip finds it.
+$fingertip: 2.75rem;
+
+/// The space between the page's columns, and round the page where it is laid
+/// out in them.
+$gutter: 2rem;

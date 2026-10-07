@@ -24,11 +24,12 @@ import { THEME_TOGGLE_ID } from "./theme";
 
 <style lang="scss">
     @use "../layouts/prelude/breakpoints";
+    @use "../layouts/prelude/layout";
     @use "../layouts/prelude/motion";
+    @use "../layouts/prelude/ornaments";
 
     $icon: 1.25rem;
     $sidebar-icon: 1.5rem;
-    $fingertip: 2.75rem;
 
     /* Drawn small, but it answers a fingertip all round it. */
     .theme-toggle {
@@ -42,7 +43,7 @@ import { THEME_TOGGLE_ID } from "./theme";
         &::before {
             content: "";
             position: absolute;
-            inset: ($icon - $fingertip) * 0.5;
+            inset: ($icon - layout.$fingertip) * 0.5;
         }
     }
 
@@ -74,8 +75,7 @@ import { THEME_TOGGLE_ID } from "./theme";
     }
 
     input:focus-visible + .toggle-icon {
-        outline: 2px solid var(--color-accent);
-        outline-offset: 2px;
+        @include ornaments.focus-ring;
     }
 
     @include breakpoints.wide-sidebar {

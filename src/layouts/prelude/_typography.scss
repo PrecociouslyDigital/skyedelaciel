@@ -30,6 +30,55 @@ $prose-blocks: "p, li, blockquote, dd, dt, figcaption, .abstract";
     --text-small: 0.85rem;
 }
 
+/// The display voice: Cormorant, at the one weight it is set in.
+@mixin display-voice {
+    font-family: var(--font-display);
+    font-weight: 600;
+}
+
+/// Figures set as `$in` reads them: `prose`, old-style and proportional, to sit
+/// in running text; `data`, lining and tabular, to line up in columns.
+@mixin numerals($in: data) {
+    @if $in == prose {
+        font-variant-numeric: oldstyle-nums proportional-nums;
+    } @else if $in == data {
+        font-variant-numeric: lining-nums tabular-nums;
+    } @else {
+        @error "figures are set for prose or for data, not for #{$in}.";
+    }
+}
+
+/// The machine's stamp: a line of small monospaced capitals in `signal`, as
+/// the rail slug, a block of code's stamp and a receipt's word are set.
+@mixin stamp {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-signal);
+}
+
+/// A link whose underline shows only while it is pointed at, `$weight` thick
+/// if it says. Longhands, not the shorthand: `text-decoration: underline`
+/// would reset the colour to `currentColor`, and take `attention` back off.
+@mixin link-underline($weight: null) {
+    text-decoration-line: none;
+
+    &:hover {
+        text-decoration-line: underline;
+        text-decoration-thickness: $weight;
+    }
+}
+
+/// Muted until pointed at, then in full ink.
+@mixin muted-to-text {
+    color: var(--color-muted);
+
+    &:hover {
+        color: var(--color-text);
+    }
+}
+
 /// Apparatus: the labels around the text rather than the text itself — nav
 /// links, the byline, column headers, the "Contents" toggle. The prose face,
 /// letterspaced and set as small caps, so it stays in the same voice while

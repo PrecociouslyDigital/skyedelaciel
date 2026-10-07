@@ -4,6 +4,7 @@
 @use "motion";
 @use "ornaments";
 @use "figures";
+@use "layout";
 @use "receipt";
 @use "resolve";
 @use "typography";
@@ -59,8 +60,7 @@ body {
 }
 
 :focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+    @include ornaments.focus-ring;
 }
 
 /* Links. Ink for the text; the only rule that ever shows under one is the one
@@ -75,20 +75,13 @@ a {
 /* Content links: semi-bold, inherit color, no underline */
 .content-link {
     font-weight: 600;
-    text-decoration-line: none;
-
-    // Longhands, not the shorthand: `text-decoration: underline` would reset
-    // the colour to `currentColor` and take `attention` back off again.
-    &:hover {
-        text-decoration-line: underline;
-        text-decoration-thickness: 2px;
-    }
+    @include typography.link-underline(2px);
 }
 
 article {
     position: relative;
     box-sizing: border-box;
-    max-width: 80ch;
+    max-width: layout.$measure;
     margin: 0 auto;
     --frame-inset: 0px;
     --tick-reach: 0px;
@@ -102,7 +95,6 @@ article {
        ornament a reader meets, before the text. */
     &::after {
         @include ornaments.vine-rule("title");
-        content: "";
         margin: 1.25rem auto 0;
     }
 }
@@ -122,8 +114,7 @@ article {
 }
 
 .title {
-    font-family: var(--font-display);
-    font-weight: 600;
+    @include typography.display-voice;
     // A step above the h1 a section heading gets, so the article's own title
     // outweighs the first heading under it rather than tying.
     font-size: var(--text-title);
@@ -150,8 +141,7 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: var(--font-display);
-    font-weight: 600;
+    @include typography.display-voice;
     line-height: 1.15;
     margin: 2.25rem 0 0.6rem;
 }
@@ -189,14 +179,13 @@ h1.heading {
 
     &::after {
         @include ornaments.vine-rule("heading");
-        content: "";
         margin-top: 0.4rem;
     }
 }
 
 /* — Prose blocks — */
 article :is(#{typography.$prose-blocks}) {
-    font-variant-numeric: oldstyle-nums proportional-nums;
+    @include typography.numerals(prose);
 }
 
 p {
@@ -216,18 +205,7 @@ blockquote {
     margin: 1.25em 0;
     padding: 0.1em 0 0.1em 1.5ch;
     min-block-size: 2lh;
-
-    &::before {
-        @include ornaments.brushed("down");
-        --band: 7px;
-        content: "";
-        position: absolute;
-        inset-block: 0;
-        left: calc(var(--band) / -2 + 1px);
-        width: var(--band);
-        background-color: var(--color-text);
-        pointer-events: none;
-    }
+    @include ornaments.brushed-edge(var(--color-text), 7px, 1px);
 }
 
 /* Bullets are brush marks, one per depth: a 點 in the accent colour, a 橫 in
@@ -346,7 +324,7 @@ ol {
 
     li::marker {
         color: var(--color-muted);
-        font-variant-numeric: lining-nums tabular-nums;
+        @include typography.numerals;
     }
 }
 
@@ -410,15 +388,9 @@ ins {
    frame is inset shadows on the block itself, so it holds still while the
    code scrolls sideways. */
 pre {
-    $frame: 4px;
+    $frame: ornaments.$frame-within;
 
-    @include ornaments.frame(
-        var(--color-text),
-        var(--color-raised),
-        3px,
-        3px,
-        1px
-    );
+    @include ornaments.frame-heavy(var(--color-raised));
     background-color: var(--color-raised);
     padding: calc(0.9rem + #{$frame}) calc(1.2rem + #{$frame})
         calc(0.9rem + #{$frame}) calc(0.8rem + #{$frame});
@@ -485,7 +457,7 @@ pre {
 table {
     border-collapse: collapse;
     margin: 1.5em 0;
-    font-variant-numeric: lining-nums tabular-nums;
+    @include typography.numerals;
 }
 
 th,
@@ -560,7 +532,6 @@ figcaption {
 
     &::before {
         @include ornaments.vine-rule("closing");
-        content: "";
         margin: 0 auto 1.75rem;
     }
 
@@ -600,15 +571,11 @@ figcaption {
     label {
         @include typography.apparatus(0.9rem);
         cursor: pointer;
-        color: var(--color-muted);
+        @include typography.muted-to-text;
 
         &::before {
             content: "▸ ";
             color: var(--color-accent);
-        }
-
-        &:hover {
-            color: var(--color-text);
         }
     }
 
@@ -622,7 +589,7 @@ figcaption {
         overflow-clip-margin: 0.5rem;
 
         > li > a {
-            @include toc.resolvable;
+            @include toc.resolvable-entry;
         }
     }
 
@@ -637,9 +604,12 @@ figcaption {
             visibility: visible;
 
             > li > a {
-                @include toc.resolving(
-                    toc.$drop * 0.56,
-                    min(var(--i) * #{toc.$drop-step}, #{toc.$drop * 0.75})
+                @include resolve.resolving(
+                    toc.$drop * toc.$resolve-share,
+                    min(
+                        var(--i) * #{toc.$drop-step},
+                        #{toc.$drop * toc.$arrival-spread}
+                    )
                 );
             }
         }
@@ -649,21 +619,30 @@ figcaption {
 /* Wide viewport: grid layout with sidenotes */
 @include breakpoints.wide {
     body {
-        --content-width: min(80ch, calc(100vw - 8rem));
+        // The page's padding either side, and a column gap either side of
+        // the article.
+        $chrome: 4 * layout.$gutter;
+
+        --content-width: min(#{layout.$measure}, calc(100vw - #{$chrome}));
         // Space available for left + right gutters (after content and gaps)
-        --gutter: calc(100vw - 8rem - var(--content-width));
+        --gutter: calc(100vw - #{$chrome} - var(--content-width));
         // Left gutter grows from 0 toward half — centering the content
-        // once there's enough room for a 16rem right margin.
+        // once there's enough room for a column of notes and its gap.
         --left-col: max(
             0px,
-            min(calc(var(--gutter) - 16rem), calc(var(--gutter) / 2))
+            min(
+                calc(
+                    var(--gutter) - #{layout.$sidenote-width + layout.$gutter}
+                ),
+                calc(var(--gutter) / 2)
+            )
         );
-        --sidenote-width: min(14rem, var(--gutter));
+        --sidenote-width: min(#{layout.$sidenote-width}, var(--gutter));
 
         display: grid;
         grid-template-columns: var(--left-col) var(--content-width) 1fr;
-        column-gap: 2rem;
-        padding: 2rem;
+        column-gap: layout.$gutter;
+        padding: layout.$gutter;
     }
 
     article {
@@ -684,9 +663,8 @@ figcaption {
 @include breakpoints.framed-article {
     article {
         @include ornaments.frame-heavy;
-        // 3px of that is the frame itself, so the text clears its inner rule
-        // by about 2ch either side.
-        --frame-inset: calc(2ch + 3px);
+        // The frame's outer rule, plus 2ch so the text clears its inner rule.
+        --frame-inset: calc(2ch + #{ornaments.$frame-outer});
         --tick-reach: #{$tick-reach};
         padding: 2.5rem var(--frame-inset) 2rem;
         // Only inside the frame: unframed, a textured block has no edge to
@@ -699,7 +677,7 @@ figcaption {
        the subject was. Two frames, two authors — which is why the ticks sit
        outside the rule rather than replacing it. */
     article::before {
-        @include ornaments.corner-ticks(var(--color-signal), 1rem, 1.5px);
+        @include ornaments.corner-ticks(1rem, 1.5px);
         content: "";
         position: absolute;
         inset: calc(-1 * var(--tick-reach));
@@ -737,15 +715,11 @@ figcaption {
         text-orientation: upright;
         white-space: nowrap;
         pointer-events: none;
-        font-family: var(--font-mono);
-        font-size: 0.6rem;
+        /* Upright, the stamp's letter-spacing is the gap between stacked
+           characters rather than between letters of a word, which is why it
+           is set much tighter than a horizontal line of small caps would be. */
+        @include typography.stamp;
         line-height: 1;
-        /* Upright, this is the gap between stacked characters rather than
-           between letters of a word, so it is set much tighter than it would
-           be in a horizontal line of small caps. */
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--color-signal);
     }
 }
 
@@ -775,7 +749,10 @@ $toc-fade: 2rem;
        either side of it: the navbar and contents on the left, the notes on
        the right. */
     body {
-        --sidenote-width: min(14rem, calc(var(--gutter) / 2 - 2.2rem));
+        --sidenote-width: min(
+            #{layout.$sidenote-width},
+            calc(var(--gutter) / 2 - 2.2rem)
+        );
 
         grid-template-columns: 1fr var(--content-width) 1fr;
     }
@@ -790,8 +767,8 @@ $toc-fade: 2rem;
         align-items: flex-end;
         gap: 2rem;
         position: sticky;
-        top: 2rem;
-        max-height: calc(100dvh - 4rem);
+        top: layout.$gutter;
+        max-height: calc(100dvh - #{2 * layout.$gutter});
         text-align: right;
     }
 

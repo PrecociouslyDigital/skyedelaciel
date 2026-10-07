@@ -51,6 +51,7 @@ const title = `${v("Title")}${block("PostSummary", ` — ${v("PostSummary")}`)}`
 
 <style lang="scss">
     @use "../layouts/prelude/breakpoints";
+    @use "../layouts/prelude/layout";
     @use "../layouts/prelude/typography";
 
     /* One column of articles, where the site has one. The grid in prelude.scss
@@ -60,7 +61,7 @@ const title = `${v("Title")}${block("PostSummary", ` — ${v("PostSummary")}`)}`
         display: flex;
         flex-direction: column;
         gap: 3rem;
-        max-width: 80ch;
+        max-width: layout.$measure;
         margin: 0 auto;
     }
 
@@ -78,12 +79,8 @@ const title = `${v("Title")}${block("PostSummary", ` — ${v("PostSummary")}`)}`
         justify-content: space-between;
 
         a {
-            color: var(--color-muted);
+            @include typography.muted-to-text;
             text-decoration-line: none;
-
-            &:hover {
-                color: var(--color-text);
-            }
         }
 
         [rel="next"] {

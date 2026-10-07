@@ -8,6 +8,7 @@
 @use "sass:map";
 @use "sass:math";
 @use "sass:meta";
+@use "sass:string";
 
 /// The rules the site draws, each a flowering vine, after the vine-stem
 /// borders of illuminated manuscripts: one per place a rule appears, so that
@@ -216,6 +217,10 @@ $-shoot-reach: $toc-reach + $toc-column * 0.5 + $toc-gap - $toc-shoot-clear;
 /// stretched; on a column narrower than the vine, it shrinks as a whole.
 @mixin vine-rule($name) {
     $vine: vine-of($name);
+    // A pseudo-element is only drawn once it has content.
+    @if string.index("#{&}", ":after") or string.index("#{&}", ":before") {
+        content: "";
+    }
     display: block;
     width: map.get($vine, "width");
     max-width: 100%;
@@ -365,9 +370,50 @@ $brush-marks: (
         $cast;
 }
 
-/// The frame around a page of a woodblock book: thick outside, thin inside.
-@mixin frame-heavy {
-    @include frame(var(--color-text), var(--color-background), 3px, 3px, 1px);
+/// The frame around a page of a woodblock book, thick outside and thin inside:
+/// its outer rule, the channel of ground within it, and its inner rule.
+$frame-outer: 3px;
+$frame-gap: 3px;
+$frame-inner: 1px;
+
+/// How far the frame reaches in from the box's padding edge, where its channel
+/// and inner rule are painted over the padding.
+$frame-within: $frame-gap + $frame-inner;
+
+@mixin frame-heavy($ground: var(--color-background)) {
+    @include frame(
+        var(--color-text),
+        $ground,
+        $frame-outer,
+        $frame-gap,
+        $frame-inner
+    );
+}
+
+/// A stroke of the brush down the left edge of a positioned element, `$band`
+/// thick and in `$ink`, centred on the edge and then moved `$nudge` right.
+@mixin brushed-edge($ink, $band, $nudge: 0) {
+    &::before {
+        @include brushed("down");
+        --band: #{$band};
+        content: "";
+        position: absolute;
+        inset-block: 0;
+        @if $nudge == 0 {
+            left: calc(var(--band) / -2);
+        } @else {
+            left: calc(var(--band) / -2 + #{$nudge});
+        }
+        width: var(--band);
+        background-color: $ink;
+        pointer-events: none;
+    }
+}
+
+/// The mark of the element a keyboard has reached.
+@mixin focus-ring {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
 }
 
 /// A square tile of fractal noise in `$color`, as an image that repeats at its
@@ -453,7 +499,7 @@ $glass-gap: 6px;
     $solid: linear-gradient(#000, #000);
 
     background-color: oklch(from #{$plane} l 0 h / 70%);
-    @include corner-ticks(var(--color-signal), $len, $weight);
+    @include corner-ticks($len, $weight);
     // No `saturate()`: it would pull the page's own faint hue up through the
     // pane, which is the tint the plane was stripped of.
     backdrop-filter: blur(16px);
@@ -511,8 +557,9 @@ $glass-gap: 6px;
 ///
 /// `$inset` holds the corners off the edge, for a box already wearing a frame
 /// of its own: `frame` draws with inset shadows, which paint over the
-/// background, so ticks on the edge of a framed box would be invisible.
-@mixin corner-ticks($rule, $len, $weight, $inset: 0) {
+/// background, so ticks on the edge of a framed box would be invisible. The
+/// ticks are the machine's, so they are in `signal` unless `$rule` says.
+@mixin corner-ticks($len, $weight, $rule: var(--color-signal), $inset: 0) {
     $arm: linear-gradient($rule, $rule);
     $arms: tick-arms($len, $weight, $inset);
 

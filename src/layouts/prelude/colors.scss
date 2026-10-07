@@ -18,7 +18,6 @@ $tokens: (
     "accent",
     "signal",
     "attention",
-    "shadow",
     "grain"
 );
 
@@ -40,15 +39,19 @@ $pigments: (
     "attention": oklch(62% 0.079 321.6deg)
 );
 
-/// How far each scheme's chromas stand from their ground, where the grain is
-/// thickest. One figure for all three, so that none of them shouts louder
-/// than the others by contrast alone; print's is higher because paper cannot
-/// be backlit.
-$chroma-ratios: (
-    "light": 6.5,
-    "dark": 6.5,
-    "print": 9,
-);
+/// A scheme, before its chromas: every argument is required, so that a scheme
+/// cannot be written without any of them.
+///
+/// `$ground` is its paper and ink. `$chroma-ratio` is how far its chromas
+/// stand from that ground, where the grain is thickest. `$texture` is the
+/// shape its grain takes; see `texture` in _ornaments.scss.
+@function -scheme($ground, $chroma-ratio, $texture) {
+    @return (
+        "ground": $ground,
+        "chroma-ratio": $chroma-ratio,
+        "texture": $texture
+    );
+}
 
 /// Paper, ink, and print, before their chromas.
 ///
@@ -60,39 +63,50 @@ $chroma-ratios: (
 /// the strength of its thickest patch: the chalk an eraser leaves on the board,
 /// or the fibre in a sheet. Print leaves the texture to the paper it is
 /// printed on, so its grain is transparent.
-$grounds: (
-    "light": (
-        "background": #fff,
-        "raised": #fbfbfa,
-        "text": #0e100f,
-        "muted": #565c58,
-        "border": #d6d9d4,
-        "border-faint": #edeeea,
-        "shadow": rgb(0 0 0 / 12%),
-        "grain": rgb(96 72 40 / 6%),
-    ),
-    "dark": (
-        "background": #1b1e21,
-        "raised": #222529,
-        "text": #eceae4,
-        "muted": #a3a5a6,
-        "border": #3d4247,
-        "border-faint": #282c30,
-        "shadow": rgb(0 0 0 / 45%),
-        "grain": rgb(236 234 228 / 12%),
-    ),
-    "print": (
-        "background": #fff,
-        "raised": #fff,
-        "text": #000,
-        "muted": #444,
-        "border": #999,
-        "border-faint": #ddd,
-        // Paper carries no shadow, but the token still has to exist so that
-        // every rule reading it stays valid under `@media print`.
-        "shadow": transparent,
-        "grain": transparent,
-    ),
+///
+/// The chroma ratio is one figure for all three, so that none of them shouts
+/// louder than the others by contrast alone; print's is higher because paper
+/// cannot be backlit.
+$schemes: (
+    "light": -scheme(
+            $chroma-ratio: 6.5,
+            $texture: "paper",
+            $ground: (
+                "background": #fff,
+                "raised": #fbfbfa,
+                "text": #0e100f,
+                "muted": #565c58,
+                "border": #d6d9d4,
+                "border-faint": #edeeea,
+                "grain": rgb(96 72 40 / 6%),
+            ),
+        ),
+    "dark": -scheme(
+            $chroma-ratio: 6.5,
+            $texture: "chalk",
+            $ground: (
+                "background": #1b1e21,
+                "raised": #222529,
+                "text": #eceae4,
+                "muted": #a3a5a6,
+                "border": #3d4247,
+                "border-faint": #282c30,
+                "grain": rgb(236 234 228 / 12%),
+            ),
+        ),
+    "print": -scheme(
+            $chroma-ratio: 9,
+            $texture: "paper",
+            $ground: (
+                "background": #fff,
+                "raised": #fff,
+                "text": #000,
+                "muted": #444,
+                "border": #999,
+                "border-faint": #ddd,
+                "grain": transparent,
+            ),
+        ),
 );
 
 /// A scheme's ground where its grain lies thickest: text can land on any
@@ -116,7 +130,8 @@ $grounds: (
 /// than a third hue because a broken link's mark, in `attention`, has to be
 /// told apart from a working link's, in `signal`, at a glance.
 $themes: ();
-@each $name, $ground in $grounds {
+@each $name, $scheme in $schemes {
+    $ground: map.get($scheme, "ground");
     $theme: $ground;
     @each $chroma, $pigment in $pigments {
         $theme: map.set(
@@ -125,20 +140,13 @@ $themes: ();
             contrast.fit(
                 $pigment,
                 grainiest($ground),
-                map.get($chroma-ratios, $name)
+                map.get($scheme, "chroma-ratio")
             )
         );
     }
 
     $themes: map.set($themes, $name, $theme);
 }
-
-/// The shape each theme's grain takes; see `texture` in _ornaments.scss.
-$textures: (
-    "light": "paper",
-    "dark": "chalk",
-    "print": "paper",
-);
 
 /// Each theme's body-text contrast, filled in by the loop below so that the
 /// schemes can be compared against each other once they have all been checked
@@ -155,9 +163,6 @@ $text-ratios: ();
         @if not list.index($tokens, $token) {
             @error "the #{$name} theme defines #{$token}, which is not a token.";
         }
-    }
-    @if not map.has-key($textures, $name) {
-        @error "the #{$name} theme has no texture.";
     }
 
     $background: map.get($theme, "background");
@@ -184,7 +189,7 @@ $text-ratios: ();
         $ground,
         "#{$name} muted text"
     );
-    @each $chroma in ("accent", "signal", "attention") {
+    @each $chroma in map.keys($pigments) {
         @include contrast.assert-at-least(
             4.5,
             map.get($theme, $chroma),
@@ -233,7 +238,7 @@ $print-ratio: map.get($text-ratios, "print");
         --color-#{$token}: #{$value};
     }
     --texture: #{ornaments.texture(
-            map.get($textures, $theme-name),
+            map.get($schemes, $theme-name, "texture"),
             map.get($theme, "grain")
         )};
     // Vines grow in the two pigments, leaf green and wisteria violet. A table

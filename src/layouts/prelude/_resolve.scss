@@ -33,8 +33,11 @@ $-quilt-frames: 6;
 /// How strongly a part's blocks are inked, at their strongest.
 $-part-ink: 0.5;
 
+/// How wide a strip of the squares words resolve through is.
+$strip: 8em;
+
 /// The squares words resolve through, about a letter wide, then half that, then
-/// a quarter: each a strip 8em wide and a line of type tall. They have no
+/// a quarter: each a strip `$strip` wide and a line of type tall. They have no
 /// colour of their own; a patch paints them in its ink.
 ///
 /// A pane's quilt is laid down in one order and unpicked in another, a frame
@@ -104,6 +107,48 @@ $-part-ink: 0.5;
     100% {
         mask-image: var(--blocks-fine);
         opacity: 0;
+    }
+}
+
+/// Words that resolve: a patch of their own ink laid over them, `$inset` from
+/// their box, for their blocks to be cut from. `$offset` shifts the blocks, so
+/// that neighbours do not show the same squares. The words' element has to be
+/// positioned for the patch to lie over it.
+@mixin resolvable($inset, $offset: null) {
+    &::after {
+        content: "";
+        position: absolute;
+        inset: $inset;
+        background: currentcolor;
+        mask-size: $strip 100%;
+        mask-repeat: repeat-x;
+        mask-position: $offset;
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+/// `resolvable` words resolving in, over `$duration` once `$delay` is out.
+@mixin resolving($duration, $delay: 0s) {
+    @include motion.grown(resolve, $duration, $delay, linear);
+
+    &::after {
+        @include motion.grown(resolve-blocks, $duration, $delay, linear);
+    }
+}
+
+/// `resolvable` words resolving out, and staying gone.
+@mixin unresolving($duration, $delay: 0s) {
+    @include motion.grown(unresolve, $duration, $delay, linear, $leaving: true);
+
+    &::after {
+        @include motion.grown(
+            unresolve-blocks,
+            $duration,
+            $delay,
+            linear,
+            $leaving: true
+        );
     }
 }
 

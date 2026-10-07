@@ -41,3 +41,14 @@ Timing is in ticks of 15 per part (6 for the quilt, 2 + 2 for the finer
 stages, 4 for the last blur), so durations scale without retuning. Link.astro
 staggers parts by `--part` (35ms in, 15ms out). The user wanted ~300ms in
 total and was fine with it being faster than the eye can follow.
+
+## 2026-10-06 — the resolve mixins live here
+
+`resolvable`/`resolving`/`unresolving` were toc.scss's, and receipt.scss had
+a word-for-word copy of all three for COPIED. They are here, generic:
+`resolvable($inset, $offset)` lays the patch, and the contents' entry keeps
+its own geometry as `toc.resolvable-entry`. `$strip` names the 8em the blocks
+are cut in. The patch's element is no longer made `position: relative` by the
+mixin, because the receipt's word is absolutely positioned and the entry
+says so itself. The receipt now also gets `pointer-events: none` on its patch,
+which its word already had.

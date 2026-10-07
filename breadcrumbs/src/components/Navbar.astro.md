@@ -92,3 +92,8 @@ again before turning back.
 Leaving after the rewrite has finished unwrites the whole thing, since -2 is a
 held state. The stroke duration is now `motion.$grow-limit` (600ms) through
 `motion.grow`; the old keyframed one ran 1.6s, outside the spec's limit.
+
+## 2026-10-06 — no `data-count`
+
+The five-link grid layout keyed on `data-count="5"` was dead with three links,
+and nothing else read the attribute, so both went.
