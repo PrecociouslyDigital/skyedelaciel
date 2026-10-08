@@ -1,12 +1,6 @@
 ---
 import Shell from "~/layouts/prelude/Shell.astro";
 import FrontMatter from "~/layouts/prelude/FrontMatter.astro";
-import { pageHref } from "~/components/mdx/links/resolve";
-import { sectionPages } from "~/content/corpus";
-
-const sections = (await sectionPages()).toSorted((a, b) =>
-    a.data.title.localeCompare(b.data.title),
-);
 ---
 
 <Shell title="Nothing Here" description="There is no page here." host="site">

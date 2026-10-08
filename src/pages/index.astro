@@ -2,16 +2,6 @@
 import Shell from "~/layouts/prelude/Shell.astro";
 import under_construction from "~/assets/under_construction.webp";
 import { SITE_DESCRIPTION, SITE_NAME } from "~/site";
-import { publishedArticles, sectionPages } from "~/content/corpus";
-import { sectioned } from "~/content/sections";
-
-/** How many of the latest pieces the home page lists. */
-const LATEST = 10;
-
-const latest = sectioned(await publishedArticles(), await sectionPages()).slice(
-    0,
-    LATEST,
-);
 ---
 
 <Shell title={SITE_NAME} description={SITE_DESCRIPTION} host="site">

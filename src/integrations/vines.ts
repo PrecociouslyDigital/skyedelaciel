@@ -6,7 +6,6 @@ import { blocks, laidDown, patchesSvg } from "../layouts/prelude/patchwork.mjs";
 import {
     blossom,
     hanging,
-    INKS,
     shoot,
     tocVine,
     vine,
