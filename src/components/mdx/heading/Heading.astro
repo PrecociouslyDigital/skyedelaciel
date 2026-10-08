@@ -9,12 +9,14 @@ import CopyLink from "../copy/CopyLink.svelte";
  * the prose's headings; one written outside the prose says `unnumbered`, and
  * its address is the bare `§`. A heading that is neither fails the build.
  */
-type Props = { as: HTMLTag; id: string } & (
+export type Address = { id: string } & (
     | { [SECTION_ATTRIBUTE]: string; unnumbered?: never }
     | { unnumbered: true; [SECTION_ATTRIBUTE]?: never }
 );
 
-const { as: Tag, id, ...rest } = Astro.props;
+type Props = Address & { tag: HTMLTag };
+
+const { tag: Tag, id, ...rest } = Astro.props;
 const section = rest[SECTION_ATTRIBUTE];
 if (!id) throw new Error("a heading needs an id for its address.");
 if (!section && !rest.unnumbered) {

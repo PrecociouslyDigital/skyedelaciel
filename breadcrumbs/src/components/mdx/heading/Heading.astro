@@ -1,0 +1,8 @@
+
+## 2026-10-08: the element prop is `tag`, not `as`
+Astro's compiler (@astrojs/compiler 0.0.0-render-script-20251003120459) stops
+recognising a frontmatter `type Props` that has an unquoted `as` key: the
+component falls back to `Record<string, any>` and astro check only reports
+`'Props' is declared but never used`. Quoting the key works, but prettier
+unquotes it. Renaming to `tag` sidesteps both; it also surfaced that H1–H6
+passed their props through untyped, hence the exported `Address`.
