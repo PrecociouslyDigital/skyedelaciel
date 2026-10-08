@@ -14,7 +14,7 @@ import { withEditor } from "./tumblr-browser.mjs";
 const cookies = await withEditor((_page, context) => context.cookies());
 const session = cookies.filter(({ domain }) => domain.endsWith("tumblr.com"));
 
-execFileSync("gh", ["secret", "set", "TUMBLR_SESSION"], {
+execFileSync("gh", ["-R", "precociouslydigital/skyedelaciel", "secret", "set", "TUMBLR_SESSION"], {
     input: JSON.stringify(session),
     stdio: ["pipe", "ignore", "inherit"],
 });
